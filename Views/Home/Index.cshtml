@@ -1,8 +1,111 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Home - Centralino Aziendale";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<style>
+    .jumbotron {
+        background-color: #f8f9fa;
+        background-image: url('https://via.placeholder.com/1200x400');
+        background-size: cover;
+        background-position: center;
+        color: #fff;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    }
+
+    .card {
+        transition: transform 0.3s;
+    }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+</style>
+
+<div class="container mt-4">
+    <div class="jumbotron bg-light p-5 rounded-lg shadow">
+        <h1 class="display-4">Benvenuti nel Centralino Aziendale</h1>
+        <p class="lead">Gestione integrata delle chiamate e rubrica contatti</p>
+        <hr class="my-4">
+        <p>Il sistema permette di monitorare le chiamate in entrata e in uscita, gestire la rubrica contatti e analizzare le statistiche delle comunicazioni aziendali.</p>
+        <a class="btn btn-primary btn-lg" href="@Url.Action("Index", "Chiamate")" role="button">
+            <i class="bi bi-telephone"></i> Vedi chiamate
+        </a>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-telephone-inbound text-primary"></i> Chiamate in Entrata</h5>
+                    <p class="card-text">Monitoraggio completo di tutte le chiamate ricevute con filtri avanzati e storico dettagliato.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-telephone-outbound text-success"></i> Chiamate in Uscita</h5>
+                    <p class="card-text">Registrazione e analisi delle chiamate effettuate con report personalizzabili.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-journal-text text-info"></i> Rubrica Contatti</h5>
+                    <p class="card-text">Gestione centralizzata di tutti i contatti aziendali con ricerca rapida e categorizzazione.</p>
+                    <a href="@Url.Action("Index", "Contatti")" class="btn btn-outline-info mt-2">Vedi rubrica</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow mt-4">
+        <div class="card-header bg-primary text-white">
+            <h5><i class="bi bi-graph-up"></i> Statistiche Rapide</h5>
+        </div>
+        <div class="card-body">
+            <div class="row text-center">
+                <div class="col-md-3">
+                    <h3>478</h3>
+                    <p class="text-muted">Chiamate oggi</p>
+                </div>
+                <div class="col-md-3">
+                    <h3>4,237</h3>
+                    <p class="text-muted">Chiamate questa settimana</p>
+                </div>
+                <div class="col-md-3">
+                    <h3>124</h3>
+                    <p class="text-muted">Contatti attivi</p>
+                </div>
+                <div class="col-md-3">
+                    <h3>98%</h3>
+                    <p class="text-muted">Disponibilità</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+@section Styles {
+    <style>
+        .jumbotron {
+            background-color: #f8f9fa;
+            background-image: url('https://via.placeholder.com/1200x400');
+            background-size: cover;
+            background-position: center;
+            color: #fff;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+        }
+
+        .card {
+            transition: transform 0.3s;
+        }
+
+            .card:hover {
+                transform: translateY(-5px);
+            }
+    </style>
+}

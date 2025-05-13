@@ -5,8 +5,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Program.cs
 builder.Services.AddHttpClient<ChiamataService>();
+builder.Services.AddHttpClient<ContattoService>();
+
+//builder.Services.AddScoped<IContattoService, ContattoService>();
 
 //builder.WebHost.UseUrls("http://localhost:1085");
 

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using System;
 using WebApplicationCentralino.Services;
 
-namespace TuaAppWeb.Controllers
+namespace WebApplicationCentralino.Controllers
 {
     public class ChiamateController : Controller
     {

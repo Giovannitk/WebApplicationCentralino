@@ -1,0 +1,110 @@
+﻿@model List<WebApplicationCentralino.Models.Contatto>
+
+@{
+    ViewData["Title"] = "Rubrica Contatti";
+    var contattiFiltrati = Model ?? new List<WebApplicationCentralino.Models.Contatto>();
+}
+
+<div class="container mt-4">
+    <h2>Rubrica Contatti</h2>
+
+    <div class="card shadow my-4">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Elenco delle chiamate</h5>
+            <div>
+                <button class="btn btn-light mx-1" id="refreshButton">
+                    <i class="bi bi-arrow-clockwise"></i> Aggiorna
+                </button>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover w-100" id="tabellaChiamate">
+                    <thead>
+                        <tr>
+                            <th>Numero</th>
+                            <th>Ragione Sociale</th>
+                            <th>Città</th>
+                            <th>Tipologia Linea</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (contattiFiltrati.Any())
+                        {
+                            @foreach (var contatto in contattiFiltrati)
+                            {
+                                <tr>
+                                    <td>@(contatto.NumeroContatto ?? "-")</td>
+                                    <td>@(contatto.RagioneSociale ?? "-")</td>
+                                    <td>@(contatto.Citta ?? "-")</td>
+                                    <td>@(contatto.Interno.HasValue ? (contatto.Interno.Value == 1 ? "Interno" : "Esterno") : "-")</td>
+                                </tr>
+                            }
+
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="10" class="text-center">Nessuna contatto presente</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    @* <table class="table table-striped">
+    @*     <thead> *@
+    @*         <tr> *@
+    @*             <th>Numero</th> *@
+    @*             <th>Ragione Sociale</th> *@
+    @*             <th>Città</th> *@
+    @*             <th>Comune di lavoro</th> *@
+    @*         </tr> *@
+    @*     </thead> *@
+    @*     <tbody> *@
+    @*         @foreach (var contatto in Model) *@
+    @*         { *@
+    @*             <tr> *@
+    @*                 <td>@contatto.NumeroContatto</td> *@
+    @*                 <td>@(contatto.RagioneSociale ?? "-")</td> *@
+    @*                 <td>@(contatto.Citta ?? "-")</td> *@
+    @*                 <td>@(contatto.Interno.ToString() ?? "-")</td> *@
+    @*             </tr> *@
+    @*         } *@
+    @*     </tbody> *@
+    @* </table> *@
+</div>
+
+@section Scripts {
+    <script>
+        let tabella;
+
+        $(document).ready(function() {
+            // Inizializza DataTables con opzioni avanzate
+            tabella = $('#tabellaChiamate').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.13.4/i18n/it-IT.json"
+                },
+                "order": [[0, "desc"]], // Ordina per la prima colonna (Numero) in ordine DECRESCENTE
+                "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Tutti"]], // Modificato il primo array per avere 10 come primo valore
+                "pageLength": 10, // Imposta 10 come numero di elementi visualizzati di default
+                "scrollX": true,
+                "autoWidth": false,
+                "columnDefs": [
+                    { "width": "120px", "targets": 0 }, // Numero
+                    { "width": "180px", "targets": 1 }, // Ragione Sociale
+                    { "width": "150px", "targets": 2 }, // Città
+                    { "width": "80px", "targets": 3 }   // Tipologia Linea
+                ]
+            });
+
+            // Gestisce il refresh della tabella
+            $("#refreshButton").click(function() {
+                location.reload();
+            });
+        });
+    </script>
+}

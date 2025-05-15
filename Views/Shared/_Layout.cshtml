@@ -130,19 +130,36 @@
                 <span>Centralino</span>
             </div>
             <nav class="nav flex-column">
+                <!-- Voce Home -->
                 <a class="nav-link" asp-controller="Home" asp-action="Index">
                     <i class="bi bi-house-door-fill me-2"></i>Home
                 </a>
+
+                <!-- Voce Registro Chiamate -->
                 <a class="nav-link" asp-controller="Chiamate" asp-action="Index">
                     <i class="bi bi-telephone-fill me-2"></i>Registro Chiamate
                 </a>
+
+                <!-- Voce Rubrica Contatti -->
                 <a class="nav-link" asp-controller="Contatti" asp-action="Index">
                     <i class="bi bi-journal-bookmark-fill me-2"></i>Rubrica
                 </a>
+
+                <!-- Voce Gestione Manuale Chiamate -->
+                <a class="nav-link" asp-controller="GestioneChiamate" asp-action="Nuova">
+                    <i class="bi bi-telephone-plus-fill me-2"></i>Gestione Chiamate
+                </a>
+
+                <!-- Voce Privacy -->
                 <a class="nav-link" asp-controller="Home" asp-action="Privacy">
                     <i class="bi bi-shield-fill me-2"></i>Privacy
                 </a>
+
+                @* <a class="nav-link" asp-controller="Statistiche" asp-action="Index"> *@
+                @*     <i class="bi bi-shield-fill me-2"></i>Statistiche *@
+                @* </a> *@
             </nav>
+
         </div>
 
         <!-- Button to toggle sidebar on mobile (removed this for all-screen toggle) -->

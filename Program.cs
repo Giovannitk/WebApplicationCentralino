@@ -8,12 +8,21 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddHttpClient<ChiamataService>();
 builder.Services.AddHttpClient<ContattoService>();
 
+
+// Leggi il parametro --port dalla riga di comando (default: 1085)
+int port = builder.Configuration.GetValue<int>("port", 1085);
+
+//builder.Services.AddHttpClient<GestioneChiamataService>();
+builder.Services.AddHttpClient<GestioneChiamataService>(client =>
+{
+    client.BaseAddress = new Uri($"http://localhost:{port}/");
+});
+
 //builder.Services.AddScoped<IContattoService, ContattoService>();
 
 //builder.WebHost.UseUrls("http://localhost:1085");
 
-// Leggi il parametro --port dalla riga di comando (default: 1085)
-int port = builder.Configuration.GetValue<int>("port", 1085);
+
 
 // Imposta la porta dinamicamente
 builder.WebHost.UseUrls($"http://localhost:{port}");

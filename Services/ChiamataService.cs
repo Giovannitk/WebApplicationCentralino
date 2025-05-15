@@ -50,7 +50,7 @@ namespace WebApplicationCentralino.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"Errore durante il filtraggio delle chiamate: {ex.Message}");
-                return new List<Chiamata>();
+                return new List<Chiamata>(); 
             }
         }
     }

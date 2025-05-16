@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using System;
 using WebApplicationCentralino.Services;
 using WebApplicationCentralino.Models;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationCentralino.Controllers
 {
@@ -31,6 +32,7 @@ namespace WebApplicationCentralino.Controllers
                 {
                     DataArrivoChiamata = DateTime.Now.AddSeconds(-DateTime.Now.Second).AddMilliseconds(-DateTime.Now.Millisecond),
                     DataFineChiamata = DateTime.Now.AddMinutes(5).AddSeconds(-DateTime.Now.Second).AddMilliseconds(-DateTime.Now.Millisecond),
+                    TipoChiamata = "Uscita", // Imposta default su "Uscita" (0)
                     UniqueID = Guid.NewGuid().ToString()
                 });
             }
@@ -72,6 +74,7 @@ namespace WebApplicationCentralino.Controllers
                     {
                         DataArrivoChiamata = dataArrivo,
                         DataFineChiamata = dataFine,
+                        TipoChiamata = "Uscita", // Imposta default su "Uscita" (0)
                         UniqueID = Guid.NewGuid().ToString()
                     });
                 }
@@ -86,6 +89,12 @@ namespace WebApplicationCentralino.Controllers
         [HttpPost]
         public async Task<IActionResult> Salva(Chiamata chiamata)
         {
+            // Assicuriamo che TipoChiamata sia un valore valido (0 o 1)
+            if (chiamata.TipoChiamata != "Entrata")//&& chiamata.TipoChiamata != "1")
+            {
+                chiamata.TipoChiamata = "Uscita"; // Default a "Uscita" se valore non valido
+            }
+
             // Validazione personalizzata: almeno uno tra numero e ragione sociale deve essere presente
             bool validazioneChiamante = !string.IsNullOrEmpty(chiamata.NumeroChiamante) ||
                                       !string.IsNullOrEmpty(chiamata.RagioneSocialeChiamante);
@@ -105,6 +114,8 @@ namespace WebApplicationCentralino.Controllers
             if (!ModelState.IsValid)
             {
                 _logger.LogWarning("Il modello non è valido");
+                // Ricarichiamo le chiamate per mostrare la lista nella stessa vista
+                ViewBag.Chiamate = await _gestioneChiamataService.GetAllChiamateAsync();
                 return View("Index", chiamata);
             }
 
@@ -117,23 +128,29 @@ namespace WebApplicationCentralino.Controllers
                 }
 
                 // Normalizza le date rimuovendo i millisecondi
-                chiamata.DataArrivoChiamata = new DateTime(
-                    chiamata.DataArrivoChiamata.Year,
-                    chiamata.DataArrivoChiamata.Month,
-                    chiamata.DataArrivoChiamata.Day,
-                    chiamata.DataArrivoChiamata.Hour,
-                    chiamata.DataArrivoChiamata.Minute,
-                    chiamata.DataArrivoChiamata.Second
-                );
+                if (chiamata.DataArrivoChiamata != default(DateTime))
+                {
+                    chiamata.DataArrivoChiamata = new DateTime(
+                        chiamata.DataArrivoChiamata.Year,
+                        chiamata.DataArrivoChiamata.Month,
+                        chiamata.DataArrivoChiamata.Day,
+                        chiamata.DataArrivoChiamata.Hour,
+                        chiamata.DataArrivoChiamata.Minute,
+                        chiamata.DataArrivoChiamata.Second
+                    );
+                }
 
-                chiamata.DataFineChiamata = new DateTime(
-                    chiamata.DataFineChiamata.Year,
-                    chiamata.DataFineChiamata.Month,
-                    chiamata.DataFineChiamata.Day,
-                    chiamata.DataFineChiamata.Hour,
-                    chiamata.DataFineChiamata.Minute,
-                    chiamata.DataFineChiamata.Second
-                );
+                if (chiamata.DataFineChiamata != default(DateTime))
+                {
+                    chiamata.DataFineChiamata = new DateTime(
+                        chiamata.DataFineChiamata.Year,
+                        chiamata.DataFineChiamata.Month,
+                        chiamata.DataFineChiamata.Day,
+                        chiamata.DataFineChiamata.Hour,
+                        chiamata.DataFineChiamata.Minute,
+                        chiamata.DataFineChiamata.Second
+                    );
+                }
 
                 // Logga i dettagli della chiamata
                 _logger.LogInformation($"Chiamata da salvare: ID={chiamata.Id}, " +
@@ -141,6 +158,7 @@ namespace WebApplicationCentralino.Controllers
                                        $"NumeroChiamato={chiamata.NumeroChiamato}, " +
                                        $"DataArrivo={chiamata.DataArrivoChiamata} (Ticks: {chiamata.DataArrivoChiamata.Ticks}), " +
                                        $"DataFine={chiamata.DataFineChiamata} (Ticks: {chiamata.DataFineChiamata.Ticks}), " +
+                                       $"TipoChiamata={chiamata.TipoChiamata} ({(chiamata.TipoChiamata == "Uscita" ? "Entrata" : "Uscita")}), " +
                                        $"UniqueID={chiamata.UniqueID}");
 
                 string message;
@@ -180,6 +198,7 @@ namespace WebApplicationCentralino.Controllers
                     _logger.LogError("Operazione fallita");
                     TempData["msg"] = "<script>alert('Errore durante il salvataggio della chiamata')</script>";
                     ModelState.AddModelError("", "Errore durante il salvataggio della chiamata.");
+                    ViewBag.Chiamate = await _gestioneChiamataService.GetAllChiamateAsync();
                     return View("Index", chiamata);
                 }
             }
@@ -187,6 +206,7 @@ namespace WebApplicationCentralino.Controllers
             {
                 _logger.LogError(ex, "Errore durante il salvataggio della chiamata");
                 ModelState.AddModelError("", $"Errore: {ex.Message}");
+                ViewBag.Chiamate = await _gestioneChiamataService.GetAllChiamateAsync();
                 return View("Index", chiamata);
             }
         }
@@ -204,7 +224,7 @@ namespace WebApplicationCentralino.Controllers
                 }
                 else
                 {
-                    TempData["msg"] = "<script>alert('Errore durante l\'eliminazione della chiamata')</script>";
+                    TempData["msg"] = "<script>alert('Errore durante l\\'eliminazione della chiamata')</script>";
                 }
             }
             catch (Exception ex)

@@ -23,7 +23,7 @@ namespace WebApplicationCentralino.Services
             catch (Exception ex)
             {
                 // Log dell'errore
-                Console.WriteLine($"Errore durante il recupero delle chiamate: {ex.Message}");
+                Console.WriteLine($"Errore durante il recupero dei contatti: {ex.Message}");
                 return new List<Contatto>();
             }
         }

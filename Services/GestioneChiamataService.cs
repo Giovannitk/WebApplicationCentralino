@@ -9,6 +9,8 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using System.Linq;
 
 namespace WebApplicationCentralino.Services
 {
@@ -60,7 +62,7 @@ namespace WebApplicationCentralino.Services
                     ragioneSocialeChiamato = chiamata.RagioneSocialeChiamato,
                     dataArrivoChiamata = chiamata.DataArrivoChiamata,
                     dataFineChiamata = chiamata.DataFineChiamata,
-                    tipoChiamata = chiamata.TipoChiamata ?? "Non specificato",
+                    tipoChiamata = chiamata.TipoChiamata, 
                     locazione = chiamata.Locazione ?? "Non specificato",
                     uniqueID = chiamata.UniqueID
                 };
@@ -115,7 +117,7 @@ namespace WebApplicationCentralino.Services
                     ragioneSocialeChiamato = chiamata.RagioneSocialeChiamato ?? "Non specificato",
                     dataArrivoChiamata = chiamata.DataArrivoChiamata,
                     dataFineChiamata = chiamata.DataFineChiamata,
-                    tipoChiamata = chiamata.TipoChiamata ?? "Non specificato",
+                    tipoChiamata = chiamata.TipoChiamata, // Ora è un intero (0 o 1)
                     locazione = chiamata.Locazione ?? "Non specificato",
                     uniqueID = chiamata.UniqueID ?? Guid.NewGuid().ToString()
                 };
@@ -237,6 +239,21 @@ namespace WebApplicationCentralino.Services
                 Console.WriteLine($"Eccezione durante la chiamata API: {ex.Message}");
                 throw new ApplicationException($"Errore durante il recupero della chiamata {id}", ex);
             }
+        }
+
+        // Metodo helper per la conversione di TipoChiamata
+        // da Entrata e Uscita a "1" e "0".
+        private string ConvertiTipoChiamataANumerico(string tipoChiamata)
+        {
+            if (string.IsNullOrEmpty(tipoChiamata))
+                return "0"; // Default a "Entrata"
+
+            return tipoChiamata.Trim().ToLower() switch
+            {
+                "entrata" => "0",
+                "uscita" => "1",
+                _ => "0" // Default se il valore non è riconosciuto
+            };
         }
     }
 }

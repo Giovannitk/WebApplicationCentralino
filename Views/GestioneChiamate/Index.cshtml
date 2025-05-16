@@ -1,170 +1,100 @@
 ﻿@model WebApplicationCentralino.Models.Chiamata
 @{
-    ViewData["Title"] = "Elenco Chiamate";
+    ViewData["Title"] = "Elenco Chiamate";    
     var chiamate = ViewBag.Chiamate as List<WebApplicationCentralino.Models.Chiamata>;
+
 }
+
 
 <h2>@ViewData["Title"]</h2>
-
-<div class="row mb-3">
-    <div class="col">
-        <a asp-action="Nuova" class="btn btn-primary">Nuova Chiamata</a>
-    </div>
-</div>
-
-@if (chiamate != null && chiamate.Any())
-{
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Numero Chiamante</th>
-                    <th>Numero Chiamato</th>
-                    <th>Data Arrivo</th>
-                    <th>Data Fine</th>
-                    <th>Durata</th>
-                    <th>Tipo</th>
-                    <th>Azioni</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var chiamata in chiamate)
-                {
-                    <tr>
-                        <td>@chiamata.Id</td>
-                        <td>
-                            @(string.IsNullOrEmpty(chiamata.NumeroChiamante) ?
-                                chiamata.RagioneSocialeChiamante : chiamata.NumeroChiamante)
-                        </td>
-                        <td>
-                            @(string.IsNullOrEmpty(chiamata.NumeroChiamato) ?
-                                chiamata.RagioneSocialeChiamato : chiamata.NumeroChiamato)
-                        </td>
-                        <td>@chiamata.DataArrivoChiamata.ToString("dd/MM/yyyy HH:mm:ss")</td>
-                        <td>@chiamata.DataFineChiamata.ToString("dd/MM/yyyy HH:mm:ss")</td>
-                        <td>@chiamata.Durata.ToString(@"hh\:mm\:ss")</td>
-                        <td>@chiamata.TipoChiamata</td>
-                        <td>
-                            <button type="button" class="btn btn-sm btn-warning"
-                                    onclick="editCall(@chiamata.Id,
-                                    '@chiamata.NumeroChiamante',
-                                    '@chiamata.NumeroChiamato',
-                                    '@chiamata.RagioneSocialeChiamante',
-                                    '@chiamata.RagioneSocialeChiamato',
-                                    '@chiamata.DataArrivoChiamata.ToString("yyyy-MM-ddTHH:mm:ss")',
-                                    '@chiamata.DataFineChiamata.ToString("yyyy-MM-ddTHH:mm:ss")',
-                                    '@chiamata.TipoChiamata',
-                                    '@chiamata.Locazione',
-                                    '@chiamata.UniqueID')">
-                                Modifica
-                            </button>
-                            <form asp-action="Elimina" method="post" style="display:inline;">
-                                <input type="hidden" name="id" value="@chiamata.Id" />
-                                <button type="submit" class="btn btn-sm btn-danger"
-                                        onclick="return confirm('Sei sicuro di voler eliminare questa chiamata?')">
-                                    Elimina
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-}
-else
-{
-    <div class="alert alert-info">
-        Non ci sono chiamate registrate.
-    </div>
-}
-
-<h3 class="mt-4">@(Model.Id > 0 ? "Modifica Chiamata" : "Nuova Chiamata")</h3>
 
 <div class="alert alert-info">
     Inserire almeno uno tra Numero e Ragione Sociale sia per il chiamante che per il chiamato.
 </div>
 
-<form asp-action="Salva" method="post">
-    @if (Model.Id > 0)
-    {
-        <input type="hidden" asp-for="Id" />
-    }
-    <div class="row">
-        <div class="col-md-6">
-            <div class="mb-3">
-                <label asp-for="NumeroChiamante" class="form-label">Numero Chiamante</label>
-                <input asp-for="NumeroChiamante" class="form-control" />
-                <span asp-validation-for="NumeroChiamante" class="text-danger"></span>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="mb-3">
-                <label asp-for="RagioneSocialeChiamante" class="form-label">Ragione Sociale Chiamante</label>
-                <input asp-for="RagioneSocialeChiamante" class="form-control" />
-            </div>
+<form asp-action="Salva" method="post" id="formChiamata">
+    
+@if (Model.Id > 0)
+{        
+    <input type = "hidden" asp-for = "Id" />
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label asp-for="NumeroChiamante" class="form-label">Numero Chiamante</label>
+            <input asp-for="NumeroChiamante" class="form-control" />
+            <span asp-validation-for="NumeroChiamante" class="text-danger"></span>
         </div>
     </div>
-    <div class="row">
-        <div class="col-md-6">
-            <div class="mb-3">
-                <label asp-for="NumeroChiamato" class="form-label">Numero Chiamato</label>
-                <input asp-for="NumeroChiamato" class="form-control" />
-                <span asp-validation-for="NumeroChiamato" class="text-danger"></span>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="mb-3">
-                <label asp-for="RagioneSocialeChiamato" class="form-label">Ragione Sociale Chiamato</label>
-                <input asp-for="RagioneSocialeChiamato" class="form-control" />
-            </div>
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label asp-for="RagioneSocialeChiamante" class="form-label">Ragione Sociale Chiamante</label>
+            <input asp-for="RagioneSocialeChiamante" class="form-control" />
         </div>
     </div>
-    <div class="row">
-        <div class="col-md-6">
-            <div class="mb-3">
-                <label asp-for="DataArrivoChiamata" class="form-label">Data Arrivo</label>
-                <input asp-for="DataArrivoChiamata" class="form-control" type="datetime-local" step="1" />
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="mb-3">
-                <label asp-for="DataFineChiamata" class="form-label">Data Fine</label>
-                <input asp-for="DataFineChiamata" class="form-control" type="datetime-local" step="1" />
-            </div>
+</div>
+<div class="row">
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label asp-for="NumeroChiamato" class="form-label">Numero Chiamato</label>
+            <input asp-for="NumeroChiamato" class="form-control" />
+            <span asp-validation-for="NumeroChiamato" class="text-danger"></span>
         </div>
     </div>
-    <div class="row">
-        <div class="col-md-6">
-            <div class="mb-3">
-                <label asp-for="TipoChiamata" class="form-label">Tipo</label>
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label asp-for="RagioneSocialeChiamato" class="form-label">Ragione Sociale Chiamato</label>
+            <input asp-for="RagioneSocialeChiamato" class="form-control" />
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label asp-for="DataArrivoChiamata" class="form-label">Data Arrivo</label>
+            <input asp-for="DataArrivoChiamata" class="form-control" type="datetime-local" step="1" />
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label asp-for="DataFineChiamata" class="form-label">Data Fine</label>
+            <input asp-for="DataFineChiamata" class="form-control" type="datetime-local" step="1" />
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label asp-for="TipoChiamata" class="form-label">Tipo</label>
                 <select asp-for="TipoChiamata" class="form-select">
-                    <option value="In Entrata">In Entrata</option>
-                    <option value="In Uscita">In Uscita</option>
-                    <option value="Persa">Persa</option>
-                    <option value="Non Risposta">Non Risposta</option>
+                    <option value="Entrata">Entrata</option>
+                    <option value="Uscita">Uscita</option>
                 </select>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="mb-3">
-                <label asp-for="Locazione" class="form-label">Locazione</label>
-                <input asp-for="Locazione" class="form-control" />
-            </div>
+            <!-- Campo nascosto per mantenere il valore numerico -->
+            @* <input type="hidden" id="TipoChiamataValue" name="TipoChiamataValue" /> *@
         </div>
     </div>
-    <input type="hidden" asp-for="UniqueID" value="@(Model.UniqueID ?? Guid.NewGuid().ToString())" />
-
-    <button type="submit" class="btn btn-success">Salva</button>
-    <button type="reset" class="btn btn-secondary" id="btnAnnulla">Annulla</button>
-
-    @if (!ViewData.ModelState.IsValid)
-    {
-        <div class="alert alert-danger mt-3">
-            <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label asp-for="Locazione" class="form-label">Locazione</label>
+            <input asp-for="Locazione" class="form-control" />
         </div>
-    }
+    </div>
+</div>
+<input type="hidden" asp-for="UniqueID" value="@(Model.UniqueID ?? Guid.NewGuid().ToString())" />
+
+<button type="submit" class="btn btn-success">Salva</button>
+<a asp-controller="Chiamate" asp-action="Index" class="btn btn-secondary">Annulla</a>
+
+    
+@if (!ViewData.ModelState.IsValid)
+{        
+    <div class = "alert alert-danger mt-3">
+        <div asp-validation-summary = "All" class = "text-danger"></div>
+    </div>  
+}
+
 </form>
 
 @section Scripts {
@@ -175,7 +105,7 @@ else
         }
 
         function editCall(id, numChiamante, numChiamato, ragSocChiamante, ragSocChiamato,
-                         dataArrivo, dataFine, tipo, locazione, uniqueID) {
+                        dataArrivo, dataFine, tipo, locazione, uniqueID) {
             document.getElementById("Id").value = id;
             document.getElementById("NumeroChiamante").value = numChiamante;
             document.getElementById("NumeroChiamato").value = numChiamato;
@@ -188,10 +118,13 @@ else
             document.getElementById("UniqueID").value = uniqueID;
 
             // Scorri alla sezione del form
-            document.querySelector('h3').scrollIntoView({ behavior: 'smooth' });
+            document.querySelector('h2').scrollIntoView({ behavior: 'smooth' });
         }
 
-        document.getElementById("btnAnnulla").addEventListener("click", function() {
+        document.getElementById("btnAnnulla").addEventListener("click", function(e) {
+            // Preveniamo il comportamento predefinito del link
+            e.preventDefault();
+            
             // Reimposta l'ID a 0 per indicare una nuova chiamata
             document.getElementById("Id").value = "0";
             // Reimposta i campi del form
@@ -199,8 +132,23 @@ else
             document.getElementById("NumeroChiamato").value = "";
             document.getElementById("RagioneSocialeChiamante").value = "";
             document.getElementById("RagioneSocialeChiamato").value = "";
+            document.getElementById("RagioneSocialeChiamato").value = "";
+            // Reimposta anche gli altri campi se necessario
+            document.getElementById("DataArrivoChiamata").value = "";
+            document.getElementById("DataFineChiamata").value = "";
+            document.getElementById("TipoChiamata").value = "Uscita"; // Imposta su "Uscita" di default
+            document.getElementById("Locazione").value = "";
             // Genera un nuovo UniqueID
             document.getElementById("UniqueID").value = crypto.randomUUID();
+            
+            // Scorri alla sezione dell'elenco chiamate
+            document.getElementById("sezioneElencoChiamate").scrollIntoView({ behavior: 'smooth' });
         });
+
+        // Aggiunge un event listener al form per impostare il valore numerico del tipo di chiamata prima dell'invio
+        // document.getElementById("formChiamata").addEventListener("submit", function() {
+        //     Il valore è già numerico (0 o 1) quindi non c'è bisogno di convertire
+        //     document.getElementById("TipoChiamataValue").value = document.getElementById("TipoChiamata").value;
+        // });
     </script>
 }

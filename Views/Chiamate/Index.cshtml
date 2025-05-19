@@ -18,10 +18,13 @@
     <div class="card shadow my-4">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Elenco delle chiamate</h5>
-            <div>
+            <div class="d-flex align-items-center">
                 <button class="btn btn-light mx-1" id="refreshButton">
                     <i class="bi bi-arrow-clockwise"></i> Aggiorna
                 </button>
+                <small class="text-white ms-2">
+                    Ultimo aggiornamento: @ViewBag.UltimoAggiornamento
+                </small>
             </div>
         </div>
 
@@ -124,6 +127,13 @@
 }
 
 @section Scripts {
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+
     <script>
         let tabella;
 

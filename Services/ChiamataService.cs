@@ -49,7 +49,7 @@ namespace WebApplicationCentralino.Services
                 var chiamate = await GetAllChiamateAsync();
                 var contatti = await _contattoService.GetAllAsync();
 
-                _logger.LogInformation("caio1");
+                //_logger.LogInformation("caio1");
 
                 // Ottieni tutti i numeri che sono interni (Interno != Entrata)
                 var numeriInterni = contatti
@@ -57,7 +57,7 @@ namespace WebApplicationCentralino.Services
                     .Select(c => c.NumeroContatto)
                     .ToHashSet();
 
-                _logger.LogInformation("caio2");
+                //_logger.LogInformation("caio2");
 
                 // Filtra le chiamate combinando tutti i criteri
                 var chiamateFiltrate = chiamate
@@ -71,7 +71,7 @@ namespace WebApplicationCentralino.Services
                     )
                     .ToList();
 
-                _logger.LogInformation("caio3");
+                //_logger.LogInformation("caio3");
 
                 return chiamateFiltrate;
             }

@@ -15,7 +15,7 @@ namespace WebApplicationCentralino.Controllers
             _chiamataService = chiamataService;
         }
 
-        public async Task<IActionResult> Index(string dateFrom = null, string dateTo = null, double minDuration = 5)
+        public async Task<IActionResult> Index(string? dateFrom = null, string? dateTo = null, double minDuration = 5)
         {
             DateTime? fromDateParsed = null;
             DateTime? toDateParsed = null;
@@ -51,6 +51,8 @@ namespace WebApplicationCentralino.Controllers
             ViewBag.DateFrom = dateFrom;
             ViewBag.DateTo = dateTo;
             ViewBag.MinDuration = minDuration;
+
+            ViewBag.UltimoAggiornamento = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
 
             return View(chiamate);
         }

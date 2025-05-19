@@ -17,6 +17,9 @@ namespace WebApplicationCentralino.Controllers
         {
             // Ottieni le chiamate filtrate
             var contatti = await _service.GetFilteredContattiAsync();
+
+            ViewBag.UltimoAggiornamento = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
+
             return View(contatti);
         }
     }

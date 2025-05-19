@@ -4,18 +4,23 @@ using System;
 using WebApplicationCentralino.Services;
 using WebApplicationCentralino.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace WebApplicationCentralino.Controllers
 {
     public class GestioneChiamateController : Controller
     {
         private readonly GestioneChiamataService _gestioneChiamataService;
+        private readonly ContattoService _contattoService; // Aggiunto il servizio contatti
         private readonly ILogger<GestioneChiamateController> _logger;
 
-        public GestioneChiamateController(GestioneChiamataService gestioneChiamataService,
-                                         ILogger<GestioneChiamateController> logger)
+        public GestioneChiamateController(
+            GestioneChiamataService gestioneChiamataService,
+            ContattoService contattoService, // Iniettato il servizio contatti
+            ILogger<GestioneChiamateController> logger)
         {
             _gestioneChiamataService = gestioneChiamataService;
+            _contattoService = contattoService;
             _logger = logger;
         }
 
@@ -24,9 +29,18 @@ namespace WebApplicationCentralino.Controllers
         {
             try
             {
+                if (ViewBag.UniqueID == null)
+                    ViewBag.UniqueID = Guid.NewGuid().ToString();
+
                 // Carica le chiamate esistenti per visualizzazione
                 var chiamate = await _gestioneChiamataService.GetAllChiamateAsync();
                 ViewBag.Chiamate = chiamate;
+
+                // Carica i contatti per le combobox di autocomplete
+                var contatti = await _contattoService.GetAllAsync();
+                ViewBag.Contatti = contatti;
+
+                _logger.LogInformation($"contatto: {contatti[0].NumeroContatto}");
 
                 return View(new Chiamata
                 {
@@ -49,6 +63,26 @@ namespace WebApplicationCentralino.Controllers
         {
             try
             {
+                // Carica i contatti per le combobox di autocomplete
+                var contatti = await _contattoService.GetAllAsync();
+
+                ViewBag.Contatti = contatti.Select(c => new SelectListItem
+                {
+                    Value = c.NumeroContatto,
+                    Text = $"{c.NumeroContatto}"
+                }).ToList();
+
+                ViewBag.RagioniSociali = contatti.Select(c => new SelectListItem
+                {
+                    Value = c.RagioneSociale,
+                    Text = $"{c.RagioneSociale}"
+                }).DistinctBy(x => x.Value).ToList();
+
+                // JSON per uso JavaScript
+                ViewBag.ContattiJson = System.Text.Json.JsonSerializer.Serialize(contatti);
+
+                //_logger.LogInformation($"ciao contatto: {contatti[0].NumeroContatto}");
+
                 if (id.HasValue && id.Value > 0)
                 {
                     // Modifica di una chiamata esistente
@@ -90,32 +124,42 @@ namespace WebApplicationCentralino.Controllers
         public async Task<IActionResult> Salva(Chiamata chiamata)
         {
             // Assicuriamo che TipoChiamata sia un valore valido (0 o 1)
-            if (chiamata.TipoChiamata != "Entrata")//&& chiamata.TipoChiamata != "1")
+            if (chiamata.TipoChiamata != "Entrata")
             {
                 chiamata.TipoChiamata = "Uscita"; // Default a "Uscita" se valore non valido
             }
 
-            // Validazione personalizzata: almeno uno tra numero e ragione sociale deve essere presente
-            bool validazioneChiamante = !string.IsNullOrEmpty(chiamata.NumeroChiamante) ||
-                                      !string.IsNullOrEmpty(chiamata.RagioneSocialeChiamante);
-            bool validazioneChiamato = !string.IsNullOrEmpty(chiamata.NumeroChiamato) ||
-                                     !string.IsNullOrEmpty(chiamata.RagioneSocialeChiamato);
+            
+
+            // Validazione personalizzata: sia numero che ragione sociale devono essere presenti per chiamante e chiamato
+            bool validazioneChiamante = !string.IsNullOrEmpty(chiamata.NumeroChiamante) &&
+                                        !string.IsNullOrEmpty(chiamata.RagioneSocialeChiamante);
+            bool validazioneChiamato = !string.IsNullOrEmpty(chiamata.NumeroChiamato) &&
+                                       !string.IsNullOrEmpty(chiamata.RagioneSocialeChiamato);
+
+            if (!validazioneChiamante || !validazioneChiamato)
+            {
+                ModelState.AddModelError("", "È necessario inserire sia il numero che la ragione sociale per chiamante e chiamato.");
+            }
 
             if (!validazioneChiamante)
             {
-                ModelState.AddModelError("NumeroChiamante", "Inserire almeno uno tra Numero o Ragione Sociale del chiamante");
+                ModelState.AddModelError("NumeroChiamante", "Inserire **sia** numero che ragione sociale del chiamante.");
+                ModelState.AddModelError("RagioneSocialeChiamante", "Inserire **sia** numero che ragione sociale del chiamante.");
             }
 
             if (!validazioneChiamato)
             {
-                ModelState.AddModelError("NumeroChiamato", "Inserire almeno uno tra Numero o Ragione Sociale del chiamato");
+                ModelState.AddModelError("NumeroChiamato", "Inserire **sia** numero che ragione sociale del chiamato.");
+                ModelState.AddModelError("RagioneSocialeChiamato", "Inserire **sia** numero che ragione sociale del chiamato.");
             }
 
             if (!ModelState.IsValid)
             {
                 _logger.LogWarning("Il modello non è valido");
-                // Ricarichiamo le chiamate per mostrare la lista nella stessa vista
+                // Ricarichiamo le chiamate e i contatti per mostrare la lista nella stessa vista
                 ViewBag.Chiamate = await _gestioneChiamataService.GetAllChiamateAsync();
+                ViewBag.Contatti = await _contattoService.GetAllAsync();
                 return View("Index", chiamata);
             }
 
@@ -199,6 +243,7 @@ namespace WebApplicationCentralino.Controllers
                     TempData["msg"] = "<script>alert('Errore durante il salvataggio della chiamata')</script>";
                     ModelState.AddModelError("", "Errore durante il salvataggio della chiamata.");
                     ViewBag.Chiamate = await _gestioneChiamataService.GetAllChiamateAsync();
+                    ViewBag.Contatti = await _contattoService.GetAllAsync();
                     return View("Index", chiamata);
                 }
             }
@@ -207,6 +252,7 @@ namespace WebApplicationCentralino.Controllers
                 _logger.LogError(ex, "Errore durante il salvataggio della chiamata");
                 ModelState.AddModelError("", $"Errore: {ex.Message}");
                 ViewBag.Chiamate = await _gestioneChiamataService.GetAllChiamateAsync();
+                ViewBag.Contatti = await _contattoService.GetAllAsync();
                 return View("Index", chiamata);
             }
         }

@@ -9,7 +9,7 @@
 <h2>@ViewData["Title"]</h2>
 
 <div class="alert alert-info">
-    Inserire almeno uno tra Numero e Ragione Sociale sia per il chiamante che per il chiamato.
+    Inserire sia Numero e Ragione Sociale sia per il chiamante che per il chiamato.
 </div>
 
 <form asp-action="Salva" method="post" id="formChiamata">
@@ -23,30 +23,40 @@
     <div class="col-md-6">
         <div class="mb-3">
             <label asp-for="NumeroChiamante" class="form-label">Numero Chiamante</label>
-            <input asp-for="NumeroChiamante" class="form-control" />
+            <select asp-for="NumeroChiamante" class="form-select select2" asp-items="@(ViewBag.Contatti as List<SelectListItem>)">
+                <option value="">Seleziona un numero</option>
+            </select>
             <span asp-validation-for="NumeroChiamante" class="text-danger"></span>
         </div>
     </div>
     <div class="col-md-6">
-        <div class="mb-3">
-            <label asp-for="RagioneSocialeChiamante" class="form-label">Ragione Sociale Chiamante</label>
-            <input asp-for="RagioneSocialeChiamante" class="form-control" />
-        </div>
+            <div class="mb-3">
+                <label asp-for="RagioneSocialeChiamante" class="form-label">Ragione Sociale Chiamante</label>
+                <select asp-for="RagioneSocialeChiamante" class="form-select select2" asp-items="@(ViewBag.RagioniSociali as List<SelectListItem>)">
+                    <option value="">Seleziona una ragione sociale</option>
+                </select>
+                <span asp-validation-for="RagioneSocialeChiamante" class="text-danger"></span>
+            </div>
     </div>
 </div>
 <div class="row">
     <div class="col-md-6">
         <div class="mb-3">
             <label asp-for="NumeroChiamato" class="form-label">Numero Chiamato</label>
-            <input asp-for="NumeroChiamato" class="form-control" />
+            <select asp-for="NumeroChiamato" class="form-select select2" asp-items="@(ViewBag.Contatti as List<SelectListItem>)">
+                <option value="">Seleziona un numero</option>
+            </select>
             <span asp-validation-for="NumeroChiamato" class="text-danger"></span>
         </div>
     </div>
     <div class="col-md-6">
-        <div class="mb-3">
-            <label asp-for="RagioneSocialeChiamato" class="form-label">Ragione Sociale Chiamato</label>
-            <input asp-for="RagioneSocialeChiamato" class="form-control" />
-        </div>
+            <div class="mb-3">
+                <label asp-for="RagioneSocialeChiamato" class="form-label">Ragione Sociale Chiamato</label>
+                <select asp-for="RagioneSocialeChiamato" class="form-select select2" asp-items="@(ViewBag.RagioniSociali as List<SelectListItem>)">
+                    <option value="">Seleziona una ragione sociale</option>
+                </select>
+                <span asp-validation-for="RagioneSocialeChiamato" class="text-danger"></span>
+            </div>
     </div>
 </div>
 <div class="row">
@@ -82,7 +92,7 @@
         </div>
     </div>
 </div>
-<input type="hidden" asp-for="UniqueID" value="@(Model.UniqueID ?? Guid.NewGuid().ToString())" />
+    <input type="hidden" asp-for="UniqueID" />
 
 <button type="submit" class="btn btn-success">Salva</button>
 <a asp-controller="Chiamate" asp-action="Index" class="btn btn-secondary">Annulla</a>
@@ -104,6 +114,24 @@
             @Html.Raw(TempData["msg"])
         }
 
+        const contatti = @Html.Raw(ViewBag.ContattiJson);
+
+        function aggiornaRagioneSociale(selectNumeroId, selectRagioneId) {
+            const numero = document.getElementById(selectNumeroId).value;
+            const contatto = contatti.find(c => c.numeroContatto === numero);
+            if (contatto) {
+                document.getElementById(selectRagioneId).value = contatto.ragioneSociale;
+            }
+        }
+
+        function aggiornaNumero(selectRagioneId, selectNumeroId) {
+            const ragione = document.getElementById(selectRagioneId).value;
+            const contatto = contatti.find(c => c.ragioneSociale === ragione);
+            if (contatto) {
+                document.getElementById(selectNumeroId).value = contatto.numeroContatto;
+            }
+        }
+
         function editCall(id, numChiamante, numChiamato, ragSocChiamante, ragSocChiamato,
                         dataArrivo, dataFine, tipo, locazione, uniqueID) {
             document.getElementById("Id").value = id;
@@ -117,38 +145,39 @@
             document.getElementById("Locazione").value = locazione;
             document.getElementById("UniqueID").value = uniqueID;
 
-            // Scorri alla sezione del form
             document.querySelector('h2').scrollIntoView({ behavior: 'smooth' });
         }
 
-        document.getElementById("btnAnnulla").addEventListener("click", function(e) {
-            // Preveniamo il comportamento predefinito del link
-            e.preventDefault();
-            
-            // Reimposta l'ID a 0 per indicare una nuova chiamata
-            document.getElementById("Id").value = "0";
-            // Reimposta i campi del form
-            document.getElementById("NumeroChiamante").value = "";
-            document.getElementById("NumeroChiamato").value = "";
-            document.getElementById("RagioneSocialeChiamante").value = "";
-            document.getElementById("RagioneSocialeChiamato").value = "";
-            document.getElementById("RagioneSocialeChiamato").value = "";
-            // Reimposta anche gli altri campi se necessario
-            document.getElementById("DataArrivoChiamata").value = "";
-            document.getElementById("DataFineChiamata").value = "";
-            document.getElementById("TipoChiamata").value = "Uscita"; // Imposta su "Uscita" di default
-            document.getElementById("Locazione").value = "";
-            // Genera un nuovo UniqueID
-            document.getElementById("UniqueID").value = crypto.randomUUID();
-            
-            // Scorri alla sezione dell'elenco chiamate
-            document.getElementById("sezioneElencoChiamate").scrollIntoView({ behavior: 'smooth' });
-        });
+        $(document).ready(function () {
+            $('.select2').select2({
+                placeholder: "Cerca un contatto...",
+                allowClear: true,
+                width: '100%'
+            });
 
-        // Aggiunge un event listener al form per impostare il valore numerico del tipo di chiamata prima dell'invio
-        // document.getElementById("formChiamata").addEventListener("submit", function() {
-        //     Il valore è già numerico (0 o 1) quindi non c'è bisogno di convertire
-        //     document.getElementById("TipoChiamataValue").value = document.getElementById("TipoChiamata").value;
-        // });
+            // Entrata
+            $("#NumeroChiamante").on("change", () => aggiornaRagioneSociale("NumeroChiamante", "RagioneSocialeChiamante"));
+            $("#RagioneSocialeChiamante").on("change", () => aggiornaNumero("RagioneSocialeChiamante", "NumeroChiamante"));
+
+            // Uscita
+            $("#NumeroChiamato").on("change", () => aggiornaRagioneSociale("NumeroChiamato", "RagioneSocialeChiamato"));
+            $("#RagioneSocialeChiamato").on("change", () => aggiornaNumero("RagioneSocialeChiamato", "NumeroChiamato"));
+
+            $("#btnAnnulla").on("click", function (e) {
+                e.preventDefault();
+                $("#Id").val("0");
+                $("#NumeroChiamante").val("").trigger("change");
+                $("#NumeroChiamato").val("").trigger("change");
+                $("#RagioneSocialeChiamante").val("").trigger("change");
+                $("#RagioneSocialeChiamato").val("").trigger("change");
+                $("#DataArrivoChiamata").val("");
+                $("#DataFineChiamata").val("");
+                $("#TipoChiamata").val("Uscita");
+                $("#Locazione").val("");
+                $("#UniqueID").val(crypto.randomUUID());
+
+                $("#sezioneElencoChiamate")[0].scrollIntoView({ behavior: 'smooth' });
+            });
+        });
     </script>
 }

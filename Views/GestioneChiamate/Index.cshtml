@@ -86,14 +86,30 @@
         </div>
     </div>
     <div class="col-md-6">
-        <div class="mb-3">
-            <label asp-for="Locazione" class="form-label">Locazione</label>
-            <input asp-for="Locazione" class="form-control" />
-        </div>
+            <div class="mb-3">
+                <label for="LocazionePredefinita" class="form-label">Locazione</label>
+                <select id="LocazionePredefinita" name="LocazionePredefinita" class="form-select">
+                    <option value="">Seleziona una locazione</option>
+                    @if (ViewBag.Comuni is List<SelectListItem> comuniList)
+                    {
+                        foreach (var comune in comuniList)
+                        {
+                            <option value="@comune.Value">@comune.Text</option>
+                        }
+                    }
+                    <option value="Altro">Altro</option>
+                </select>
+            </div>
+
+            <div class="mb-3" id="DivLocazioneManuale" style="display:none;">
+                <label for="Locazione" class="form-label">Inserisci manualmente la locazione</label>
+                <input asp-for="Locazione" class="form-control" readonly />
+            </div>
+
     </div>
 </div>
-    <input type="hidden" asp-for="UniqueID" />
 
+<input type="hidden" asp-for="UniqueID" />
 <button type="submit" class="btn btn-success">Salva</button>
 <a asp-controller="Chiamate" asp-action="Index" class="btn btn-secondary">Annulla</a>
 
@@ -107,14 +123,32 @@
 
 </form>
 
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
         @if (!string.IsNullOrEmpty(TempData["msg"] as string))
         {
             @Html.Raw(TempData["msg"])
         }
 
-        const contatti = @Html.Raw(ViewBag.ContattiJson);
+        const contatti = @Html.Raw(ViewBag.ContattiJson ?? "[]");
 
         function aggiornaRagioneSociale(selectNumeroId, selectRagioneId) {
             const numero = document.getElementById(selectNumeroId).value;
@@ -148,7 +182,78 @@
             document.querySelector('h2').scrollIntoView({ behavior: 'smooth' });
         }
 
+                // Funzione per formattare la data nel formato corretto per input datetime-local
+        // senza problemi di timezone
+        function formatDateTimeForInput(date) {
+            const pad = num => num.toString().padStart(2, '0');
+            return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+        }
+
+        function parseLocalDateTime(inputValue) {
+            const [datePart, timePart] = inputValue.split("T");
+            const [year, month, day] = datePart.split("-").map(Number);
+            const [hour, minute] = timePart.split(":").map(Number);
+            return new Date(year, month - 1, day, hour, minute);
+        }
+
+        // Funzione per validare le date
+        function validateDates() {
+            const now = new Date();
+            const dataArrivoInput = document.getElementById("DataArrivoChiamata");
+            const dataFineInput = document.getElementById("DataFineChiamata");
+
+            // Crea date locali senza problemi di timezone
+            let dataArrivo = dataArrivoInput.value ? parseLocalDateTime(dataArrivoInput.value) : new Date();
+            let dataFine = dataFineInput.value ? parseLocalDateTime(dataFineInput.value) : new Date(dataArrivo.getTime() + 5 * 60000);
+
+            // Controllo che le date non siano nel futuro
+            if (dataArrivo > now) {
+                alert("La data di arrivo non può essere nel futuro. Verrà impostata alla data e ora corrente.");
+                dataArrivo = new Date();
+                dataArrivoInput.value = formatDateTimeForInput(dataArrivo);
+                return false;
+            }
+
+            if (dataFine > now) {
+                alert("La data di fine non può essere nel futuro. Verrà impostata alla data e ora corrente.");
+                dataFine = new Date();
+                dataFineInput.value = formatDateTimeForInput(dataFine);
+                return false;
+            }
+
+            // Controllo che data fine sia successiva a data arrivo
+            if (dataFine < dataArrivo) {
+                alert("La data di fine deve essere successiva alla data di arrivo. Verrà impostata a 5 minuti dopo la data di arrivo.");
+                dataFine = new Date(dataArrivo.getTime() + 5 * 60000);
+                dataFineInput.value = formatDateTimeForInput(dataFine);
+                return false;
+            }
+
+            return true;
+        }
+
         $(document).ready(function () {
+            const ddl = document.getElementById("LocazionePredefinita");
+            const divManuale = document.getElementById("DivLocazioneManuale");
+            const manualInput = document.getElementById("Locazione");
+
+            function toggleManuale() {
+                if (ddl.value === "Altro") {
+                    divManuale.style.display = "block";
+                    manualInput.removeAttribute("readonly");
+                    manualInput.value = ""; // pulisci il campo se entri in manuale
+                } else {
+                    divManuale.style.display = "none";
+                    manualInput.setAttribute("readonly", true);
+                    manualInput.value = ddl.value; // imposta il valore scelto
+                }
+            }
+
+            if (ddl) {
+                ddl.addEventListener("change", toggleManuale);
+                toggleManuale(); // inizializzazione
+            }
+
             $('.select2').select2({
                 placeholder: "Cerca un contatto...",
                 allowClear: true,
@@ -163,6 +268,19 @@
             $("#NumeroChiamato").on("change", () => aggiornaRagioneSociale("NumeroChiamato", "RagioneSocialeChiamato"));
             $("#RagioneSocialeChiamato").on("change", () => aggiornaNumero("RagioneSocialeChiamato", "NumeroChiamato"));
 
+            // Validazione date quando perdono il focus
+            $("#DataArrivoChiamata, #DataFineChiamata").on("blur", function() {
+                validateDates();
+            });
+
+            // Validazione date al submit del form
+            $("#formChiamata").on("submit", function(e) {
+                if (!validateDates()) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+
             $("#btnAnnulla").on("click", function (e) {
                 e.preventDefault();
                 $("#Id").val("0");
@@ -170,8 +288,14 @@
                 $("#NumeroChiamato").val("").trigger("change");
                 $("#RagioneSocialeChiamante").val("").trigger("change");
                 $("#RagioneSocialeChiamato").val("").trigger("change");
-                $("#DataArrivoChiamata").val("");
-                $("#DataFineChiamata").val("");
+
+                // Imposta le date correnti quando si annulla
+                const now = new Date();
+                const endDate = new Date(now.getTime() + 5 * 60000); // 5 minuti dopo
+
+                $("#DataArrivoChiamata").val(formatDateTimeForInput(now));
+                $("#DataFineChiamata").val(formatDateTimeForInput(endDate));
+
                 $("#TipoChiamata").val("Uscita");
                 $("#Locazione").val("");
                 $("#UniqueID").val(crypto.randomUUID());

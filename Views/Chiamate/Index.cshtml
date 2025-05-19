@@ -4,14 +4,31 @@
 @{
     ViewData["Title"] = "Registro Chiamate";
     var chiamateFiltrate = Model ?? new List<WebApplicationCentralino.Models.Chiamata>();
-
 }
+
 
 <div class="container-fluid mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Registro Chiamate</h2>
         <div>
-            <a asp-controller="GestioneChiamate" asp-action="Index" class="btn btn-primary">Nuova Chiamata</a>
+            <a asp-controller="GestioneChiamate" asp-action="Nuova" class="btn btn-primary me-2">Nuova Chiamata</a>
+            <div class="btn-group">
+                <button id="exportDropdown" type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-file-earmark-arrow-down"></i> Esporta
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
+                    <li>
+                        <a id="exportExcel" class="dropdown-item">
+                            <i class="bi bi-file-earmark-excel"></i> Excel
+                        </a>
+                    </li>
+                    <li>
+                        <a id="exportCsv" class="dropdown-item">
+                            <i class="bi bi-file-earmark-text"></i> CSV
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 
@@ -50,7 +67,6 @@
                 </div>
             </div>
 
-
             <div class="table-responsive">
                 <table class="table table-striped table-hover w-100" id="tabellaChiamate">
                     <thead>
@@ -69,12 +85,13 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if (chiamateFiltrate.Any())
-                        {
-                            @foreach (var chiamata in chiamateFiltrate)
+
+                            @if (chiamateFiltrate.Any())
                             {
+                                @foreach (var chiamata in chiamateFiltrate)
+                                {
                                 <tr>
-                                    @* <td>@chiamata.Id</td> *@
+                                        @* <td>@chiamata.Id</td> *@
                                     <td>@(chiamata.NumeroChiamante ?? "-")</td>
                                     <td>@(chiamata.RagioneSocialeChiamante ?? "-")</td>
                                     <td>@(chiamata.NumeroChiamato ?? "-")</td>
@@ -84,47 +101,42 @@
                                     <td>@(chiamata.Durata.TotalSeconds.ToString("N0")) sec</td>
                                     <td>
                                         <span class="badge @GetTipoChiamataBadgeClass(chiamata.TipoChiamata)">
-                                            @(chiamata.TipoChiamata ?? "-")
+                                                @(chiamata.TipoChiamata ?? "-")
                                         </span>
                                     </td>
                                     <td>@(chiamata.Locazione ?? "-")</td>
                                     <td>
-                                        <a asp-controller="GestioneChiamate" asp-action="Nuova" asp-route-id="@chiamata.Id"
+                                        <a asp-controller="GestioneChiamate"
+                                           asp-action="Nuova"
+                                           asp-route-id="@chiamata.Id"
                                            class="btn btn-sm btn-warning">
                                             Modifica
                                         </a>
                                     </td>
-
                                 </tr>
+                                }
                             }
-
-                        }
-                        else
-                        {
+                            else
+                            {
                             <tr>
                                 <td colspan="10" class="text-center">Nessuna chiamata trovata per la data odierna</td>
                             </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
+                            }
 
-@functions {
-    public string GetTipoChiamataBadgeClass(string? tipoChiamata)
-    {
-        return tipoChiamata?.ToLower() switch
-        {
-            "in entrata" => "bg-success",
-            "in uscita" => "bg-primary",
-            "persa" => "bg-danger",
-            "non risposta" => "bg-warning",
-            _ => "bg-secondary"
-        };
-    }
-}
+                            @functions {
+                                public string GetTipoChiamataBadgeClass(string? tipoChiamata)
+                                {
+                                    return tipoChiamata?.ToLower() switch
+                                    {
+                                        "in entrata" => "bg-success",
+                                        "in uscita" => "bg-primary",
+                                        "persa" => "bg-danger",
+                                        "non risposta" => "bg-warning",
+                                        _ => "bg-secondary"
+                                    };
+                                }
+                        }
+
 
 @section Scripts {
     <!-- jQuery -->
@@ -133,6 +145,8 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
     <!-- DataTables JS -->
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 
     <script>
         let tabella;
@@ -172,6 +186,30 @@
 
                 // Reindirizza alla stessa pagina con parametri di query
                 window.location.href = `@Url.Action("Index")?dateFrom=${dateFrom}&dateTo=${dateTo}&minDuration=${minDuration}`;
+            });
+            
+            // Gestione esportazione Excel
+            $("#exportExcel").click(function() {
+                let dateFrom = $("#dateFrom").val();
+                let dateTo = $("#dateTo").val();
+                let minDuration = $("#minDuration").val();
+                let searchValue = tabella.search();
+                
+                // Crea l'URL per l'esportazione in Excel con gli stessi filtri
+                let exportUrl = `@Url.Action("ExportToExcel")?dateFrom=${dateFrom}&dateTo=${dateTo}&minDuration=${minDuration}&searchTerm=${encodeURIComponent(searchValue)}`;
+                window.location.href = exportUrl;
+            });
+            
+            // Gestione esportazione CSV
+            $("#exportCsv").click(function() {
+                let dateFrom = $("#dateFrom").val();
+                let dateTo = $("#dateTo").val();
+                let minDuration = $("#minDuration").val();
+                let searchValue = tabella.search();
+                
+                // Crea l'URL per l'esportazione in CSV con gli stessi filtri
+                let exportUrl = `@Url.Action("ExportToCsv")?dateFrom=${dateFrom}&dateTo=${dateTo}&minDuration=${minDuration}&searchTerm=${encodeURIComponent(searchValue)}`;
+                window.location.href = exportUrl;
             });
         });
     </script>

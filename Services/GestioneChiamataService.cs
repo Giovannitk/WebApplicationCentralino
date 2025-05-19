@@ -75,9 +75,10 @@ namespace WebApplicationCentralino.Services
                 };
 
                 var jsonContent = JsonSerializer.Serialize(payload, options);
-                Console.WriteLine($"Payload inviato: {jsonContent}");
+                Console.WriteLine($"-- Payload inviato: {jsonContent}");
 
                 var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+                //Console.WriteLine($"-- Payload inviato content: {content}");
 
                 var response = await _httpClient.PostAsync("api/call/add-call", content);
 
@@ -190,7 +191,7 @@ namespace WebApplicationCentralino.Services
                                                    c.DataFineChiamata.Hour, c.DataFineChiamata.Minute, c.DataFineChiamata.Second);
 
                     // Debug
-                    Console.WriteLine($"Confronto con ID {c.Id}: {cDataArrivoNorm} - {cDataFineNorm}");
+                    //Console.WriteLine($"Confronto con ID {c.Id}: {cDataArrivoNorm} - {cDataFineNorm}");
 
                     // Confronta le date normalizzate e gli altri parametri
                     return cDataArrivoNorm == dataArrivoNormalizzata &&

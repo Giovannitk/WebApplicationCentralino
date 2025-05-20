@@ -343,12 +343,12 @@ namespace WebApplicationCentralino.Controllers
                             TempData["InfoMessage"] = "Chiamata salvata con successo, ma si consiglia di completare l'anagrafica dei contatti.";
                         }
 
-                        return RedirectToAction("Index", new { success = true });
+                        return RedirectToAction("Index", "Chiamate");
                     }
                     else
                     {
-                        // Per gli aggiornamenti, puoi decidere se reindirizzare o rimanere sulla stessa pagina
-                        return RedirectToAction("Index");
+                        // Per gli aggiornamenti, reindirizza alla pagina delle chiamate
+                        return RedirectToAction("Index", "Chiamate");
                     }
                 }
                 else
@@ -373,7 +373,7 @@ namespace WebApplicationCentralino.Controllers
         }
 
         // Metodo per verificare la corrispondenza tra numero e ragione sociale
-        private async Task<(bool isValid, bool isIncompleto, string messaggioAvviso)> VerificaCorrispondenzaAvanzataAsync(string numero, string ragioneSociale)
+        private async Task<(bool isValid, bool isIncompleto, string? messaggioAvviso)> VerificaCorrispondenzaAvanzataAsync(string? numero, string? ragioneSociale)
         {
             if (string.IsNullOrEmpty(numero))
             {

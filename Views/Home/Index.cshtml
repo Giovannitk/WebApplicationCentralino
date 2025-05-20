@@ -66,21 +66,31 @@
         </div>
         <div class="card-body">
             <div class="row text-center">
-                <div class="col-md-3">
-                    <h3>478</h3>
+                <div class="col-md-2">
+                    <h3>@ViewBag.Statistiche?.ChiamateOggi</h3>
                     <p class="text-muted">Chiamate oggi</p>
                 </div>
-                <div class="col-md-3">
-                    <h3>4,237</h3>
+                <div class="col-md-2">
+                    <h3>@ViewBag.Statistiche?.ChiamateSettimana</h3>
                     <p class="text-muted">Chiamate questa settimana</p>
                 </div>
-                <div class="col-md-3">
-                    <h3>124</h3>
-                    <p class="text-muted">Contatti attivi</p>
+                <div class="col-md-2">
+                    <h3>@ViewBag.Statistiche?.ContattiAttivi</h3>
+                    <p class="text-muted">Contatti attivi questa settimana</p>
                 </div>
-                <div class="col-md-3">
-                    <h3>98%</h3>
-                    <p class="text-muted">Disponibilità</p>
+                <div class="col-md-2">
+                    <h3>@ViewBag.Statistiche?.ContattiInattivi</h3>
+                    <p class="text-muted">Contatti inattivi</p>
+                </div>
+                <div class="col-md-2">
+                    <h3 class="text-warning">@ViewBag.Statistiche?.ContattiIncompleti</h3>
+                    <p class="text-muted">Contatti da completare</p>
+                    @if (ViewBag.Statistiche?.ContattiIncompleti > 0)
+                    {
+                        <a href="@Url.Action("ContattiIncompleti", "Home")" class="btn btn-sm btn-warning mt-2">
+                            <i class="bi bi-list"></i> Visualizza
+                        </a>
+                    }
                 </div>
             </div>
         </div>

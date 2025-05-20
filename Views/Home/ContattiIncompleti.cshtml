@@ -1,0 +1,59 @@
+@model List<WebApplicationCentralino.Models.Contatto>
+@{
+    ViewData["Title"] = "Contatti da Completare";
+}
+
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">
+                <i class="bi bi-exclamation-triangle"></i> Contatti da Completare
+            </h5>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Numero</th>
+                                <th>Ragione Sociale</th>
+                                <th>Stato</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var contatto in Model)
+                            {
+                                <tr>
+                                    <td>@contatto.NumeroContatto</td>
+                                    <td>@(string.IsNullOrEmpty(contatto.RagioneSociale) ? "Non specificata" : contatto.RagioneSociale)</td>
+                                    <td>
+                                        @if (string.IsNullOrEmpty(contatto.RagioneSociale))
+                                        {
+                                            <span class="badge bg-danger">Ragione sociale mancante</span>
+                                        }
+                                        else if (contatto.RagioneSociale == "Non registrato")
+                                        {
+                                            <span class="badge bg-warning">Non registrato</span>
+                                        }
+                                        else if (contatto.RagioneSociale == contatto.NumeroContatto)
+                                        {
+                                            <span class="badge bg-info">Ragione sociale = Numero</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle"></i> Non ci sono contatti da completare.
+                </div>
+            }
+        </div>
+    </div>
+</div> 

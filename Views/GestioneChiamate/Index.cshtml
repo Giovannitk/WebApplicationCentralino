@@ -76,7 +76,7 @@
 <div class="row">
     <div class="col-md-6">
         <div class="mb-3">
-            <label asp-for="TipoChiamata" class="form-label">Tipo</label>
+            <label asp-for="TipoChiamata" class="form-label">Tipologia Linea</label>
                 <select asp-for="TipoChiamata" class="form-select">
                     <option value="Entrata">Entrata</option>
                     <option value="Uscita">Uscita</option>
@@ -88,17 +88,28 @@
     <div class="col-md-6">
             <div class="mb-3">
                 <label for="LocazionePredefinita" class="form-label">Locazione</label>
+                @{
+                    var comuniList = ViewBag.Comuni as List<SelectListItem>;
+                }
+
                 <select id="LocazionePredefinita" name="LocazionePredefinita" class="form-select">
                     <option value="">Seleziona una locazione</option>
-                    @if (ViewBag.Comuni is List<SelectListItem> comuniList)
+                    @if (comuniList != null)
                     {
                         foreach (var comune in comuniList)
                         {
-                            <option value="@comune.Value">@comune.Text</option>
+                            var isSelected = Model?.Locazione == comune.Value;
+                            <option value="@comune.Value" selected="@(isSelected ? "selected" : null)">
+                                @comune.Text
+                            </option>
                         }
                     }
-                    <option value="Altro">Altro</option>
+
+                    <option value="Altro" selected="@(Model?.Locazione != null && (comuniList == null || !comuniList.Any(c => c.Value == Model.Locazione)) ? "selected" : null)">
+                        Altro
+                    </option>
                 </select>
+
             </div>
 
             <div class="mb-3" id="DivLocazioneManuale" style="display:none;">
@@ -148,6 +159,28 @@
             @Html.Raw(TempData["msg"])
         }
 
+            // Visualizza messaggi di avviso per contatti incompleti
+        @if (TempData["AvvisoChiamante"] != null)
+        {
+            <text>
+                            showToast("Avviso chiamante", "@TempData["AvvisoChiamante"]", "warning");
+            </text>
+        }
+
+        @if (TempData["AvvisoChiamato"] != null)
+        {
+            <text>
+                            showToast("Avviso chiamato", "@TempData["AvvisoChiamato"]", "warning");
+            </text>
+        }
+
+        @if (TempData["InfoMessage"] != null)
+        {
+            <text>
+                            showToast("Informazione", "@TempData["InfoMessage"]", "info");
+            </text>
+        }
+
         const contatti = @Html.Raw(ViewBag.ContattiJson ?? "[]");
 
         function aggiornaRagioneSociale(selectNumeroId, selectRagioneId) {
@@ -168,6 +201,9 @@
 
         function editCall(id, numChiamante, numChiamato, ragSocChiamante, ragSocChiamato,
                         dataArrivo, dataFine, tipo, locazione, uniqueID) {
+
+            console.log("Locazione ricevuta:", locazione);
+
             document.getElementById("Id").value = id;
             document.getElementById("NumeroChiamante").value = numChiamante;
             document.getElementById("NumeroChiamato").value = numChiamato;
@@ -230,6 +266,39 @@
             }
 
             return true;
+        }
+
+        // Funzione per mostrare toast
+        function showToast(title, message, type) {
+            // Puoi usare la libreria di toast che preferisci (es. Toastr, Bootstrap Toast)
+            // Esempio con Toastr:
+            if (typeof toastr !== 'undefined') {
+                toastr.options = {
+                    "closeButton": true,
+                    "positionClass": "toast-top-right",
+                    "timeOut": "10000"
+                };
+
+                switch(type) {
+                    case "warning":
+                        toastr.warning(message, title);
+                        break;
+                    case "info":
+                        toastr.info(message, title);
+                        break;
+                    case "success":
+                        toastr.success(message, title);
+                        break;
+                    case "error":
+                        toastr.error(message, title);
+                        break;
+                    default:
+                        toastr.info(message, title);
+                }
+            } else {
+                // Fallback se Toastr non è disponibile
+                alert(title + ": " + message);
+            }
         }
 
         $(document).ready(function () {
@@ -301,6 +370,33 @@
                 $("#UniqueID").val(crypto.randomUUID());
 
                 $("#sezioneElencoChiamate")[0].scrollIntoView({ behavior: 'smooth' });
+            });
+
+
+            // Aggiungi listener per verificare corrispondenza quando l'utente cambia i valori
+            $("#NumeroChiamante, #RagioneSocialeChiamante, #NumeroChiamato, #RagioneSocialeChiamato").on("change", function() {
+                var campo = $(this).attr("id");
+                var fieldPrefix = campo.includes("Chiamante") ? "Chiamante" : "Chiamato";
+                var numero = $("#Numero" + fieldPrefix).val();
+                var ragioneSociale = $("#RagioneSociale" + fieldPrefix).val();
+
+                if (numero && ragioneSociale) {
+                    // Effettua una chiamata AJAX per verificare la corrispondenza
+                    $.ajax({
+                        url: '@Url.Action("VerificaCorrispondenza", "Chiamate")',
+                        type: "GET",
+                        data: { numero: numero, ragioneSociale: ragioneSociale },
+                        success: function(result) {
+                            if (!result.isValid) {
+                                // Mostra avviso in caso di non corrispondenza
+                                showToast("Avviso " + fieldPrefix.toLowerCase(), result.messaggioAvviso, "warning");
+                            }
+                        },
+                        error: function() {
+                            console.log("Errore durante la verifica della corrispondenza");
+                        }
+                    });
+                }
             });
         });
     </script>

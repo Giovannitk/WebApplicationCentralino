@@ -85,13 +85,12 @@
                         </tr>
                     </thead>
                     <tbody>
-
-                            @if (chiamateFiltrate.Any())
+                        @if (chiamateFiltrate.Any())
+                        {
+                            @foreach (var chiamata in chiamateFiltrate)
                             {
-                                @foreach (var chiamata in chiamateFiltrate)
-                                {
                                 <tr>
-                                        @* <td>@chiamata.Id</td> *@
+                                    @* <td>@chiamata.Id</td> *@
                                     <td>@(chiamata.NumeroChiamante ?? "-")</td>
                                     <td>@(chiamata.RagioneSocialeChiamante ?? "-")</td>
                                     <td>@(chiamata.NumeroChiamato ?? "-")</td>
@@ -101,7 +100,7 @@
                                     <td>@(chiamata.Durata.TotalSeconds.ToString("N0")) sec</td>
                                     <td>
                                         <span class="badge @GetTipoChiamataBadgeClass(chiamata.TipoChiamata)">
-                                                @(chiamata.TipoChiamata ?? "-")
+                                            @(chiamata.TipoChiamata ?? "-")
                                         </span>
                                     </td>
                                     <td>@(chiamata.Locazione ?? "-")</td>
@@ -114,28 +113,34 @@
                                         </a>
                                     </td>
                                 </tr>
-                                }
                             }
-                            else
-                            {
+                        }
+                        else
+                        {
                             <tr>
                                 <td colspan="10" class="text-center">Nessuna chiamata trovata per la data odierna</td>
                             </tr>
-                            }
-
-                            @functions {
-                                public string GetTipoChiamataBadgeClass(string? tipoChiamata)
-                                {
-                                    return tipoChiamata?.ToLower() switch
-                                    {
-                                        "in entrata" => "bg-success",
-                                        "in uscita" => "bg-primary",
-                                        "persa" => "bg-danger",
-                                        "non risposta" => "bg-warning",
-                                        _ => "bg-secondary"
-                                    };
-                                }
                         }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    public string GetTipoChiamataBadgeClass(string? tipoChiamata)
+    {
+        return tipoChiamata?.ToLower() switch
+        {
+            "in entrata" => "bg-success",
+            "in uscita" => "bg-primary",
+            "persa" => "bg-danger",
+            "non risposta" => "bg-warning",
+            _ => "bg-secondary"
+        };
+    }
+}
 
 
 @section Scripts {
@@ -174,9 +179,10 @@
             });
 
             // Gestisce il refresh della tabella
-            $("#refreshButton").click(function() {
-                location.reload();
-            });
+                    $("#refreshButton").click(function() {
+            window.location.href = window.location.href; // ricarica la pagina intera con il layout completo
+        });
+
 
             // Gestione filtri per data
             $("#applyFilters").click(function() {

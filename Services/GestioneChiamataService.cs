@@ -256,5 +256,50 @@ namespace WebApplicationCentralino.Services
                 _ => "0" // Default se il valore non è riconosciuto
             };
         }
+
+        //public async Task<bool> VerificaCorrispondenzaNumeroRagioneSocialeAsync(string numero, string ragioneSociale)
+        //{
+        //    try
+        //    {
+        //        if (string.IsNullOrEmpty(numero) || string.IsNullOrEmpty(ragioneSociale))
+        //        {
+        //            return false;
+        //        }
+
+        //        // Chiamata all'API per verificare la corrispondenza tra numero e ragione sociale
+        //        var response = await _httpClient.GetAsync($"api/contatto/verifica-corrispondenza?numero={Uri.EscapeDataString(numero)}&ragioneSociale={Uri.EscapeDataString(ragioneSociale)}");
+
+        //        if (!response.IsSuccessStatusCode)
+        //        {
+        //            // Se l'API non esiste, utilizziamo una verifica locale con i dati disponibili
+        //            var contatti = await GetAllContattiAsync(); // Assumi che esista un metodo per ottenere tutti i contatti
+        //            return contatti.Any(c => c.NumeroContatto == numero && c.RagioneSociale == ragioneSociale);
+        //        }
+
+        //        // Leggi il risultato dalla risposta API
+        //        var result = await response.Content.ReadFromJsonAsync<bool>();
+        //        return result;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"Errore durante la verifica di corrispondenza contatto: {ex.Message}");
+        //        return false; // In caso di errore, fallisci in modo sicuro
+        //    }
+        //}
+
+        // Se necessario, aggiungi un metodo per ottenere tutti i contatti (se non esiste già)
+        //private async Task<List<Contatto>> GetAllContattiAsync()
+        //{
+        //    try
+        //    {
+        //        var response = await _httpClient.GetFromJsonAsync<List<Contatto>>("api/contatto/get-all-contatti");
+        //        return response ?? new List<Contatto>();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"Errore durante il recupero dei contatti: {ex.Message}");
+        //        return new List<Contatto>();
+        //    }
+        //}
     }
 }

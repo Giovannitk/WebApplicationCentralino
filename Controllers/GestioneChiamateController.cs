@@ -146,27 +146,56 @@ namespace WebApplicationCentralino.Controllers
                 chiamata.Locazione = LocazionePredefinita;
             }
 
+            // NUOVO CODICE: Verifica corrispondenza tra numero e ragione sociale per chiamante e chiamato
+            var verificaChiamante = await VerificaCorrispondenzaAvanzataAsync(chiamata.NumeroChiamante, chiamata.RagioneSocialeChiamante);
+            var verificaChiamato = await VerificaCorrispondenzaAvanzataAsync(chiamata.NumeroChiamato, chiamata.RagioneSocialeChiamato);
+
+            // Gestione contatti incompleti
+            if (verificaChiamante.isIncompleto)
+            {
+                // Non blocchiamo il salvataggio, ma avvisiamo l'utente
+                TempData["AvvisoChiamante"] = verificaChiamante.messaggioAvviso;
+            }
+            else if (!verificaChiamante.isValid)
+            {
+                // Blocchiamo il salvataggio con errore specifico
+                ModelState.AddModelError("NumeroChiamante", verificaChiamante.messaggioAvviso);
+                ModelState.AddModelError("RagioneSocialeChiamante", verificaChiamante.messaggioAvviso);
+            }
+
+            if (verificaChiamato.isIncompleto)
+            {
+                // Non blocchiamo il salvataggio, ma avvisiamo l'utente
+                TempData["AvvisoChiamato"] = verificaChiamato.messaggioAvviso;
+            }
+            else if (!verificaChiamato.isValid)
+            {
+                // Blocchiamo il salvataggio con errore specifico
+                ModelState.AddModelError("NumeroChiamato", verificaChiamato.messaggioAvviso);
+                ModelState.AddModelError("RagioneSocialeChiamato", verificaChiamato.messaggioAvviso);
+            }
+
             // Validazione personalizzata: sia numero che ragione sociale devono essere presenti per chiamante e chiamato
-            bool validazioneChiamante = !string.IsNullOrEmpty(chiamata.NumeroChiamante) &&
-                                        !string.IsNullOrEmpty(chiamata.RagioneSocialeChiamante);
-            bool validazioneChiamato = !string.IsNullOrEmpty(chiamata.NumeroChiamato) &&
-                                       !string.IsNullOrEmpty(chiamata.RagioneSocialeChiamato);
+            bool validazioneChiamante = !string.IsNullOrEmpty(chiamata.NumeroChiamante); //&&
+                                        //!string.IsNullOrEmpty(chiamata.RagioneSocialeChiamante);
+            bool validazioneChiamato = !string.IsNullOrEmpty(chiamata.NumeroChiamato); //&&
+                                       //!string.IsNullOrEmpty(chiamata.RagioneSocialeChiamato);
 
             if (!validazioneChiamante || !validazioneChiamato)
             {
-                ModelState.AddModelError("", "È necessario inserire sia il numero che la ragione sociale per chiamante e chiamato.");
+                ModelState.AddModelError("", "È necessario inserire sia il numero del chiamante che del chiamato.");
             }
 
             if (!validazioneChiamante)
             {
-                ModelState.AddModelError("NumeroChiamante", "Inserire **sia** numero che ragione sociale del chiamante.");
-                ModelState.AddModelError("RagioneSocialeChiamante", "Inserire **sia** numero che ragione sociale del chiamante.");
+                ModelState.AddModelError("NumeroChiamante", "Inserire il numero del chiamante.");
+                //ModelState.AddModelError("RagioneSocialeChiamante", "Inserire il numero del chiamante.");
             }
 
             if (!validazioneChiamato)
             {
-                ModelState.AddModelError("NumeroChiamato", "Inserire **sia** numero che ragione sociale del chiamato.");
-                ModelState.AddModelError("RagioneSocialeChiamato", "Inserire **sia** numero che ragione sociale del chiamato.");
+                ModelState.AddModelError("NumeroChiamato", "Inserire il numero del chiamato.");
+                //ModelState.AddModelError("RagioneSocialeChiamato", "Inserire **sia** numero che ragione sociale del chiamato.");
             }
 
             // Validazione date
@@ -188,7 +217,6 @@ namespace WebApplicationCentralino.Controllers
             // Controllo che data fine sia successiva a data arrivo
             if (chiamata.DataFineChiamata < chiamata.DataArrivoChiamata)
             {
-                //_logger.LogInformation($"data arrivo {chiamata.DataArrivoChiamata.ToString()} - data fine: {chiamata.DataFineChiamata.ToString()}");
                 ModelState.AddModelError("DataFineChiamata", "La data di fine deve essere successiva alla data di arrivo");
                 // Imposta data fine a 5 minuti dopo data arrivo
                 chiamata.DataFineChiamata = chiamata.DataArrivoChiamata.AddMinutes(5);
@@ -300,7 +328,7 @@ namespace WebApplicationCentralino.Controllers
                 }
 
                 _logger.LogInformation($"provs{chiamata.NumeroChiamante} - {chiamata.RagioneSocialeChiamante}");
-                
+
                 if (success)
                 {
                     // Usa TempData per mantenere il messaggio tra le richieste
@@ -309,6 +337,12 @@ namespace WebApplicationCentralino.Controllers
                     // Se è una nuova chiamata, reindirizza alla pagina Index con un parametro di successo
                     if (isNew)
                     {
+                        // Aggiungi messaggi di avviso per contatti incompleti se presenti
+                        if (TempData.ContainsKey("AvvisoChiamante") || TempData.ContainsKey("AvvisoChiamato"))
+                        {
+                            TempData["InfoMessage"] = "Chiamata salvata con successo, ma si consiglia di completare l'anagrafica dei contatti.";
+                        }
+
                         return RedirectToAction("Index", new { success = true });
                     }
                     else
@@ -335,6 +369,74 @@ namespace WebApplicationCentralino.Controllers
                 ViewBag.Chiamate = await _gestioneChiamataService.GetAllChiamateAsync();
                 ViewBag.Contatti = await _contattoService.GetAllAsync();
                 return View("Index", chiamata);
+            }
+        }
+
+        // Metodo per verificare la corrispondenza tra numero e ragione sociale
+        private async Task<(bool isValid, bool isIncompleto, string messaggioAvviso)> VerificaCorrispondenzaAvanzataAsync(string numero, string ragioneSociale)
+        {
+            if (string.IsNullOrEmpty(numero))
+            {
+                return (false, false, "Il numero di telefono è obbligatorio");
+            }
+
+            // Ottieni tutti i contatti
+            var contatti = await _contattoService.GetAllAsync();
+
+            // Cerca contatti con questo numero
+            var contattiConQuestoNumero = contatti.Where(c => c.NumeroContatto == numero).ToList();
+
+            // Se non esiste nessun contatto con questo numero
+            if (!contattiConQuestoNumero.Any())
+            {
+                // Numero non trovato nei contatti - chiediamo all'utente di aggiungere il contatto
+                return (true, true, $"Il numero {numero} non e' presente nell'anagrafica contatti. Si consiglia di completare il contatto.");
+            }
+
+            // Controlla se il contatto è completo (ha una ragione sociale)
+            var contattoCompleto = contattiConQuestoNumero.FirstOrDefault(c => !string.IsNullOrEmpty(c.RagioneSociale));
+
+            // Se il contatto esiste ma non ha ragione sociale
+            if (contattoCompleto == null)
+            {
+                // Contatto incompleto nel database
+                return (true, true, $"Il contatto con numero {numero} e' incompleto nell'anagrafica. Si consiglia di completare il contatto con la ragione sociale.");
+            }
+
+            // Se il contatto esiste ed è completo, verifica che la ragione sociale corrisponda
+            if (contattoCompleto.RagioneSociale != ragioneSociale)
+            {
+                return (false, false, $"La ragione sociale '{ragioneSociale}' non corrisponde a quella registrata nell'anagrafica per il numero {numero} (Quella corretta è: '{contattoCompleto.RagioneSociale}')");
+            }
+
+            // Tutto ok, contatto valido e completo
+            return (true, false, null);
+        }
+
+        // Nuovo metodo per verificare la corrispondenza tra numero e ragione sociale
+        [HttpGet]
+        public async Task<IActionResult> VerificaCorrispondenza(string numero, string ragioneSociale)
+        {
+            try
+            {
+                var risultato = await VerificaCorrispondenzaAvanzataAsync(numero, ragioneSociale);
+
+                return Json(new
+                {
+                    isValid = risultato.isValid,
+                    isIncompleto = risultato.isIncompleto,
+                    messaggioAvviso = risultato.messaggioAvviso
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante la verifica di corrispondenza");
+                return Json(new
+                {
+                    isValid = false,
+                    isIncompleto = false,
+                    messaggioAvviso = "Si è verificato un errore durante la verifica"
+                });
             }
         }
 

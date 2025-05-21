@@ -60,6 +60,14 @@
                     <label for="minDuration" class="form-label">Durata min (sec):</label>
                     <input type="number" id="minDuration" class="form-control" value="@(ViewBag.MinDuration ?? 5)" min="0" step="1">
                 </div>
+                <div class="col-md-3 mb-2">
+                    <label for="tipoInserimento" class="form-label">Tipo Inserimento:</label>
+                    <select id="tipoInserimento" class="form-control">
+                        <option value="">Tutti</option>
+                        <option value="Manuale">Manuale</option>
+                        <option value="Automatico">Automatico</option>
+                    </select>
+                </div>
                 <div class="col-md-3 d-flex align-items-end mb-2">
                     <button id="applyFilters" class="btn btn-primary w-100">
                         <i class="bi bi-filter"></i> Applica Filtri
@@ -81,6 +89,7 @@
                             <th>Durata</th>
                             <th>Tipo</th>
                             <th>Locazione</th>
+                            <th>Inserimento</th>
                             <th>Azioni</th>
                         </tr>
                     </thead>
@@ -104,6 +113,11 @@
                                         </span>
                                     </td>
                                     <td>@(chiamata.Locazione ?? "-")</td>
+                                    <td>
+                                        <span class="badge @(chiamata.CampoExtra1 == "Manuale" ? "bg-info" : "bg-secondary")">
+                                            @(chiamata.CampoExtra1 == "Manuale" ? "Manuale" : "Automatico")
+                                        </span>
+                                    </td>
                                     <td>
                                         <a asp-controller="GestioneChiamate"
                                            asp-action="Nuova"
@@ -189,9 +203,10 @@
                 let dateFrom = $("#dateFrom").val();
                 let dateTo = $("#dateTo").val();
                 let minDuration = $("#minDuration").val();
+                let tipoInserimento = $("#tipoInserimento").val();
 
                 // Reindirizza alla stessa pagina con parametri di query
-                window.location.href = `@Url.Action("Index")?dateFrom=${dateFrom}&dateTo=${dateTo}&minDuration=${minDuration}`;
+                window.location.href = `@Url.Action("Index")?dateFrom=${dateFrom}&dateTo=${dateTo}&minDuration=${minDuration}&tipoInserimento=${tipoInserimento}`;
             });
             
             // Gestione esportazione Excel

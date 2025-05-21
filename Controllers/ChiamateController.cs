@@ -22,7 +22,7 @@ namespace WebApplicationCentralino.Controllers
             _chiamataService = chiamataService;
         }
 
-        public async Task<IActionResult> Index(string? dateFrom = null, string? dateTo = null, double minDuration = 5)
+        public async Task<IActionResult> Index(string? dateFrom = null, string? dateTo = null, double minDuration = 5, string? tipoInserimento = null)
         {
             DateTime? fromDateParsed = null;
             DateTime? toDateParsed = null;
@@ -53,10 +53,20 @@ namespace WebApplicationCentralino.Controllers
             // Ottieni le chiamate filtrate
             var chiamate = await _chiamataService.GetFilteredChiamateAsync(fromDateParsed, toDateParsed, minDuration);
 
+            // Applica il filtro per tipo inserimento
+            if (!string.IsNullOrEmpty(tipoInserimento))
+            {
+                chiamate = chiamate.Where(c => 
+                    (tipoInserimento == "Manuale" && c.CampoExtra1 == "Manuale") ||
+                    (tipoInserimento == "Automatico" && (c.CampoExtra1 == null || c.CampoExtra1 != "Manuale"))
+                ).ToList();
+            }
+
             // Passa i valori alla vista per mantenere i filtri
             ViewBag.DateFrom = dateFrom;
             ViewBag.DateTo = dateTo;
             ViewBag.MinDuration = minDuration;
+            ViewBag.TipoInserimento = tipoInserimento;
             ViewBag.UltimoAggiornamento = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
 
             return View(chiamate);
@@ -100,7 +110,8 @@ namespace WebApplicationCentralino.Controllers
                     (c.RagioneSocialeChiamante?.ToLower().Contains(searchTerm) ?? false) ||
                     (c.RagioneSocialeChiamato?.ToLower().Contains(searchTerm) ?? false) ||
                     (c.TipoChiamata?.ToLower().Contains(searchTerm) ?? false) ||
-                    (c.Locazione?.ToLower().Contains(searchTerm) ?? false)
+                    (c.Locazione?.ToLower().Contains(searchTerm) ?? false) ||
+                    (c.CampoExtra1?.ToLower().Contains(searchTerm) ?? false)
                 ).ToList();
             }
 
@@ -119,6 +130,7 @@ namespace WebApplicationCentralino.Controllers
                 worksheet.Cell(1, 7).Value = "Durata (sec)";
                 worksheet.Cell(1, 8).Value = "Tipo Chiamata";
                 worksheet.Cell(1, 9).Value = "Locazione";
+                worksheet.Cell(1, 10).Value = "Inserimento";
 
                 // Stile intestazioni
                 var headerRow = worksheet.Row(1);
@@ -140,6 +152,7 @@ namespace WebApplicationCentralino.Controllers
                     worksheet.Cell(row, 7).Value = chiamata.Durata.TotalSeconds;
                     worksheet.Cell(row, 8).Value = chiamata.TipoChiamata ?? "-";
                     worksheet.Cell(row, 9).Value = chiamata.Locazione ?? "-";
+                    worksheet.Cell(row, 10).Value = chiamata.CampoExtra1 == "Manuale" ? "Manuale" : "Automatico";
                     row++;
                 }
 

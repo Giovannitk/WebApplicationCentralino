@@ -64,7 +64,8 @@ namespace WebApplicationCentralino.Services
                     dataFineChiamata = chiamata.DataFineChiamata,
                     tipoChiamata = chiamata.TipoChiamata, 
                     locazione = chiamata.Locazione ?? "Non specificato",
-                    uniqueID = chiamata.UniqueID
+                    uniqueID = chiamata.UniqueID,
+                    campoExtra1 = chiamata.CampoExtra1
                 };
 
                 // Usa le opzioni di serializzazione per gestire date e valori null
@@ -120,7 +121,8 @@ namespace WebApplicationCentralino.Services
                     dataFineChiamata = chiamata.DataFineChiamata,
                     tipoChiamata = chiamata.TipoChiamata, // Ora è un intero (0 o 1)
                     locazione = chiamata.Locazione ?? "Non specificato",
-                    uniqueID = chiamata.UniqueID ?? Guid.NewGuid().ToString()
+                    uniqueID = chiamata.UniqueID ?? Guid.NewGuid().ToString(),
+                    campoExtra1 = chiamata.CampoExtra1
                 };
 
                 var options = new JsonSerializerOptions

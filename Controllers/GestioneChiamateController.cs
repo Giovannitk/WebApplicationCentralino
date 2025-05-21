@@ -315,6 +315,7 @@ namespace WebApplicationCentralino.Controllers
                     chiamata.Id = idEsistente.Value;
                     _logger.LogInformation($"Aggiornamento chiamata esistente con ID {chiamata.Id}");
                     _logger.LogInformation($"prova {chiamata.NumeroChiamante} - {chiamata.RagioneSocialeChiamante}");
+                    chiamata.CampoExtra1 = "Manuale"; // Imposta il campo a Manuale anche per gli aggiornamenti
                     success = await _gestioneChiamataService.AggiornaChiamataAsync(chiamata);
                     message = $"Chiamata aggiornata con ID: {chiamata.Id}";
                 }
@@ -322,6 +323,7 @@ namespace WebApplicationCentralino.Controllers
                 {
                     // Non esiste: aggiungi nuova
                     _logger.LogInformation("Inserimento nuova chiamata");
+                    chiamata.CampoExtra1 = "Manuale"; // Imposta il campo a Manuale per le chiamate inserite manualmente
                     success = await _gestioneChiamataService.AggiungiChiamataAsync(chiamata);
                     message = "Nuova chiamata inserita con successo.";
                     isNew = true;

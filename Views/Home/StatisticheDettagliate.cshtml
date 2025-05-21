@@ -1,0 +1,301 @@
+@model WebApplicationCentralino.Models.DetailedCallStatistics
+@{
+    ViewData["Title"] = "Statistiche Dettagliate";
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Statistiche Dettagliate</h2>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Filtri</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="dateFrom" class="form-label">Data da:</label>
+                    <input type="date" id="dateFrom" name="dateFrom" class="form-control" value="@ViewBag.DateFrom">
+                </div>
+                <div class="col-md-3">
+                    <label for="dateTo" class="form-label">Data a:</label>
+                    <input type="date" id="dateTo" name="dateTo" class="form-control" value="@ViewBag.DateTo">
+                </div>
+
+                <div class="col-md-3">
+                    <label for="includeInterni" class="form-label">Includi chiamate interne:</label>
+                    <select id="includeInterni" name="includeInterni" class="form-control">
+                        @if (ViewBag.IncludeInterni == false)
+                        {
+                            <option value="false" selected>No</option>
+                            <option value="true">Sì</option>
+                        }
+                        else
+                        {
+                            <option value="false">No</option>
+                            <option value="true" selected>Sì</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-filter"></i> Applica Filtri
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Riepilogo Generale -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Totale Chiamate</h5>
+                    <h2 class="card-text">@Model.TotaleChiamate</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Durata Media</h5>
+                    <h2 class="card-text">@Model.DurataMediaChiamate.ToString("N0") sec</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Chiamate Manuali</h5>
+                    <h2 class="card-text">@Model.ChiamateManuali</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Chiamate Automatiche</h5>
+                    <h2 class="card-text">@Model.ChiamateAutomatiche</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Distribuzione Chiamate -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Distribuzione per Tipo</h5>
+                </div>
+                <div class="card-body">
+                    <div style="height: 300px;">
+                        <canvas id="tipoChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Distribuzione per Locazione</h5>
+                </div>
+                <div class="card-body">
+                    <div style="height: 300px;">
+                        <canvas id="locazioneChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Andamento Giornaliero</h5>
+                </div>
+                <div class="card-body">
+                    <div style="height: 300px;">
+                        <canvas id="giornoChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Chiamanti e Chiamati -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Top 10 Chiamanti</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Numero</th>
+                                    <th>Ragione Sociale</th>
+                                    <th>Chiamate</th>
+                                    <th>Durata Totale</th>
+                                    <th>Durata Media</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var chiamante in Model.TopChiamanti)
+                                {
+                                    <tr>
+                                        <td>@chiamante.Numero</td>
+                                        <td>@chiamante.RagioneSociale</td>
+                                        <td>@chiamante.NumeroChiamate</td>
+                                        <td>@chiamante.DurataTotale.ToString("N0") sec</td>
+                                        <td>@chiamante.DurataMedia.ToString("N1") sec</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Top 10 Chiamati</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Numero</th>
+                                    <th>Ragione Sociale</th>
+                                    <th>Chiamate</th>
+                                    <th>Durata Totale</th>
+                                    <th>Durata Media</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var chiamato in Model.TopChiamati)
+                                {
+                                    <tr>
+                                        <td>@chiamato.Numero</td>
+                                        <td>@chiamato.RagioneSociale</td>
+                                        <td>@chiamato.NumeroChiamate</td>
+                                        <td>@chiamato.DurataTotale.ToString("N0") sec</td>
+                                        <td>@chiamato.DurataMedia.ToString("N1") sec</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Dati per i grafici
+        const tipoData = {
+            labels: @Html.Raw(Json.Serialize(Model.ChiamatePerTipo.Keys)),
+            datasets: [{
+                data: @Html.Raw(Json.Serialize(Model.ChiamatePerTipo.Values)),
+                backgroundColor: [
+                    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'
+                ]
+            }]
+        };
+
+        const locazioneData = {
+            labels: @Html.Raw(Json.Serialize(Model.ChiamatePerLocazione.Keys)),
+            datasets: [{
+                data: @Html.Raw(Json.Serialize(Model.ChiamatePerLocazione.Values)),
+                backgroundColor: [
+                    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'
+                ]
+            }]
+        };
+
+        const giornoData = {
+            labels: @Html.Raw(Json.Serialize(Model.ChiamatePerGiorno.Keys)),
+            datasets: [{
+                label: 'Numero Chiamate',
+                data: @Html.Raw(Json.Serialize(Model.ChiamatePerGiorno.Values)),
+                borderColor: '#4e73df',
+                backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                fill: true
+            }]
+        };
+
+        // Configurazione dei grafici
+        const tipoChart = new Chart(
+            document.getElementById('tipoChart'),
+            {
+                type: 'pie',
+                data: tipoData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 15
+                            }
+                        }
+                    }
+                }
+            }
+        );
+
+        const locazioneChart = new Chart(
+            document.getElementById('locazioneChart'),
+            {
+                type: 'pie',
+                data: locazioneData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 15
+                            }
+                        }
+                    }
+                }
+            }
+        );
+
+        const giornoChart = new Chart(
+            document.getElementById('giornoChart'),
+            {
+                type: 'line',
+                data: giornoData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            }
+        );
+    </script>
+} 

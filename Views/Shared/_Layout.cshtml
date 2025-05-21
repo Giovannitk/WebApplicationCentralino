@@ -140,24 +140,34 @@
                     <i class="bi bi-telephone-fill me-2"></i>Registro Chiamate
                 </a>
 
-                <!-- Voce Rubrica Contatti -->
-                <a class="nav-link" asp-controller="Contatti" asp-action="Index">
-                    <i class="bi bi-journal-bookmark-fill me-2"></i>Rubrica
-                </a>
-
                 <!-- Voce Gestione Manuale Chiamate -->
                 <a class="nav-link" asp-controller="GestioneChiamate" asp-action="Nuova">
                     <i class="bi bi-telephone-plus-fill me-2"></i>Gestione Chiamate
                 </a>
 
+                <!-- Voce Rubrica Contatti -->
+                <a class="nav-link" asp-controller="Contatti" asp-action="Index">
+                    <i class="bi bi-journal-bookmark-fill me-2"></i>Rubrica
+                </a>
+
+                <!-- Voce Contatti Incompleti -->
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Home" asp-action="ContattiIncompleti">
+                        <i class="bi bi-journal-x me-2"></i>Contatti Incompleti
+                    </a>
+                </li>
+
+                <!-- Voce Statistiche -->
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Home" asp-action="StatisticheDettagliate">
+                        <i class="bi bi-bar-chart-line me-2"></i>Statistiche Dettagliate
+                    </a>
+                </li>
+
                 <!-- Voce Privacy -->
                 <a class="nav-link" asp-controller="Home" asp-action="Privacy">
                     <i class="bi bi-shield-fill me-2"></i>Privacy
                 </a>
-
-                @* <a class="nav-link" asp-controller="Statistiche" asp-action="Index"> *@
-                @*     <i class="bi bi-shield-fill me-2"></i>Statistiche *@
-                @* </a> *@
             </nav>
 
         </div>

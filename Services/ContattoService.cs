@@ -67,19 +67,19 @@ namespace WebApplicationCentralino.Services
 
         public async Task<bool> AddAsync(Contatto contatto)
         {
-            var response = await _httpClient.PostAsJsonAsync("api/contatti/add-contact", contatto);
+            var response = await _httpClient.PostAsJsonAsync("api/Call/add-contact", contatto);
             return response.IsSuccessStatusCode;
         }
 
         public async Task<bool> UpdateAsync(string numero, Contatto contatto)
         {
-            var response = await _httpClient.PutAsJsonAsync($"api/contatti/{numero}", contatto);
+            var response = await _httpClient.PutAsJsonAsync($"api/Call/update-contact/{numero}", contatto);
             return response.IsSuccessStatusCode;
         }
 
         public async Task<bool> DeleteAsync(string numero)
         {
-            var response = await _httpClient.DeleteAsync($"api/contatti/{numero}");
+            var response = await _httpClient.DeleteAsync($"api/Call/delete-contact?phoneNumber={Uri.EscapeDataString(numero)}");
             return response.IsSuccessStatusCode;
         }
 

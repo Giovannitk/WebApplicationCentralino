@@ -1,0 +1,80 @@
+﻿@model WebApplicationCentralino.Models.Contatto
+@{
+    ViewData["Title"] = "Gestione Contatti";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">@(string.IsNullOrEmpty(Model.Id) ? "Nuovo Contatto" : "Modifica Contatto")</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="Salva" method="post" id="formContatto">
+                    <input type="hidden" asp-for="Id" />
+                    
+                    <div class="mb-3">
+                        <label asp-for="NumeroContatto" class="form-label">Numero Contatto</label>
+                        <input asp-for="NumeroContatto" class="form-control" required />
+                        <span asp-validation-for="NumeroContatto" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="RagioneSociale" class="form-label">Ragione Sociale</label>
+                        <input asp-for="RagioneSociale" class="form-control" required />
+                        <span asp-validation-for="RagioneSociale" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Citta" class="form-label">Città</label>
+                        <input asp-for="Citta" class="form-control" />
+                        <span asp-validation-for="Citta" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Interno" class="form-label">Interno</label>
+                        <select asp-for="Interno" class="form-select">
+                            <option value="">Seleziona...</option>
+                            <option value="1">Interno</option>
+                            <option value="0">Esterno</option>
+                        </select>
+                        <span asp-validation-for="Interno" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Salva
+                        </button>
+                        <a asp-controller="Contatti" asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Annulla
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Aggiungi qui eventuali script specifici per la validazione del form
+    </script>
+}

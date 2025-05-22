@@ -22,6 +22,7 @@
                                 <th>Numero</th>
                                 <th>Ragione Sociale</th>
                                 <th>Stato</th>
+                                <th>Azioni</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -46,6 +47,11 @@
                                         {
                                             <span class="badge bg-info">Ragione sociale = Numero</span>
                                         }
+                                    </td>
+                                    <td>
+                                        <a asp-controller="GestioneContatti" asp-action="Index" asp-route-numero="@contatto.NumeroContatto" class="btn btn-primary btn-sm">
+                                            <i class="bi bi-pencil"></i> Modifica
+                                        </a>
                                     </td>
                                 </tr>
                             }

@@ -263,6 +263,79 @@ namespace WebApplicationCentralino.Services
                 return new DetailedCallStatistics();
             }
         }
+
+        /// <summary>
+        /// Calcola le statistiche dettagliate per un contatto specifico
+        /// </summary>
+        public async Task<ContactStatistics> GetContactStatisticsAsync(string numeroContatto, DateTime? fromDate = null, DateTime? toDate = null)
+        {
+            try
+            {
+                var chiamate = await GetAllChiamateAsync();
+                var contatti = await _contattoService.GetAllAsync();
+                
+                // Trova il contatto
+                var contatto = contatti.FirstOrDefault(c => c.NumeroContatto == numeroContatto);
+                if (contatto == null)
+                {
+                    throw new Exception($"Contatto non trovato: {numeroContatto}");
+                }
+
+                // Filtra le chiamate per il periodo specificato
+                if (fromDate.HasValue)
+                {
+                    chiamate = chiamate.Where(c => c.DataArrivoChiamata >= fromDate.Value).ToList();
+                }
+                if (toDate.HasValue)
+                {
+                    chiamate = chiamate.Where(c => c.DataArrivoChiamata <= toDate.Value).ToList();
+                }
+
+                // Filtra le chiamate per il contatto specifico
+                var chiamateContatto = chiamate.Where(c => 
+                    c.NumeroChiamante == numeroContatto || 
+                    c.NumeroChiamato == numeroContatto
+                ).ToList();
+
+                var statistiche = new ContactStatistics
+                {
+                    Numero = numeroContatto,
+                    RagioneSociale = contatto.RagioneSociale,
+                    ChiamateInEntrata = chiamateContatto.Count(c => c.NumeroChiamato == numeroContatto),
+                    ChiamateInUscita = chiamateContatto.Count(c => c.NumeroChiamante == numeroContatto),
+                    ChiamatePerse = chiamateContatto.Count(c => 
+                        (c.NumeroChiamato == numeroContatto || c.NumeroChiamante == numeroContatto) && 
+                        c.TipoChiamata?.ToLower() == "persa"),
+                    ChiamateNonRisposta = chiamateContatto.Count(c => 
+                        (c.NumeroChiamato == numeroContatto || c.NumeroChiamante == numeroContatto) && 
+                        c.TipoChiamata?.ToLower() == "non risposta"),
+                    DurataTotaleChiamate = chiamateContatto.Sum(c => c.Durata.TotalSeconds),
+                };
+
+                // Raggruppa per giorno
+                statistiche.ChiamatePerGiorno = chiamateContatto
+                    .GroupBy(c => c.DataArrivoChiamata.ToString("dd/MM/yyyy"))
+                    .ToDictionary(g => g.Key, g => g.Count());
+
+                // Raggruppa per ora
+                statistiche.ChiamatePerOra = chiamateContatto
+                    .GroupBy(c => c.DataArrivoChiamata.ToString("HH:00"))
+                    .ToDictionary(g => g.Key, g => g.Count());
+
+                // Ultime 10 chiamate
+                statistiche.UltimeChiamate = chiamateContatto
+                    .OrderByDescending(c => c.DataArrivoChiamata)
+                    .Take(10)
+                    .ToList();
+
+                return statistiche;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante il calcolo delle statistiche del contatto");
+                throw;
+            }
+        }
     }
 
     /// <summary>

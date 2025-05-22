@@ -1,0 +1,212 @@
+@model WebApplicationCentralino.Models.ContactStatistics
+@{
+    ViewData["Title"] = $"Statistiche - {Model.RagioneSociale}";
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Statistiche Contatto: @Model.RagioneSociale</h2>
+        <div>
+            <a href="@Url.Action("Index", "Home")" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Torna alla Home
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Filtri</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <input type="hidden" name="numeroContatto" value="@ViewBag.NumeroContatto">
+                <div class="col-md-4">
+                    <label for="dateFrom" class="form-label">Data da:</label>
+                    <input type="date" id="dateFrom" name="dateFrom" class="form-control" value="@ViewBag.DateFrom">
+                </div>
+                <div class="col-md-4">
+                    <label for="dateTo" class="form-label">Data a:</label>
+                    <input type="date" id="dateTo" name="dateTo" class="form-control" value="@ViewBag.DateTo">
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-filter"></i> Applica Filtri
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Riepilogo Generale -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Chiamate in Entrata</h5>
+                    <h2 class="card-text">@Model.ChiamateInEntrata</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Chiamate in Uscita</h5>
+                    <h2 class="card-text">@Model.ChiamateInUscita</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Durata Totale</h5>
+                    <h2 class="card-text">@Model.DurataTotaleChiamate.ToString("N0") sec</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Durata Media</h5>
+                    <h2 class="card-text">@Model.DurataMediaChiamate.ToString("N0") sec</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grafici -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Andamento Giornaliero</h5>
+                </div>
+                <div class="card-body">
+                    <div style="height: 300px;">
+                        <canvas id="giornoChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Distribuzione Oraria</h5>
+                </div>
+                <div class="card-body">
+                    <div style="height: 300px;">
+                        <canvas id="oraChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ultime Chiamate -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Ultime 10 Chiamate</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Tipo</th>
+                            <th>Numero</th>
+                            <th>Ragione Sociale</th>
+                            <th>Durata</th>
+                            <th>Locazione</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var chiamata in Model.UltimeChiamate)
+                        {
+                            <tr>
+                                <td>@chiamata.DataArrivoChiamata.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                <td>
+                                    <span class="badge @(chiamata.NumeroChiamato == Model.Numero ? "bg-success" : "bg-primary")">
+                                        @(chiamata.NumeroChiamato == Model.Numero ? "In Entrata" : "In Uscita")
+                                    </span>
+                                </td>
+                                <td>@(chiamata.NumeroChiamato == Model.Numero ? chiamata.NumeroChiamante : chiamata.NumeroChiamato)</td>
+                                <td>@(chiamata.NumeroChiamato == Model.Numero ? chiamata.RagioneSocialeChiamante : chiamata.RagioneSocialeChiamato)</td>
+                                <td>@chiamata.Durata.TotalSeconds.ToString("N0") sec</td>
+                                <td>@(chiamata.Locazione ?? "-")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Dati per i grafici
+        const giornoData = {
+            labels: @Html.Raw(Json.Serialize(Model.ChiamatePerGiorno.Keys)),
+            datasets: [{
+                label: 'Numero Chiamate',
+                data: @Html.Raw(Json.Serialize(Model.ChiamatePerGiorno.Values)),
+                borderColor: '#4e73df',
+                backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                fill: true
+            }]
+        };
+
+        const oraData = {
+            labels: @Html.Raw(Json.Serialize(Model.ChiamatePerOra.Keys)),
+            datasets: [{
+                label: 'Numero Chiamate',
+                data: @Html.Raw(Json.Serialize(Model.ChiamatePerOra.Values)),
+                borderColor: '#1cc88a',
+                backgroundColor: 'rgba(28, 200, 138, 0.1)',
+                fill: true
+            }]
+        };
+
+        // Configurazione dei grafici
+        new Chart(
+            document.getElementById('giornoChart'),
+            {
+                type: 'line',
+                data: giornoData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            }
+        );
+
+        new Chart(
+            document.getElementById('oraChart'),
+            {
+                type: 'line',
+                data: oraData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            }
+        );
+    </script>
+} 

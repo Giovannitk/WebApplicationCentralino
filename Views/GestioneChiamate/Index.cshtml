@@ -24,7 +24,7 @@
         <div class="mb-3">
             <label asp-for="NumeroChiamante" class="form-label">Numero Chiamante</label>
             <select asp-for="NumeroChiamante" class="form-select select2" asp-items="@(ViewBag.Contatti as List<SelectListItem>)">
-                <option value="">Seleziona un numero</option>
+                <option value="">Seleziona o inserisci un numero</option>
             </select>
             <span asp-validation-for="NumeroChiamante" class="text-danger"></span>
         </div>
@@ -33,7 +33,7 @@
             <div class="mb-3">
                 <label asp-for="RagioneSocialeChiamante" class="form-label">Ragione Sociale Chiamante</label>
                 <select asp-for="RagioneSocialeChiamante" class="form-select select2" asp-items="@(ViewBag.RagioniSociali as List<SelectListItem>)">
-                    <option value="">Seleziona una ragione sociale</option>
+                    <option value="">Seleziona o inserisci una ragione sociale</option>
                 </select>
                 <span asp-validation-for="RagioneSocialeChiamante" class="text-danger"></span>
             </div>
@@ -44,7 +44,7 @@
         <div class="mb-3">
             <label asp-for="NumeroChiamato" class="form-label">Numero Chiamato</label>
             <select asp-for="NumeroChiamato" class="form-select select2" asp-items="@(ViewBag.Contatti as List<SelectListItem>)">
-                <option value="">Seleziona un numero</option>
+                <option value="">Seleziona o inserisci un numero</option>
             </select>
             <span asp-validation-for="NumeroChiamato" class="text-danger"></span>
         </div>
@@ -53,7 +53,7 @@
             <div class="mb-3">
                 <label asp-for="RagioneSocialeChiamato" class="form-label">Ragione Sociale Chiamato</label>
                 <select asp-for="RagioneSocialeChiamato" class="form-select select2" asp-items="@(ViewBag.RagioniSociali as List<SelectListItem>)">
-                    <option value="">Seleziona una ragione sociale</option>
+                    <option value="">Seleziona o inserisci una ragione sociale</option>
                 </select>
                 <span asp-validation-for="RagioneSocialeChiamato" class="text-danger"></span>
             </div>
@@ -77,12 +77,11 @@
     <div class="col-md-6">
         <div class="mb-3">
             <label asp-for="TipoChiamata" class="form-label">Tipologia Linea</label>
-                <select asp-for="TipoChiamata" class="form-select">
-                    <option value="Entrata">Entrata</option>
-                    <option value="Uscita">Uscita</option>
-                </select>
-            <!-- Campo nascosto per mantenere il valore numerico -->
-            @* <input type="hidden" id="TipoChiamataValue" name="TipoChiamataValue" /> *@
+            <select asp-for="TipoChiamata" class="form-select" data-bs-toggle="tooltip" data-bs-placement="right" 
+                    title="Entrata: chiamata ricevuta da un numero esterno all'azienda&#10;Uscita: chiamata effettuata dall'interno verso l'esterno dell'azienda">
+                <option value="Entrata">Entrata</option>
+                <option value="Uscita">Uscita</option>
+            </select>
         </div>
     </div>
     <div class="col-md-6">
@@ -115,6 +114,7 @@
             <div class="mb-3" id="DivLocazioneManuale" style="display:none;">
                 <label for="Locazione" class="form-label">Inserisci manualmente la locazione</label>
                 <input asp-for="Locazione" class="form-control" readonly />
+                <small class="form-text text-muted">Suggerimento: utilizzare il formato "Comune di [Nome Comune]" (es. "Comune di Roccalumera")</small>
             </div>
 
     </div>
@@ -301,7 +301,41 @@
             }
         }
 
+        // Funzione per gestire la verifica del contatto
+        function handleContactVerification(result, fieldPrefix) {
+            if (!result.isValid) {
+                if (result.isIncompleto) {
+                    // Chiedi all'utente se vuole completare il contatto
+                    if (confirm(result.messaggioAvviso + "\nVuoi completare il contatto adesso?")) {
+                        window.location.href = '@Url.Action("Index", "Contatti")';
+                        return false;
+                    }
+                } else {
+                    showToast("Errore " + fieldPrefix.toLowerCase(), result.messaggioAvviso, "error");
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // Funzione per gestire il numero mancante
+        function handleMissingNumber(numero, fieldPrefix) {
+            if (confirm("Il numero " + numero + " non è presente nella rubrica. Vuoi aggiungerlo adesso?")) {
+                window.location.href = '@Url.Action("Index", "Contatti")';
+                return false;
+            }
+            return true;
+        }
+
         $(document).ready(function () {
+            // Inizializza i tooltip di Bootstrap
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl, {
+                    html: true
+                })
+            });
+
             const ddl = document.getElementById("LocazionePredefinita");
             const divManuale = document.getElementById("DivLocazioneManuale");
             const manualInput = document.getElementById("Locazione");
@@ -324,9 +358,17 @@
             }
 
             $('.select2').select2({
-                placeholder: "Cerca un contatto...",
+                placeholder: "Cerca o inserisci...",
                 allowClear: true,
-                width: '100%'
+                width: '100%',
+                tags: true, // Permette l'inserimento di valori liberi
+                createTag: function(params) {
+                    return {
+                        id: params.term,
+                        text: params.term,
+                        newOption: true
+                    }
+                }
             });
 
             // Entrata
@@ -342,12 +384,129 @@
                 validateDates();
             });
 
-            // Validazione date al submit del form
+            // Modifica la gestione della verifica dei contatti
+            $("#NumeroChiamante, #RagioneSocialeChiamante, #NumeroChiamato, #RagioneSocialeChiamato").on("change", function() {
+                var campo = $(this).attr("id");
+                var fieldPrefix = campo.includes("Chiamante") ? "Chiamante" : "Chiamato";
+                var numero = $("#Numero" + fieldPrefix).val();
+                var ragioneSociale = $("#RagioneSociale" + fieldPrefix).val();
+
+                // Effettua una chiamata AJAX per verificare la corrispondenza
+                $.ajax({
+                    url: '@Url.Action("VerificaCorrispondenza", "GestioneChiamate")',
+                    type: "GET",
+                    data: { numero: numero, ragioneSociale: ragioneSociale },
+                    success: function(result) {
+                        if (!result.isValid) {
+                            if (result.isIncompleto) {
+                                // Chiedi all'utente se vuole completare il contatto
+                                if (confirm(result.messaggioAvviso)) {
+                                    window.location.href = '@Url.Action("Index", "Contatti")';
+                                    return false;
+                                } else {
+                                    // Se l'utente non vuole completare il contatto, pulisci i campi
+                                    $("#Numero" + fieldPrefix).val("").trigger("change");
+                                    $("#RagioneSociale" + fieldPrefix).val("").trigger("change");
+                                }
+                            } else {
+                                showToast("Errore " + fieldPrefix.toLowerCase(), result.messaggioAvviso, "error");
+                                // Pulisci i campi in caso di errore
+                                $("#Numero" + fieldPrefix).val("").trigger("change");
+                                $("#RagioneSociale" + fieldPrefix).val("").trigger("change");
+                            }
+                        }
+                    },
+                    error: function() {
+                        console.log("Errore durante la verifica della corrispondenza");
+                    }
+                });
+            });
+
+            // Modifica la validazione del form
             $("#formChiamata").on("submit", function(e) {
+                e.preventDefault();
+                
+                // Verifica le date
                 if (!validateDates()) {
-                    e.preventDefault();
                     return false;
                 }
+
+                // Verifica i contatti prima di procedere
+                var numeroChiamante = $("#NumeroChiamante").val();
+                var ragioneSocialeChiamante = $("#RagioneSocialeChiamante").val();
+                var numeroChiamato = $("#NumeroChiamato").val();
+                var ragioneSocialeChiamato = $("#RagioneSocialeChiamato").val();
+
+                var verificaChiamante = $.Deferred();
+                var verificaChiamato = $.Deferred();
+
+                // Verifica chiamante
+                if (numeroChiamante || ragioneSocialeChiamante) {
+                    $.ajax({
+                        url: '@Url.Action("VerificaCorrispondenza", "GestioneChiamate")',
+                        type: "GET",
+                        data: { numero: numeroChiamante, ragioneSociale: ragioneSocialeChiamante },
+                        success: function(result) {
+                            if (!result.isValid) {
+                                if (result.isIncompleto) {
+                                    if (confirm(result.messaggioAvviso)) {
+                                        window.location.href = '@Url.Action("Index", "Contatti")';
+                                        verificaChiamante.reject();
+                                    } else {
+                                        verificaChiamante.reject();
+                                    }
+                                } else {
+                                    showToast("Errore chiamante", result.messaggioAvviso, "error");
+                                    verificaChiamante.reject();
+                                }
+                            } else {
+                                verificaChiamante.resolve();
+                            }
+                        }
+                    });
+                } else {
+                    verificaChiamante.resolve();
+                }
+
+                // Verifica chiamato
+                if (numeroChiamato || ragioneSocialeChiamato) {
+                    $.ajax({
+                        url: '@Url.Action("VerificaCorrispondenza", "GestioneChiamate")',
+                        type: "GET",
+                        data: { numero: numeroChiamato, ragioneSociale: ragioneSocialeChiamato },
+                        success: function(result) {
+                            if (!result.isValid) {
+                                if (result.isIncompleto) {
+                                    if (confirm(result.messaggioAvviso)) {
+                                        window.location.href = '@Url.Action("Index", "Contatti")';
+                                        verificaChiamato.reject();
+                                    } else {
+                                        verificaChiamato.reject();
+                                    }
+                                } else {
+                                    showToast("Errore chiamato", result.messaggioAvviso, "error");
+                                    verificaChiamato.reject();
+                                }
+                            } else {
+                                verificaChiamato.resolve();
+                            }
+                        }
+                    });
+                } else {
+                    verificaChiamato.resolve();
+                }
+
+                // Procedi con il submit solo se entrambe le verifiche sono passate
+                $.when(verificaChiamante, verificaChiamato).then(
+                    function() {
+                        // Entrambe le verifiche sono passate, procedi con il submit
+                        e.target.submit();
+                    },
+                    function() {
+                        // Almeno una verifica è fallita
+                        return false;
+                    }
+                );
             });
 
             $("#btnAnnulla").on("click", function (e) {
@@ -370,33 +529,6 @@
                 $("#UniqueID").val(crypto.randomUUID());
 
                 $("#sezioneElencoChiamate")[0].scrollIntoView({ behavior: 'smooth' });
-            });
-
-
-            // Aggiungi listener per verificare corrispondenza quando l'utente cambia i valori
-            $("#NumeroChiamante, #RagioneSocialeChiamante, #NumeroChiamato, #RagioneSocialeChiamato").on("change", function() {
-                var campo = $(this).attr("id");
-                var fieldPrefix = campo.includes("Chiamante") ? "Chiamante" : "Chiamato";
-                var numero = $("#Numero" + fieldPrefix).val();
-                var ragioneSociale = $("#RagioneSociale" + fieldPrefix).val();
-
-                if (numero && ragioneSociale) {
-                    // Effettua una chiamata AJAX per verificare la corrispondenza
-                    $.ajax({
-                        url: '@Url.Action("VerificaCorrispondenza", "Chiamate")',
-                        type: "GET",
-                        data: { numero: numero, ragioneSociale: ragioneSociale },
-                        success: function(result) {
-                            if (!result.isValid) {
-                                // Mostra avviso in caso di non corrispondenza
-                                showToast("Avviso " + fieldPrefix.toLowerCase(), result.messaggioAvviso, "warning");
-                            }
-                        },
-                        error: function() {
-                            console.log("Errore durante la verifica della corrispondenza");
-                        }
-                    });
-                }
             });
         });
     </script>

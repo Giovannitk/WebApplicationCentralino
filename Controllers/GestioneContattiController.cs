@@ -22,12 +22,34 @@ namespace WebApplicationCentralino.Controllers
             _configuration = configuration;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? id, string? numero)
         {   
             try
             {
-                var contatti = await _contattoService.GetAllAsync();
-                ViewBag.Contatti = contatti;
+                if (!string.IsNullOrEmpty(numero))
+                {
+                    // Se viene fornito un numero, carica il contatto esistente
+                    var contatti = await _contattoService.GetAllAsync();
+                    var contatto = contatti.FirstOrDefault(c => c.NumeroContatto == numero);
+                    
+                    if (contatto != null)
+                    {
+                        return View(contatto);
+                    }
+                }
+                else if (!string.IsNullOrEmpty(id))
+                {
+                    // Se viene fornito un ID, carica il contatto esistente
+                    var contatti = await _contattoService.GetAllAsync();
+                    var contatto = contatti.FirstOrDefault(c => c.Id == id);
+                    
+                    if (contatto != null)
+                    {
+                        return View(contatto);
+                    }
+                }
+                
+                // Se non viene fornito né un ID né un numero, o il contatto non viene trovato, mostra il form vuoto
                 return View(new Contatto());
             }
             catch (Exception ex)

@@ -377,41 +377,65 @@ namespace WebApplicationCentralino.Controllers
         // Metodo per verificare la corrispondenza tra numero e ragione sociale
         private async Task<(bool isValid, bool isIncompleto, string? messaggioAvviso)> VerificaCorrispondenzaAvanzataAsync(string? numero, string? ragioneSociale)
         {
-            if (string.IsNullOrEmpty(numero))
-            {
-                return (false, false, "Il numero di telefono è obbligatorio");
-            }
-
             // Ottieni tutti i contatti
             var contatti = await _contattoService.GetAllAsync();
 
-            // Cerca contatti con questo numero
-            var contattiConQuestoNumero = contatti.Where(c => c.NumeroContatto == numero).ToList();
-
-            // Se non esiste nessun contatto con questo numero
-            if (!contattiConQuestoNumero.Any())
+            // Se non viene fornito né numero né ragione sociale, non è un errore
+            if (string.IsNullOrEmpty(numero) && string.IsNullOrEmpty(ragioneSociale))
             {
-                // Numero non trovato nei contatti - chiediamo all'utente di aggiungere il contatto
-                return (true, true, $"Il numero {numero} non e' presente nell'anagrafica contatti. Si consiglia di completare il contatto.");
+                return (true, false, null);
             }
 
-            // Controlla se il contatto è completo (ha una ragione sociale)
-            var contattoCompleto = contattiConQuestoNumero.FirstOrDefault(c => !string.IsNullOrEmpty(c.RagioneSociale));
-
-            // Se il contatto esiste ma non ha ragione sociale
-            if (contattoCompleto == null)
+            // Se viene fornito solo il numero
+            if (!string.IsNullOrEmpty(numero) && string.IsNullOrEmpty(ragioneSociale))
             {
-                // Contatto incompleto nel database
-                return (true, true, $"Il contatto con numero {numero} e' incompleto nell'anagrafica. Si consiglia di completare il contatto con la ragione sociale.");
+                var contattiConQuestoNumero = contatti.Where(c => c.NumeroContatto == numero).ToList();
+                
+                if (!contattiConQuestoNumero.Any())
+                {
+                    return (false, true, $"Il numero {numero} non è presente nell'anagrafica contatti. Vuoi aggiungerlo adesso?");
+                }
+
+                var contattoCompleto = contattiConQuestoNumero.FirstOrDefault(c => !string.IsNullOrEmpty(c.RagioneSociale));
+                if (contattoCompleto == null)
+                {
+                    return (false, true, $"Il contatto con numero {numero} è incompleto nell'anagrafica. Vuoi completarlo adesso con la ragione sociale?");
+                }
             }
 
-            // Se il contatto esiste ed è completo, verifica che la ragione sociale corrisponda
-            if (contattoCompleto.RagioneSociale != ragioneSociale)
+            // Se viene fornita solo la ragione sociale
+            if (string.IsNullOrEmpty(numero) && !string.IsNullOrEmpty(ragioneSociale))
             {
-                return (false, false, $"La ragione sociale '{ragioneSociale}' non corrisponde a quella registrata nell'anagrafica per il numero {numero} (Quella corretta è: '{contattoCompleto.RagioneSociale}')");
+                var contattiConQuestaRagione = contatti.Where(c => c.RagioneSociale == ragioneSociale).ToList();
+                
+                if (!contattiConQuestaRagione.Any())
+                {
+                    return (false, true, $"La ragione sociale '{ragioneSociale}' non è presente nell'anagrafica contatti. Vuoi aggiungerla adesso?");
+                }
             }
 
-            // Tutto ok, contatto valido e completo
+            // Se vengono forniti entrambi
+            if (!string.IsNullOrEmpty(numero) && !string.IsNullOrEmpty(ragioneSociale))
+            {
+                var contattiConQuestoNumero = contatti.Where(c => c.NumeroContatto == numero).ToList();
+                
+                if (!contattiConQuestoNumero.Any())
+                {
+                    return (false, true, $"Il numero {numero} non è presente nell'anagrafica contatti. Vuoi aggiungerlo adesso?");
+                }
+
+                var contattoCompleto = contattiConQuestoNumero.FirstOrDefault(c => !string.IsNullOrEmpty(c.RagioneSociale));
+                if (contattoCompleto == null)
+                {
+                    return (false, true, $"Il contatto con numero {numero} è incompleto nell'anagrafica. Vuoi completarlo adesso con la ragione sociale?");
+                }
+
+                if (contattoCompleto.RagioneSociale != ragioneSociale)
+                {
+                    return (false, false, $"La ragione sociale '{ragioneSociale}' non corrisponde a quella registrata nell'anagrafica per il numero {numero} (Quella corretta è: '{contattoCompleto.RagioneSociale}')");
+                }
+            }
+
             return (true, false, null);
         }
 

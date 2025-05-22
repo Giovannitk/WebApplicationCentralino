@@ -114,6 +114,56 @@ namespace WebApplicationCentralino.Controllers
             }
         }
 
+        /// <summary>
+        /// Visualizza le statistiche dettagliate per un contatto specifico
+        /// </summary>
+        public async Task<IActionResult> StatisticheContatto(string numeroContatto, string? dateFrom = null, string? dateTo = null)
+        {
+            try
+            {
+                DateTime? fromDateParsed = null;
+                DateTime? toDateParsed = null;
+
+                // Parsing dei parametri di data
+                if (!string.IsNullOrEmpty(dateFrom) && DateTime.TryParse(dateFrom, out DateTime fromDate))
+                {
+                    fromDateParsed = fromDate;
+                }
+                else
+                {
+                    // Se non specificato, usa l'inizio del mese corrente
+                    fromDateParsed = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+                    dateFrom = fromDateParsed.Value.ToString("yyyy-MM-dd");
+                }
+
+                if (!string.IsNullOrEmpty(dateTo) && DateTime.TryParse(dateTo, out DateTime toDate))
+                {
+                    toDateParsed = toDate.AddDays(1).AddSeconds(-1);
+                }
+                else
+                {
+                    // Se non specificato, usa oggi
+                    toDateParsed = DateTime.Today.AddDays(1).AddSeconds(-1);
+                    dateTo = DateTime.Today.ToString("yyyy-MM-dd");
+                }
+
+                // Recupera le statistiche del contatto
+                var statistiche = await _chiamataService.GetContactStatisticsAsync(numeroContatto, fromDateParsed, toDateParsed);
+                
+                // Passa i valori alla vista per mantenere i filtri
+                ViewBag.DateFrom = dateFrom;
+                ViewBag.DateTo = dateTo;
+                ViewBag.NumeroContatto = numeroContatto;
+                
+                return View(statistiche);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante il recupero delle statistiche del contatto");
+                return RedirectToAction("Index");
+            }
+        }
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {

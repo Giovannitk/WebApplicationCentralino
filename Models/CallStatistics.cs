@@ -53,4 +53,21 @@ namespace WebApplicationCentralino.Models
         public int ContattiInattivi { get; set; }
         public int ContattiIncompleti { get; set; }
     }
+
+    public class ContactStatistics
+    {
+        public string Numero { get; set; } = "";
+        public string RagioneSociale { get; set; } = "";
+        public int ChiamateInEntrata { get; set; }
+        public int ChiamateInUscita { get; set; }
+        public int ChiamatePerse { get; set; }
+        public int ChiamateNonRisposta { get; set; }
+        public double DurataTotaleChiamate { get; set; }
+        public double DurataMediaChiamate => (ChiamateInEntrata + ChiamateInUscita) > 0 
+            ? DurataTotaleChiamate / (ChiamateInEntrata + ChiamateInUscita) 
+            : 0;
+        public Dictionary<string, int> ChiamatePerGiorno { get; set; } = new();
+        public Dictionary<string, int> ChiamatePerOra { get; set; } = new();
+        public List<Chiamata> UltimeChiamate { get; set; } = new();
+    }
 } 

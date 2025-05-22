@@ -71,6 +71,11 @@
                                                class="btn btn-sm btn-primary">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
+                                            <a asp-controller="Home" asp-action="StatisticheContatto" 
+                                               asp-route-numeroContatto="@contatto.NumeroContatto" 
+                                               class="btn btn-sm btn-info">
+                                                <i class="bi bi-graph-up"></i>
+                                            </a>
                                             <button type="button" class="btn btn-sm btn-danger" 
                                                     onclick="mostraModalEliminazione('@contatto.NumeroContatto', '@contatto.RagioneSociale')">
                                                 <i class="bi bi-trash"></i>

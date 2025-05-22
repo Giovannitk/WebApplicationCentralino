@@ -33,29 +33,42 @@
                     
                     <div class="mb-3">
                         <label asp-for="NumeroContatto" class="form-label">Numero Contatto</label>
-                        <input asp-for="NumeroContatto" class="form-control" required />
+                        <input asp-for="NumeroContatto" class="form-control" required 
+                               pattern="^\d{1,15}$" 
+                               title="Inserire solo numeri (max 15 cifre)" />
+                        <div class="form-text">Inserire solo numeri, massimo 15 cifre</div>
                         <span asp-validation-for="NumeroContatto" class="text-danger"></span>
                     </div>
 
                     <div class="mb-3">
                         <label asp-for="RagioneSociale" class="form-label">Ragione Sociale</label>
-                        <input asp-for="RagioneSociale" class="form-control" required />
+                        <input asp-for="RagioneSociale" class="form-control" required 
+                               pattern="^.* - Comune di [A-Za-z\s']+$"
+                               title="Formato: ragioneSociale - Comune di PaeseX" />
+                        <div class="form-text">Formato richiesto: ragioneSociale - Comune di PaeseX (es. "Ufficio Tecnico - Comune di Roccalumera")</div>
                         <span asp-validation-for="RagioneSociale" class="text-danger"></span>
                     </div>
 
                     <div class="mb-3">
                         <label asp-for="Citta" class="form-label">Città</label>
-                        <input asp-for="Citta" class="form-control" />
+                        <input asp-for="Citta" class="form-control" 
+                               pattern="^[A-Za-z\s']+$"
+                               title="Inserire solo lettere" />
+                        <div class="form-text">Inserire solo lettere, senza numeri</div>
                         <span asp-validation-for="Citta" class="text-danger"></span>
                     </div>
 
                     <div class="mb-3">
                         <label asp-for="Interno" class="form-label">Interno</label>
-                        <select asp-for="Interno" class="form-select">
+                        <select asp-for="Interno" class="form-select" required>
                             <option value="">Seleziona...</option>
                             <option value="1">Interno</option>
                             <option value="0">Esterno</option>
                         </select>
+                        <div class="form-text">
+                            <strong>Interno:</strong> numero telefonico interno all'azienda<br>
+                            <strong>Esterno:</strong> numero telefonico esterno all'azienda
+                        </div>
                         <span asp-validation-for="Interno" class="text-danger"></span>
                     </div>
 
@@ -75,6 +88,55 @@
 
 @section Scripts {
     <script>
-        // Aggiungi qui eventuali script specifici per la validazione del form
+        $(document).ready(function() {
+            // Abilita la validazione del form
+            $("#formContatto").validate({
+                rules: {
+                    NumeroContatto: {
+                        required: true,
+                        pattern: /^\d{1,15}$/
+                    },
+                    RagioneSociale: {
+                        required: true,
+                        pattern: /^.* - Comune di [A-Za-z\s']+$/
+                    },
+                    Citta: {
+                        pattern: /^[A-Za-z\s']+$/
+                    },
+                    Interno: {
+                        required: true
+                    }
+                },
+                messages: {
+                    NumeroContatto: {
+                        required: "Il numero di contatto è obbligatorio",
+                        pattern: "Inserire solo numeri (max 15 cifre)"
+                    },
+                    RagioneSociale: {
+                        required: "La ragione sociale è obbligatoria",
+                        pattern: "Formato richiesto: ragioneSociale - Comune di PaeseX"
+                    },
+                    Citta: {
+                        pattern: "Inserire solo lettere, senza numeri"
+                    },
+                    Interno: {
+                        required: "Specificare se il numero è interno o esterno"
+                    }
+                }
+            });
+
+            // Previeni l'inserimento di caratteri non numerici nel campo numero
+            $("#NumeroContatto").on("input", function() {
+                this.value = this.value.replace(/[^\d]/g, '');
+                if (this.value.length > 15) {
+                    this.value = this.value.slice(0, 15);
+                }
+            });
+
+            // Previeni l'inserimento di numeri nel campo città
+            $("#Citta").on("input", function() {
+                this.value = this.value.replace(/[0-9]/g, '');
+            });
+        });
     </script>
 }

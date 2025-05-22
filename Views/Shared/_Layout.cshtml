@@ -102,20 +102,17 @@
 
         /* Responsive design per sidebar */
         @@media (max-width: 768px) {
-            .sidebar
+            .sidebar {
+                transform: translateX(-250px);
+            }
 
-        {
-            transform: translateX(-250px);
-        }
+            .sidebar.show {
+                transform: translateX(0);
+            }
 
-        .sidebar.show {
-            transform: translateX(0);
-        }
-
-        .main-content {
-            margin-left: 0;
-        }
-
+            .main-content {
+                margin-left: 0;
+            }
         }
     </style>
 
@@ -123,84 +120,101 @@
 </head>
 <body>
     <div class="page">
-        <!-- Sidebar -->
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-brand d-flex align-items-center">
-                <i class="bi bi-telephone-fill me-2"></i>
-                <span>Centralino</span>
-            </div>
-            <nav class="nav flex-column">
-                <!-- Voce Home -->
-                <a class="nav-link" asp-controller="Home" asp-action="Index">
-                    <i class="bi bi-house-door-fill me-2"></i>Home
-                </a>
-
-                <!-- Voce Registro Chiamate -->
-                <a class="nav-link" asp-controller="Chiamate" asp-action="Index">
-                    <i class="bi bi-telephone-fill me-2"></i>Registro Chiamate
-                </a>
-
-                <!-- Voce Gestione Manuale Chiamate -->
-                <a class="nav-link" asp-controller="GestioneChiamate" asp-action="Nuova">
-                    <i class="bi bi-telephone-plus-fill me-2"></i>Gestione Chiamate
-                </a>
-
-                <!-- Voce Rubrica Contatti -->
-                <a class="nav-link" asp-controller="Contatti" asp-action="Index">
-                    <i class="bi bi-journal-bookmark-fill me-2"></i>Rubrica
-                </a>
-
-                <!-- Voce Contatti Incompleti -->
-                <li class="nav-item">
-                    <a class="nav-link" asp-controller="Home" asp-action="ContattiIncompleti">
-                        <i class="bi bi-journal-x me-2"></i>Contatti Incompleti
-                    </a>
-                </li>
-
-                <!-- Voce Gestione Contatti -->
-                <li class="nav-item">
-                    <a class="nav-link" asp-controller="GestioneContatti" asp-action="Index">
-                        <i class="bi bi-journal-plus me-2"></i>Gestione Contatti
-                    </a>
-                </li>
-
-                <!-- Voce Statistiche -->
-                <li class="nav-item">
-                    <a class="nav-link" asp-controller="Home" asp-action="StatisticheDettagliate">
-                        <i class="bi bi-bar-chart-line me-2"></i>Statistiche Dettagliate
-                    </a>
-                </li>
-
-                <!-- Voce Privacy -->
-                <a class="nav-link" asp-controller="Home" asp-action="Privacy">
-                    <i class="bi bi-shield-fill me-2"></i>Privacy
-                </a>
-            </nav>
-
-        </div>
-
-        <!-- Button to toggle sidebar on mobile (removed this for all-screen toggle) -->
-        <!-- Main content -->
-        <div class="main-content">
-            <div class="top-row px-4">
-                <button class="sidebar-toggler" type="button" id="sidebarToggle">
-                    <i class="bi bi-list me-1"></i> Menu
-                </button>
-                <a href="#" class="text-dark">About</a>
-            </div>
-
-            <!-- Contenuto -->
-            <div class="content">
-                @RenderBody()
-            </div>
-
-            <!-- Footer -->
-            <footer class="footer text-center text-muted border-top py-3">
-                <div class="container">
-                    &copy; 2025 - WebApplicationCentralino - <a asp-controller="Home" asp-action="Privacy" class="text-muted">Privacy</a>
+        @if (User.Identity.IsAuthenticated)
+        {
+            <!-- Sidebar -->
+            <div class="sidebar" id="sidebar">
+                <div class="sidebar-brand d-flex align-items-center">
+                    <i class="bi bi-telephone-fill me-2"></i>
+                    <span>Centralino</span>
                 </div>
-            </footer>
-        </div>
+                <nav class="nav flex-column">
+                    <!-- Voce Home -->
+                    <a class="nav-link" asp-controller="Home" asp-action="Index">
+                        <i class="bi bi-house-door-fill me-2"></i>Home
+                    </a>
+
+                    <!-- Voce Registro Chiamate -->
+                    <a class="nav-link" asp-controller="Chiamate" asp-action="Index">
+                        <i class="bi bi-telephone-fill me-2"></i>Registro Chiamate
+                    </a>
+
+                    <!-- Voce Gestione Manuale Chiamate -->
+                    <a class="nav-link" asp-controller="GestioneChiamate" asp-action="Nuova">
+                        <i class="bi bi-telephone-plus-fill me-2"></i>Gestione Chiamate
+                    </a>
+
+                    <!-- Voce Rubrica Contatti -->
+                    <a class="nav-link" asp-controller="Contatti" asp-action="Index">
+                        <i class="bi bi-journal-bookmark-fill me-2"></i>Rubrica
+                    </a>
+
+                    <!-- Voce Contatti Incompleti -->
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Home" asp-action="ContattiIncompleti">
+                            <i class="bi bi-journal-x me-2"></i>Contatti Incompleti
+                        </a>
+                    </li>
+
+                    <!-- Voce Gestione Contatti -->
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="GestioneContatti" asp-action="Index">
+                            <i class="bi bi-journal-plus me-2"></i>Gestione Contatti
+                        </a>
+                    </li>
+
+                    <!-- Voce Statistiche -->
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Home" asp-action="StatisticheDettagliate">
+                            <i class="bi bi-bar-chart-line me-2"></i>Statistiche Dettagliate
+                        </a>
+                    </li>
+
+                    <!-- Voce Privacy -->
+                    <a class="nav-link" asp-controller="Home" asp-action="Privacy">
+                        <i class="bi bi-shield-fill me-2"></i>Privacy
+                    </a>
+
+                    <!-- Voce Logout -->
+                    <a class="nav-link" asp-controller="Auth" asp-action="Logout">
+                        <i class="bi bi-box-arrow-right me-2"></i>Logout
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Main content -->
+            <div class="main-content">
+                <div class="top-row px-4">
+                    <button class="sidebar-toggler" type="button" id="sidebarToggle">
+                        <i class="bi bi-list me-1"></i> Menu
+                    </button>
+                    <div class="d-flex align-items-center">
+                        <span class="me-3">@User.Identity.Name</span>
+                    </div>
+                </div>
+
+                <!-- Contenuto -->
+                <div class="content">
+                    @RenderBody()
+                </div>
+
+                <!-- Footer -->
+                <footer class="footer text-center text-muted border-top py-3">
+                    <div class="container">
+                        &copy; 2025 - WebApplicationCentralino - <a asp-controller="Home" asp-action="Privacy" class="text-muted">Privacy</a>
+                    </div>
+                </footer>
+            </div>
+        }
+        else
+        {
+            <!-- Contenuto per utenti non autenticati -->
+            <div class="main-content" style="margin-left: 0;">
+                <div class="content">
+                    @RenderBody()
+                </div>
+            </div>
+        }
     </div>
 
     <!-- Script -->
@@ -215,17 +229,19 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
+    @if (User.Identity.IsAuthenticated)
+    {
+        <script>
+            // Script per il toggle della sidebar
+            document.getElementById('sidebarToggle').addEventListener('click', function() {
+                const sidebar = document.getElementById('sidebar');
+                const mainContent = document.querySelector('.main-content');
 
-    <script>
-        // Script per il toggle della sidebar
-        document.getElementById('sidebarToggle').addEventListener('click', function() {
-            const sidebar = document.getElementById('sidebar');
-            const mainContent = document.querySelector('.main-content');
-
-            sidebar.classList.toggle('collapsed');
-            mainContent.classList.toggle('expanded');
-        });
-    </script>
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+            });
+        </script>
+    }
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

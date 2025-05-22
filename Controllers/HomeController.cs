@@ -4,12 +4,14 @@ using WebApplicationCentralino.Models;
 using WebApplicationCentralino.Services;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApplicationCentralino.Controllers
 {
     /// <summary>
     /// Controller principale dell'applicazione che gestisce la home page e le statistiche
     /// </summary>
+    [Authorize]
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;

@@ -35,12 +35,14 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.SameSite = SameSiteMode.Strict;
     });
 
+var address = builder.Configuration.GetValue<string>("BaseUrl", "http://10.36.150.250:5000/");
+
 // Create a function to configure HTTP clients with JWT token handler
 void ConfigureHttpClientWithJwtToken(IServiceCollection services, string name, Action<HttpClient> configureClient = null)
 {
     services.AddHttpClient(name, client =>
     {
-        client.BaseAddress = new Uri("http://localhost:5000/");
+        client.BaseAddress = new Uri(address);
         client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
         configureClient?.Invoke(client);
     }).AddHttpMessageHandler(() => new JwtTokenHandler(services.BuildServiceProvider().GetRequiredService<JwtTokenService>()));
@@ -57,7 +59,8 @@ int port = builder.Configuration.GetValue<int>("port", 1085);
 // Configure GestioneChiamataService with custom base address
 ConfigureHttpClientWithJwtToken(builder.Services, "GestioneChiamataService", client =>
 {
-    client.BaseAddress = new Uri($"http://localhost:{port}/");
+    //client.BaseAddress = new Uri($"http://localhost:{port}/");
+    client.BaseAddress = new Uri($"{address}");
 });
 
 // Imposta la porta dinamicamente

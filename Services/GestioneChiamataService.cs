@@ -19,11 +19,10 @@ namespace WebApplicationCentralino.Services
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
 
-        public GestioneChiamataService(HttpClient httpClient, IConfiguration configuration)
+        public GestioneChiamataService(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
-            _httpClient = httpClient;
+            _httpClient = httpClientFactory.CreateClient("GestioneChiamataService");
             _configuration = configuration;
-            _httpClient.BaseAddress = new Uri(_configuration["ApiSettings:BaseUrl"]);
         }
 
         public async Task<bool> AggiungiChiamataAsync(Chiamata chiamata)
@@ -79,28 +78,13 @@ namespace WebApplicationCentralino.Services
                 Console.WriteLine($"-- Payload inviato: {jsonContent}");
 
                 var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-                //Console.WriteLine($"-- Payload inviato content: {content}");
 
                 var response = await _httpClient.PostAsync("api/call/add-call", content);
-
-                var responseContent = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Risposta API: {response.StatusCode} - {responseContent}");
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    Console.WriteLine($"Errore HTTP: {(int)response.StatusCode} - {response.StatusCode}");
-                    return false;
-                }
-
-                return true;
+                return response.IsSuccessStatusCode;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Errore nell'invio della chiamata: {ex.Message}");
-                if (ex.InnerException != null)
-                {
-                    Console.WriteLine($"Eccezione interna: {ex.InnerException.Message}");
-                }
+                Console.WriteLine($"Errore nell'aggiunta della chiamata: {ex.Message}");
                 return false;
             }
         }
@@ -109,19 +93,18 @@ namespace WebApplicationCentralino.Services
         {
             try
             {
-                // Prepara il payload JSON con esplicitamente tutti i campi
                 var payload = new
                 {
                     id = chiamata.Id,
-                    numeroChiamante = chiamata.NumeroChiamante ?? "",
-                    numeroChiamato = chiamata.NumeroChiamato ?? "",
-                    ragioneSocialeChiamante = chiamata.RagioneSocialeChiamante ?? "Non specificato",
-                    ragioneSocialeChiamato = chiamata.RagioneSocialeChiamato ?? "Non specificato",
+                    numeroChiamante = chiamata.NumeroChiamante,
+                    numeroChiamato = chiamata.NumeroChiamato,
+                    ragioneSocialeChiamante = chiamata.RagioneSocialeChiamante,
+                    ragioneSocialeChiamato = chiamata.RagioneSocialeChiamato,
                     dataArrivoChiamata = chiamata.DataArrivoChiamata,
                     dataFineChiamata = chiamata.DataFineChiamata,
-                    tipoChiamata = chiamata.TipoChiamata, // Ora è un intero (0 o 1)
-                    locazione = chiamata.Locazione ?? "Non specificato",
-                    uniqueID = chiamata.UniqueID ?? Guid.NewGuid().ToString(),
+                    tipoChiamata = chiamata.TipoChiamata,
+                    locazione = chiamata.Locazione,
+                    uniqueID = chiamata.UniqueID,
                     campoExtra1 = chiamata.CampoExtra1
                 };
 

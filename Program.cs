@@ -6,6 +6,21 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+// Add HttpContextAccessor
+builder.Services.AddHttpContextAccessor();
+
+// Add Memory Cache
+builder.Services.AddMemoryCache();
+
+// Add JWT Token Service
+builder.Services.AddScoped<JwtTokenService>();
+
+// Register all services
+builder.Services.AddScoped<ChiamataService>();
+builder.Services.AddScoped<ContattoService>();
+builder.Services.AddScoped<GestioneChiamataService>();
+builder.Services.AddScoped<IContattoService, ContattoService>();
+
 // Add authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -20,24 +35,30 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.SameSite = SameSiteMode.Strict;
     });
 
-builder.Services.AddHttpClient<ChiamataService>();
-builder.Services.AddHttpClient<ContattoService>();
+// Create a function to configure HTTP clients with JWT token handler
+void ConfigureHttpClientWithJwtToken(IServiceCollection services, string name, Action<HttpClient> configureClient = null)
+{
+    services.AddHttpClient(name, client =>
+    {
+        client.BaseAddress = new Uri("http://localhost:5000/");
+        client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+        configureClient?.Invoke(client);
+    }).AddHttpMessageHandler(() => new JwtTokenHandler(services.BuildServiceProvider().GetRequiredService<JwtTokenService>()));
+}
 
+// Configure all HTTP clients with JWT token handler
+ConfigureHttpClientWithJwtToken(builder.Services, "ApiClient");
+ConfigureHttpClientWithJwtToken(builder.Services, "ChiamataService");
+ConfigureHttpClientWithJwtToken(builder.Services, "ContattoService");
 
 // Leggi il parametro --port dalla riga di comando (default: 1085)
 int port = builder.Configuration.GetValue<int>("port", 1085);
 
-//builder.Services.AddHttpClient<GestioneChiamataService>();
-builder.Services.AddHttpClient<GestioneChiamataService>(client =>
+// Configure GestioneChiamataService with custom base address
+ConfigureHttpClientWithJwtToken(builder.Services, "GestioneChiamataService", client =>
 {
     client.BaseAddress = new Uri($"http://localhost:{port}/");
 });
-
-//builder.Services.AddScoped<IContattoService, ContattoService>();
-
-//builder.WebHost.UseUrls("http://localhost:1085");
-
-
 
 // Imposta la porta dinamicamente
 builder.WebHost.UseUrls($"http://localhost:{port}");

@@ -3,9 +3,11 @@ using WebApplicationCentralino.Models;
 using WebApplicationCentralino.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApplicationCentralino.Controllers
 {
+    [Authorize]
     public class GestioneContattiController : Controller
     {
         private readonly ContattoService _contattoService;

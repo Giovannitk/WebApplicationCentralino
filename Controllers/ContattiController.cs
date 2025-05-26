@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using WebApplicationCentralino.Models;
 using WebApplicationCentralino.Services;
 
 namespace WebApplicationCentralino.Controllers
 {
+    [Authorize]
     public class ContattiController : Controller
     {
         private readonly ContattoService _service;

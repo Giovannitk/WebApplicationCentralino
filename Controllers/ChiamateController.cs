@@ -1,5 +1,6 @@
 ﻿// Controllers/ChiamateController.cs
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
 using System;
 using System.Linq;
@@ -13,6 +14,7 @@ using WebApplicationCentralino.Models;
 
 namespace WebApplicationCentralino.Controllers
 {
+    [Authorize]
     public class ChiamateController : Controller
     {
         private readonly ChiamataService _chiamataService;

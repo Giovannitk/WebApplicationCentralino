@@ -170,6 +170,16 @@
                         </a>
                     </li>
 
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <!-- Voce Gestione Utenti -->
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="UserManagement" asp-action="Index">
+                                <i class="bi bi-people-fill me-2"></i>Gestione Utenti
+                            </a>
+                        </li>
+                    }
+
                     <!-- Voce Privacy -->
                     <a class="nav-link" asp-controller="Home" asp-action="Privacy">
                         <i class="bi bi-shield-fill me-2"></i>Privacy

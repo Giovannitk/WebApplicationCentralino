@@ -5,9 +5,11 @@ using WebApplicationCentralino.Services;
 using WebApplicationCentralino.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApplicationCentralino.Controllers
 {
+    [Authorize]
     public class GestioneChiamateController : Controller
     {
         private readonly GestioneChiamataService _gestioneChiamataService;

@@ -24,16 +24,15 @@ namespace WebApplicationCentralino.Services
         private const string INCOMPLETE_CONTACTS_CACHE_KEY = "IncompleteContacts";
 
         public ChiamataService(
-            HttpClient httpClient, 
+            IHttpClientFactory httpClientFactory,
             IConfiguration configuration, 
             ContattoService contattoService, 
             ILogger<ChiamataService> logger,
             IMemoryCache cache)
         {
-            _httpClient = httpClient;
+            _httpClient = httpClientFactory.CreateClient("ChiamataService");
             _configuration = configuration;
             _contattoService = contattoService;
-            _httpClient.BaseAddress = new Uri(_configuration["ApiSettings:BaseUrl"]);
             _logger = logger;
             _cache = cache;
         }
@@ -45,7 +44,7 @@ namespace WebApplicationCentralino.Services
         {
             try
             {
-                var response = await _httpClient.GetFromJsonAsync<List<Chiamata>>("api/Call/get-all-calls");
+                var response = await _httpClient.GetFromJsonAsync<List<Chiamata>>("api/call/get-all-calls");
                 return response ?? new List<Chiamata>();
             }
             catch (Exception ex)

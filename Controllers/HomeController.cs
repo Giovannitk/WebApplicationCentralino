@@ -11,8 +11,8 @@ namespace WebApplicationCentralino.Controllers
     /// <summary>
     /// Controller principale dell'applicazione che gestisce la home page e le statistiche
     /// </summary>
-    [Authorize]
-    public class HomeController : Controller
+    [Authorize] // Questo consente di accedere alla Home solo previa autorizzazione tramite login
+    public class HomeController : BaseController
     {
         private readonly ILogger<HomeController> _logger;
         private readonly ChiamataService _chiamataService;

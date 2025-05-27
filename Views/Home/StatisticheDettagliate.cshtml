@@ -14,16 +14,16 @@
         </div>
         <div class="card-body">
             <form method="get" class="row g-3">
-                <div class="col-md-3">
+                <div class="col-12 col-md-3">
                     <label for="dateFrom" class="form-label">Data da:</label>
                     <input type="date" id="dateFrom" name="dateFrom" class="form-control" value="@ViewBag.DateFrom">
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-md-3">
                     <label for="dateTo" class="form-label">Data a:</label>
                     <input type="date" id="dateTo" name="dateTo" class="form-control" value="@ViewBag.DateTo">
                 </div>
 
-                <div class="col-md-3">
+                <div class="col-12 col-md-3">
                     <label for="includeInterni" class="form-label">Includi chiamate interne:</label>
                     <select id="includeInterni" name="includeInterni" class="form-control">
                         @if (ViewBag.IncludeInterni == false)
@@ -39,7 +39,7 @@
                     </select>
                 </div>
 
-                <div class="col-md-3 d-flex align-items-end">
+                <div class="col-12 col-md-3 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary w-100">
                         <i class="bi bi-filter"></i> Applica Filtri
                     </button>
@@ -50,32 +50,32 @@
 
     <!-- Riepilogo Generale -->
     <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
+        <div class="col-6 col-md-3 mb-3">
+            <div class="card bg-primary text-white h-100">
                 <div class="card-body">
                     <h5 class="card-title">Totale Chiamate</h5>
                     <h2 class="card-text">@Model.TotaleChiamate</h2>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
+        <div class="col-6 col-md-3 mb-3">
+            <div class="card bg-success text-white h-100">
                 <div class="card-body">
                     <h5 class="card-title">Durata Media</h5>
                     <h2 class="card-text">@Model.DurataMediaChiamate.ToString("N0") sec</h2>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
+        <div class="col-6 col-md-3 mb-3">
+            <div class="card bg-info text-white h-100">
                 <div class="card-body">
                     <h5 class="card-title">Chiamate Manuali</h5>
                     <h2 class="card-text">@Model.ChiamateManuali</h2>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-secondary text-white">
+        <div class="col-6 col-md-3 mb-3">
+            <div class="card bg-secondary text-white h-100">
                 <div class="card-body">
                     <h5 class="card-title">Chiamate Automatiche</h5>
                     <h2 class="card-text">@Model.ChiamateAutomatiche</h2>
@@ -86,7 +86,7 @@
 
     <!-- Distribuzione Chiamate -->
     <div class="row mb-4">
-        <div class="col-md-4">
+        <div class="col-12 col-md-4 mb-4">
             <div class="card shadow h-100">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">Distribuzione per Tipo</h5>
@@ -98,7 +98,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-12 col-md-4 mb-4">
             <div class="card shadow h-100">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">Distribuzione per Locazione</h5>
@@ -110,7 +110,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-12 col-md-4 mb-4">
             <div class="card shadow h-100">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">Andamento Giornaliero</h5>
@@ -126,8 +126,8 @@
 
     <!-- Top Chiamanti e Chiamati -->
     <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card shadow">
+        <div class="col-12 col-md-6 mb-4">
+            <div class="card shadow h-100">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">Top 10 Chiamanti</h5>
                 </div>
@@ -160,8 +160,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="card shadow">
+        <div class="col-12 col-md-6 mb-4">
+            <div class="card shadow h-100">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">Top 10 Chiamati</h5>
                 </div>
@@ -243,9 +243,12 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            position: 'right',
+                            position: window.innerWidth < 768 ? 'bottom' : 'right',
                             labels: {
-                                boxWidth: 15
+                                boxWidth: 15,
+                                font: {
+                                    size: window.innerWidth < 768 ? 10 : 12
+                                }
                             }
                         }
                     }
@@ -263,9 +266,12 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            position: 'right',
+                            position: window.innerWidth < 768 ? 'bottom' : 'right',
                             labels: {
-                                boxWidth: 15
+                                boxWidth: 15,
+                                font: {
+                                    size: window.innerWidth < 768 ? 10 : 12
+                                }
                             }
                         }
                     }
@@ -290,12 +296,37 @@
                         y: {
                             beginAtZero: true,
                             ticks: {
-                                stepSize: 1
+                                stepSize: 1,
+                                font: {
+                                    size: window.innerWidth < 768 ? 10 : 12
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: {
+                                    size: window.innerWidth < 768 ? 10 : 12
+                                }
                             }
                         }
                     }
                 }
             }
         );
+
+        // Aggiorna i grafici quando la finestra viene ridimensionata
+        window.addEventListener('resize', function() {
+            tipoChart.options.plugins.legend.position = window.innerWidth < 768 ? 'bottom' : 'right';
+            tipoChart.options.plugins.legend.labels.font.size = window.innerWidth < 768 ? 10 : 12;
+            tipoChart.update();
+
+            locazioneChart.options.plugins.legend.position = window.innerWidth < 768 ? 'bottom' : 'right';
+            locazioneChart.options.plugins.legend.labels.font.size = window.innerWidth < 768 ? 10 : 12;
+            locazioneChart.update();
+
+            giornoChart.options.scales.y.ticks.font.size = window.innerWidth < 768 ? 10 : 12;
+            giornoChart.options.scales.x.ticks.font.size = window.innerWidth < 768 ? 10 : 12;
+            giornoChart.update();
+        });
     </script>
 } 

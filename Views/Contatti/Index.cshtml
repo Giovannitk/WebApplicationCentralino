@@ -5,9 +5,9 @@
     var contattiFiltrati = Model ?? new List<WebApplicationCentralino.Models.Contatto>();
 }
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Rubrica Contatti</h2>
+<div class="container-fluid mt-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+        <h2 class="mb-3 mb-md-0">Rubrica Contatti</h2>
         <a asp-controller="GestioneContatti" asp-action="Index" class="btn btn-primary">
             <i class="bi bi-plus-circle"></i> Nuovo Contatto
         </a>
@@ -30,15 +30,17 @@
     }
 
     <div class="card shadow">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Elenco Contatti</h5>
-            <div class="d-flex align-items-center">
-                <button class="btn btn-light mx-1" id="refreshButton">
-                    <i class="bi bi-arrow-clockwise"></i> Aggiorna
-                </button>
-                <small class="text-white ms-2">
-                    Ultimo aggiornamento: @ViewBag.UltimoAggiornamento
-                </small>
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                <h5 class="mb-2 mb-md-0">Elenco Contatti</h5>
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-light mx-1" id="refreshButton">
+                        <i class="bi bi-arrow-clockwise"></i> Aggiorna
+                    </button>
+                    <small class="text-white ms-2 d-none d-md-inline">
+                        Ultimo aggiornamento: @ViewBag.UltimoAggiornamento
+                    </small>
+                </div>
             </div>
         </div>
 
@@ -51,7 +53,7 @@
                             <th>Ragione Sociale</th>
                             <th>Città</th>
                             <th>Interno</th>
-                            <th>Azioni</th>
+                            <th class="text-end">Azioni</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -65,7 +67,7 @@
                                     <td>@(contatto.Citta ?? "-")</td>
                                     <td>@(contatto.Interno.HasValue ? (contatto.Interno.Value == 1 ? "Interno" : "Esterno") : "-")</td>
                                     <td>
-                                        <div class="btn-group">
+                                        <div class="btn-group float-end">
                                             <a asp-controller="GestioneContatti" asp-action="Modifica" 
                                                asp-route-numero="@contatto.NumeroContatto" 
                                                class="btn btn-sm btn-primary">
@@ -126,13 +128,6 @@
 </div>
 
 @section Scripts {
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- DataTables CSS -->
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
-    <!-- DataTables JS -->
-    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-
     <script>
         let deleteModal;
         let tabella;
@@ -140,13 +135,21 @@
         document.addEventListener('DOMContentLoaded', function() {
             deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
             
-            // Inizializza DataTables
+            // Inizializza DataTables con configurazione responsive
             tabella = $('#tabellaContatti').DataTable({
                 language: {
                     url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/it-IT.json'
                 },
                 order: [[1, 'asc']], // Ordina per ragione sociale
-                pageLength: 25
+                pageLength: 25,
+                responsive: true,
+                columnDefs: [
+                    {
+                        targets: -1, // Ultima colonna (Azioni)
+                        orderable: false,
+                        searchable: false
+                    }
+                ]
             });
 
             // Gestione del pulsante di aggiornamento

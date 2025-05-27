@@ -20,6 +20,8 @@ builder.Services.AddScoped<ChiamataService>();
 builder.Services.AddScoped<ContattoService>();
 builder.Services.AddScoped<GestioneChiamataService>();
 builder.Services.AddScoped<IContattoService, ContattoService>();
+builder.Services.AddScoped<ISystemLogService, SystemLogService>();
+builder.Services.AddScoped<ILoginAttemptService, LoginAttemptService>();
 
 // Add authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -28,7 +30,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LoginPath = "/Auth/Login";
         options.LogoutPath = "/Auth/Logout";
         options.AccessDeniedPath = "/Auth/Login";
-        options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        options.ExpireTimeSpan = builder.Configuration.GetValue<TimeSpan>("Authentication:ExpireTimeSpan", TimeSpan.FromDays(7));
         options.Cookie.Name = "Centralino.Auth";
         options.Cookie.HttpOnly = true;
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;

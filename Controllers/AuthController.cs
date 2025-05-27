@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using WebApplicationCentralino.Models;
+using WebApplicationCentralino.Services;
 
 namespace WebApplicationCentralino.Controllers
 {
@@ -14,12 +15,18 @@ namespace WebApplicationCentralino.Controllers
         private readonly ILogger<AuthController> _logger;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
+        private readonly ILoginAttemptService _loginAttemptService;
 
-        public AuthController(ILogger<AuthController> logger, IHttpClientFactory httpClientFactory, IConfiguration configuration)
+        public AuthController(
+            ILogger<AuthController> logger, 
+            IHttpClientFactory httpClientFactory, 
+            IConfiguration configuration,
+            ILoginAttemptService loginAttemptService)
         {
             _logger = logger;
             _httpClientFactory = httpClientFactory;
             _configuration = configuration;
+            _loginAttemptService = loginAttemptService;
         }
 
         public IActionResult Login(string returnUrl = null)
@@ -35,6 +42,15 @@ namespace WebApplicationCentralino.Controllers
             {
                 try
                 {
+                    // Check if user is locked out
+                    if (_loginAttemptService.IsUserLocked(model.Email))
+                    {
+                        var lockoutDuration = _configuration.GetValue<int>("Authentication:LockoutDuration", 10);
+                        ModelState.AddModelError(string.Empty, 
+                            $"Account bloccato per troppi tentativi falliti. Riprova tra {lockoutDuration} minuti.");
+                        return View(model);
+                    }
+
                     _logger.LogInformation("Tentativo di login per email: {Email}", model.Email);
 
                     // Crea il client HTTP
@@ -77,6 +93,9 @@ namespace WebApplicationCentralino.Controllers
                         if (authResponse?.Success == true)
                         {
                             _logger.LogInformation("Login riuscito per utente: {Email}", model.Email);
+                            
+                            // Reset failed attempts on successful login
+                            _loginAttemptService.ResetAttempts(model.Email);
 
                             // Store the JWT token in a cookie
                             var tokenCookie = new CookieOptions
@@ -121,7 +140,13 @@ namespace WebApplicationCentralino.Controllers
                         var errorContent = await response.Content.ReadAsStringAsync();
                         _logger.LogWarning("Login fallito - Status: {Status}, Content: {Content}",
                             response.StatusCode, errorContent);
-                        ModelState.AddModelError(string.Empty, "Email o password non validi.");
+                        
+                        // Record failed attempt
+                        _loginAttemptService.RecordFailedAttempt(model.Email);
+                        
+                        var remainingAttempts = _loginAttemptService.GetRemainingAttempts(model.Email);
+                        ModelState.AddModelError(string.Empty, 
+                            $"Email o password non validi. Tentativi rimanenti: {remainingAttempts}");
                     }
                 }
                 catch (Exception ex)

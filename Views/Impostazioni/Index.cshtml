@@ -1,0 +1,253 @@
+@{
+    ViewData["Title"] = "Impostazioni";
+}
+
+<div class="container mt-4">
+    <h2>Impostazioni Sistema</h2>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Token Duration Card -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Durata Token di Autenticazione</h5>
+            <p class="card-text">
+                Durata attuale: 
+                @if (ViewBag.ExpireTimeSpan.TotalDays >= 1)
+                {
+                    <span>@ViewBag.ExpireTimeSpan.TotalDays giorni</span>
+                }
+                else if (ViewBag.ExpireTimeSpan.TotalHours >= 1)
+                {
+                    <span>@ViewBag.ExpireTimeSpan.TotalHours ore</span>
+                }
+                else
+                {
+                    <span>@ViewBag.ExpireTimeSpan.TotalMinutes minuti</span>
+                }
+            </p>
+            
+            <form asp-action="UpdateExpireTime" method="post">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="value">Valore</label>
+                            <input type="number" class="form-control" id="value" name="value" min="1" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="unit">Unità di tempo</label>
+                            <select class="form-control" id="unit" name="unit" required>
+                                <option value="minutes">Minuti</option>
+                                <option value="hours">Ore</option>
+                                <option value="days">Giorni</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="submit" class="btn btn-primary form-control">Aggiorna</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Security Settings Card -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Impostazioni di Sicurezza</h5>
+            <form asp-action="UpdateLoginAttempts" method="post">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="maxAttempts">Numero massimo tentativi</label>
+                            <input type="number" class="form-control" id="maxAttempts" name="maxAttempts" min="1" max="10" value="@ViewBag.MaxLoginAttempts" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="lockoutDuration">Durata blocco (minuti)</label>
+                            <input type="number" class="form-control" id="lockoutDuration" name="lockoutDuration" min="1" max="60" value="@ViewBag.LockoutDuration" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="submit" class="btn btn-primary form-control">Aggiorna</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Interface Settings Card -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Impostazioni Interfaccia</h5>
+            <form asp-action="UpdateInterfaceSettings" method="post">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="theme">Tema</label>
+                            <select class="form-control" id="theme" name="theme">
+                                <option value="light">Chiaro</option>
+                                <option value="dark">Scuro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="language">Lingua</label>
+                            <select class="form-control" id="language" name="language">
+                                <option value="it">Italiano</option>
+                                <option value="en">English</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="dateFormat">Formato Data</label>
+                            <select class="form-control" id="dateFormat" name="dateFormat">
+                                <option value="dd/MM/yyyy">DD/MM/YYYY</option>
+                                <option value="MM/dd/yyyy">MM/DD/YYYY</option>
+                                <option value="yyyy-MM-dd">YYYY-MM-DD</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="timezone">Fuso Orario</label>
+                            <select class="form-control" id="timezone" name="timezone">
+                                <option value="Europe/Rome">Roma (GMT+1)</option>
+                                <option value="Europe/London">Londra (GMT+0)</option>
+                                <option value="America/New_York">New York (GMT-5)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">Salva Impostazioni</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- System Resources Card -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Risorse di Sistema</h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6>CPU</h6>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: @ViewBag.CpuUsage%" aria-valuenow="@ViewBag.CpuUsage" aria-valuemin="0" aria-valuemax="100">@ViewBag.CpuUsage%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6>RAM</h6>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: @ViewBag.RamUsage%" aria-valuenow="@ViewBag.RamUsage" aria-valuemin="0" aria-valuemax="100">@ViewBag.RamUsage%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6>Disco</h6>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: @ViewBag.DiskUsage%" aria-valuenow="@ViewBag.DiskUsage" aria-valuemin="0" aria-valuemax="100">@ViewBag.DiskUsage%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h6>Log di Sistema</h6>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Tipo</th>
+                                    <th>Messaggio</th>
+                                    <th>Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var log in ViewBag.SystemLogs)
+                                {
+                                    <tr>
+                                        <td>@log.Timestamp</td>
+                                        <td>@log.Type</td>
+                                        <td>@log.Message</td>
+                                        <td>
+                                            <a href="@Url.Action("DownloadLog", new { id = log.Id })" class="btn btn-sm btn-primary">Scarica</a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Precompila il form con i valori attuali
+            var currentSpan = @ViewBag.ExpireTimeSpan.TotalMinutes;
+            if (currentSpan >= 1440) { // più di un giorno
+                $('#unit').val('days');
+                $('#value').val(Math.round(currentSpan / 1440));
+            } else if (currentSpan >= 60) { // più di un'ora
+                $('#unit').val('hours');
+                $('#value').val(Math.round(currentSpan / 60));
+            } else {
+                $('#unit').val('minutes');
+                $('#value').val(currentSpan);
+            }
+
+            // Initialize interface settings
+            $('#theme').val('@ViewBag.CurrentTheme');
+            $('#language').val('@ViewBag.CurrentLanguage');
+            $('#dateFormat').val('@ViewBag.CurrentDateFormat');
+            $('#timezone').val('@ViewBag.CurrentTimezone');
+
+            // Auto-refresh system resources every 30 seconds
+            setInterval(function() {
+                $.get('@Url.Action("GetSystemResources")', function(data) {
+                    $('.progress-bar').each(function() {
+                        var type = $(this).closest('.card').find('h6').text().toLowerCase();
+                        var value = data[type + 'Usage'];
+                        $(this).css('width', value + '%').attr('aria-valuenow', value).text(value + '%');
+                    });
+                });
+            }, 30000);
+        });
+    </script>
+} 

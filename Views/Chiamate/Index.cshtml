@@ -129,12 +129,6 @@
                                 </tr>
                             }
                         }
-                        else
-                        {
-                            <tr>
-                                <td colspan="10" class="text-center">Nessuna chiamata trovata per la data odierna</td>
-                            </tr>
-                        }
                     </tbody>
                 </table>
             </div>
@@ -161,9 +155,13 @@
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- DataTables CSS -->
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css" />
     <!-- DataTables JS -->
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.4.1/js/responsive.bootstrap5.min.js"></script>
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 
@@ -174,13 +172,16 @@
             // Inizializza DataTables con opzioni avanzate
             tabella = $('#tabellaChiamate').DataTable({
                 "language": {
-                    "url": "//cdn.datatables.net/plug-ins/1.13.4/i18n/it-IT.json"
+                    "url": "//cdn.datatables.net/plug-ins/1.13.4/i18n/it-IT.json",
+                    "emptyTable": "Nessuna chiamata trovata per la data odierna",
+                    "zeroRecords": "Nessuna chiamata trovata per la data odierna"
                 },
-                "order": [[5, "desc"]], // Ordina per data di arrivo (decrescente)
+                "order": [[4, "desc"]], // Ordina per data di arrivo (decrescente)
                 "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "Tutti"]], // Opzioni per numero elementi
                 "pageLength": 5, // Default a 5 elementi per pagina
                 "scrollX": true, // Abilita lo scorrimento orizzontale per tabelle larghe
                 "autoWidth": false, // Consente una migliore gestione manuale delle larghezze
+                "responsive": true,
                 "columnDefs": [
                     { "width": "120px", "targets": [0, 2] }, // Numeri telefonici
                     { "width": "180px", "targets": [1, 3] }, // Ragioni sociali
@@ -190,14 +191,16 @@
                     { "width": "120px", "targets": 8 }, // Locazione
                     { "width": "100px", "targets": 9 }, // Inserimento
                     { "width": "80px", "targets": 10 } // Azioni
-                ]
+                ],
+                "destroy": true,
+                "deferRender": true,
+                "processing": true
             });
 
             // Gestisce il refresh della tabella
-                    $("#refreshButton").click(function() {
-            window.location.href = window.location.href; // ricarica la pagina intera con il layout completo
-        });
-
+            $("#refreshButton").click(function() {
+                window.location.href = window.location.href; // ricarica la pagina intera con il layout completo
+            });
 
             // Gestione filtri per data
             $("#applyFilters").click(function() {

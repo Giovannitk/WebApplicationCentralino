@@ -3,6 +3,11 @@
     ViewData["Title"] = "Statistiche Dettagliate";
 }
 
+@section Styles {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+}
+
 <div class="container-fluid mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Statistiche Dettagliate</h2>
@@ -13,19 +18,19 @@
             <h5 class="mb-0">Filtri</h5>
         </div>
         <div class="card-body">
-            <form method="get" class="row g-3">
+            <form method="get" class="row g-3" id="filterForm">
                 <div class="col-12 col-md-3">
                     <label for="dateFrom" class="form-label">Data da:</label>
-                    <input type="date" id="dateFrom" name="dateFrom" class="form-control" value="@ViewBag.DateFrom">
+                    <input type="date" id="dateFrom" name="dateFrom" class="form-control" min="2020-01-01" value="@ViewBag.DateFrom">
                 </div>
                 <div class="col-12 col-md-3">
                     <label for="dateTo" class="form-label">Data a:</label>
-                    <input type="date" id="dateTo" name="dateTo" class="form-control" value="@ViewBag.DateTo">
+                    <input type="date" id="dateTo" name="dateTo" class="form-control" min="2020-01-01" value="@ViewBag.DateTo">
                 </div>
 
                 <div class="col-12 col-md-3">
                     <label for="includeInterni" class="form-label">Includi chiamate interne:</label>
-                    <select id="includeInterni" name="includeInterni" class="form-control">
+                    <select id="includeInterni" name="includeInterni" class="form-select">
                         @if (ViewBag.IncludeInterni == false)
                         {
                             <option value="false" selected>No</option>
@@ -39,10 +44,34 @@
                     </select>
                 </div>
 
-                <div class="col-12 col-md-3 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">
+                <div class="col-12 col-md-3" id="comuneContainer">
+                    <label for="comune" class="form-label">Comune:</label>
+                    <select id="comune" name="comune" class="form-control select2">
+                        <option value="">Seleziona un comune</option>
+                        @foreach (var comune in ViewBag.Comuni ?? new List<string>())
+                        {
+                            <option value="@comune" selected="@(ViewBag.SelectedComune == comune)">@comune</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-12" id="searchContainer">
+                    <label for="searchContatto" class="form-label">Cerca contatto:</label>
+                    <select id="searchContatto" name="searchContatto" class="form-control" style="width: 100%;">
+                        @if (!string.IsNullOrEmpty(ViewBag.SearchContatto))
+                        {
+                            <option value="@ViewBag.SearchContatto" selected>@ViewBag.SearchContatto</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
                         <i class="bi bi-filter"></i> Applica Filtri
                     </button>
+                    <a href="@Url.Action("StatisticheDettagliate")" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Reset Filtri
+                    </a>
                 </div>
             </form>
         </div>
@@ -62,7 +91,7 @@
             <div class="card bg-success text-white h-100">
                 <div class="card-body">
                     <h5 class="card-title">Durata Media</h5>
-                    <h2 class="card-text">@Model.DurataMediaChiamate.ToString("N0") sec</h2>
+                    <h2 class="card-text">@FormatDuration(Model.DurataMediaChiamate)</h2>
                 </div>
             </div>
         </div>
@@ -83,6 +112,52 @@
             </div>
         </div>
     </div>
+
+    @if (!string.IsNullOrEmpty(ViewBag.SearchContatto))
+    {
+        <!-- Statistiche del Contatto -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Statistiche del Contatto: @ViewBag.SearchContatto</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Chiamate in Entrata</h5>
+                                <h2 class="card-text">@Model.ChiamateInEntrata</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Chiamate in Uscita</h5>
+                                <h2 class="card-text">@Model.ChiamateInUscita</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Durata Totale</h5>
+                                <h2 class="card-text">@FormatDuration(Model.DurataTotaleChiamate)</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Durata Media</h5>
+                                <h2 class="card-text">@FormatDuration(Model.DurataMediaChiamate)</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 
     <!-- Distribuzione Chiamate -->
     <div class="row mb-4">
@@ -128,8 +203,17 @@
     <div class="row mb-4">
         <div class="col-12 col-md-6 mb-4">
             <div class="card shadow h-100">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Top 10 Chiamanti</h5>
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Top Chiamanti</h5>
+                    @if (!string.IsNullOrEmpty(ViewBag.SearchContatto))
+                    {
+                        <select id="topChiamantiCount" class="form-select form-select-sm" style="width: auto;">
+                            <option value="10">Top 10</option>
+                            <option value="20">Top 20</option>
+                            <option value="50">Top 50</option>
+                            <option value="100">Top 100</option>
+                        </select>
+                    }
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -143,15 +227,15 @@
                                     <th>Durata Media</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="topChiamantiBody">
                                 @foreach (var chiamante in Model.TopChiamanti)
                                 {
                                     <tr>
                                         <td>@chiamante.Numero</td>
                                         <td>@chiamante.RagioneSociale</td>
                                         <td>@chiamante.NumeroChiamate</td>
-                                        <td>@chiamante.DurataTotale.ToString("N0") sec</td>
-                                        <td>@chiamante.DurataMedia.ToString("N1") sec</td>
+                                        <td>@FormatDuration(chiamante.DurataTotale)</td>
+                                        <td>@FormatDuration(chiamante.DurataMedia)</td>
                                     </tr>
                                 }
                             </tbody>
@@ -162,8 +246,17 @@
         </div>
         <div class="col-12 col-md-6 mb-4">
             <div class="card shadow h-100">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Top 10 Chiamati</h5>
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Top Chiamati</h5>
+                    @if (!string.IsNullOrEmpty(ViewBag.SearchContatto))
+                    {
+                        <select id="topChiamatiCount" class="form-select form-select-sm" style="width: auto;">
+                            <option value="10">Top 10</option>
+                            <option value="20">Top 20</option>
+                            <option value="50">Top 50</option>
+                            <option value="100">Top 100</option>
+                        </select>
+                    }
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -177,15 +270,15 @@
                                     <th>Durata Media</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="topChiamatiBody">
                                 @foreach (var chiamato in Model.TopChiamati)
                                 {
                                     <tr>
                                         <td>@chiamato.Numero</td>
                                         <td>@chiamato.RagioneSociale</td>
                                         <td>@chiamato.NumeroChiamate</td>
-                                        <td>@chiamato.DurataTotale.ToString("N0") sec</td>
-                                        <td>@chiamato.DurataMedia.ToString("N1") sec</td>
+                                        <td>@FormatDuration(chiamato.DurataTotale)</td>
+                                        <td>@FormatDuration(chiamato.DurataMedia)</td>
                                     </tr>
                                 }
                             </tbody>
@@ -195,138 +288,485 @@
             </div>
         </div>
     </div>
+
+    @if (!string.IsNullOrEmpty(ViewBag.SearchContatto))
+    {
+        <!-- Grafici Contatto -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card shadow h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Andamento Giornaliero</h5>
+                    </div>
+                    <div class="card-body">
+                        <div style="height: 300px;">
+                            <canvas id="contattoGiornoChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card shadow h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Distribuzione Oraria</h5>
+                    </div>
+                    <div class="card-body">
+                        <div style="height: 300px;">
+                            <canvas id="contattoOraChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Modal per contatto non trovato -->
+<div class="modal fade" id="contattoNonTrovatoModal" tabindex="-1" aria-labelledby="contattoNonTrovatoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title" id="contattoNonTrovatoModalLabel">Contatto non trovato</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Il contatto cercato non è stato trovato. Vuoi cercarlo nella rubrica?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, rimani qui</button>
+                <a href="@Url.Action("Index", "Contatti")" class="btn btn-primary">Sì, vai alla rubrica</a>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
-        // Dati per i grafici
-        const tipoData = {
-            labels: @Html.Raw(Json.Serialize(Model.ChiamatePerTipo.Keys)),
-            datasets: [{
-                data: @Html.Raw(Json.Serialize(Model.ChiamatePerTipo.Values)),
-                backgroundColor: [
-                    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'
-                ]
-            }]
-        };
+        $(document).ready(function() {
+            // Funzione per gestire date non valide
+            function fixInvalidDate(input) {
+                if (!input.value) return;
 
-        const locazioneData = {
-            labels: @Html.Raw(Json.Serialize(Model.ChiamatePerLocazione.Keys)),
-            datasets: [{
-                data: @Html.Raw(Json.Serialize(Model.ChiamatePerLocazione.Values)),
-                backgroundColor: [
-                    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'
-                ]
-            }]
-        };
+                const parts = input.value.split("-");
+                if (parts.length !== 3) return;
 
-        const giornoData = {
-            labels: @Html.Raw(Json.Serialize(Model.ChiamatePerGiorno.Keys)),
-            datasets: [{
-                label: 'Numero Chiamate',
-                data: @Html.Raw(Json.Serialize(Model.ChiamatePerGiorno.Values)),
-                borderColor: '#4e73df',
-                backgroundColor: 'rgba(78, 115, 223, 0.1)',
-                fill: true
-            }]
-        };
+                let year = parseInt(parts[0], 10);
+                const currentYear = new Date().getFullYear();
 
-        // Configurazione dei grafici
-        const tipoChart = new Chart(
-            document.getElementById('tipoChart'),
-            {
-                type: 'pie',
-                data: tipoData,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: window.innerWidth < 768 ? 'bottom' : 'right',
-                            labels: {
-                                boxWidth: 15,
-                                font: {
-                                    size: window.innerWidth < 768 ? 10 : 12
+                if (isNaN(year) || year < 2020) {
+                    parts[0] = currentYear;
+                    input.value = parts.join("-");
+                }
+            }
+
+            // Aggiungi event listeners per i campi data
+            $('#dateFrom, #dateTo').on('change blur', function() {
+                fixInvalidDate(this);
+            });
+
+            // Initialize Select2 for comune dropdown
+            $('.select2').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                dropdownParent: $('#comuneContainer'),
+                placeholder: 'Seleziona un comune',
+                allowClear: true
+            });
+
+            // Gestione della visibilità dei campi di ricerca
+            function toggleSearchFields() {
+                const comune = $('#comune').val();
+                const searchText = $('#searchContatto').val();
+
+                if (comune) {
+                    $('#searchContainer').hide();
+                    $('#searchContatto').val('');
+                } else if (searchText) {
+                    $('#comuneContainer').hide();
+                    $('#comune').val('').trigger('change');
+                } else {
+                    $('#searchContainer').show();
+                    $('#comuneContainer').show();
+                }
+            }
+
+            // Inizializza lo stato dei campi
+            toggleSearchFields();
+
+            // Gestisci i cambiamenti nei campi
+            $('#comune').on('change', function() {
+                toggleSearchFields();
+            });
+
+            $('#searchContatto').on('input', function() {
+                toggleSearchFields();
+            });
+
+            // Gestione del form submit
+            $('#filterForm').on('submit', function(e) {
+                const comune = $('#comune').val();
+                const searchText = $('#searchContatto').val();
+
+                // Se c'è un termine di ricerca, verifica se ci sono risultati
+                if (searchText) {
+                    e.preventDefault();
+                    $.get('@Url.Action("VerificaContatto", "Home")', { searchContatto: searchText })
+                        .done(function(hasResults) {
+                            if (hasResults) {
+                                $('#filterForm')[0].submit();
+                            } else {
+                                $('#contattoNonTrovatoModal').modal('show');
+                            }
+                        });
+                }
+            });
+
+            // Dati per i grafici
+            const tipoData = {
+                labels: @Html.Raw(Json.Serialize(Model.ChiamatePerTipo.Keys)),
+                datasets: [{
+                    data: @Html.Raw(Json.Serialize(Model.ChiamatePerTipo.Values)),
+                    backgroundColor: [
+                        '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'
+                    ]
+                }]
+            };
+
+            const locazioneData = {
+                labels: @Html.Raw(Json.Serialize(Model.ChiamatePerLocazione.Keys)),
+                datasets: [{
+                    data: @Html.Raw(Json.Serialize(Model.ChiamatePerLocazione.Values)),
+                    backgroundColor: [
+                        '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'
+                    ]
+                }]
+            };
+
+            const giornoData = {
+                labels: @Html.Raw(Json.Serialize(Model.ChiamatePerGiorno.Keys)),
+                datasets: [{
+                    label: 'Numero Chiamate',
+                    data: @Html.Raw(Json.Serialize(Model.ChiamatePerGiorno.Values)),
+                    borderColor: '#4e73df',
+                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                    fill: true
+                }]
+            };
+
+            // Configurazione dei grafici
+            const tipoChart = new Chart(
+                document.getElementById('tipoChart'),
+                {
+                    type: 'pie',
+                    data: tipoData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: window.innerWidth < 768 ? 'bottom' : 'right',
+                                labels: {
+                                    boxWidth: 15,
+                                    font: {
+                                        size: window.innerWidth < 768 ? 10 : 12
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
-        );
+            );
 
-        const locazioneChart = new Chart(
-            document.getElementById('locazioneChart'),
-            {
-                type: 'pie',
-                data: locazioneData,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: window.innerWidth < 768 ? 'bottom' : 'right',
-                            labels: {
-                                boxWidth: 15,
-                                font: {
-                                    size: window.innerWidth < 768 ? 10 : 12
+            const locazioneChart = new Chart(
+                document.getElementById('locazioneChart'),
+                {
+                    type: 'pie',
+                    data: locazioneData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: window.innerWidth < 768 ? 'bottom' : 'right',
+                                labels: {
+                                    boxWidth: 15,
+                                    font: {
+                                        size: window.innerWidth < 768 ? 10 : 12
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
-        );
+            );
 
-        const giornoChart = new Chart(
-            document.getElementById('giornoChart'),
-            {
-                type: 'line',
-                data: giornoData,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 1,
-                                font: {
-                                    size: window.innerWidth < 768 ? 10 : 12
-                                }
+            const giornoChart = new Chart(
+                document.getElementById('giornoChart'),
+                {
+                    type: 'line',
+                    data: giornoData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
                             }
                         },
-                        x: {
-                            ticks: {
-                                font: {
-                                    size: window.innerWidth < 768 ? 10 : 12
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1,
+                                    font: {
+                                        size: window.innerWidth < 768 ? 10 : 12
+                                    }
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    font: {
+                                        size: window.innerWidth < 768 ? 10 : 12
+                                    }
                                 }
                             }
                         }
                     }
                 }
+            );
+
+            // Aggiorna i grafici quando la finestra viene ridimensionata
+            window.addEventListener('resize', function() {
+                tipoChart.options.plugins.legend.position = window.innerWidth < 768 ? 'bottom' : 'right';
+                tipoChart.options.plugins.legend.labels.font.size = window.innerWidth < 768 ? 10 : 12;
+                tipoChart.update();
+
+                locazioneChart.options.plugins.legend.position = window.innerWidth < 768 ? 'bottom' : 'right';
+                locazioneChart.options.plugins.legend.labels.font.size = window.innerWidth < 768 ? 10 : 12;
+                locazioneChart.update();
+
+                giornoChart.options.scales.y.ticks.font.size = window.innerWidth < 768 ? 10 : 12;
+                giornoChart.options.scales.x.ticks.font.size = window.innerWidth < 768 ? 10 : 12;
+                giornoChart.update();
+            });
+
+            // Inizializza Select2 per il campo di ricerca contatto
+            $('#searchContatto').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Cerca per numero o ragione sociale...',
+                allowClear: true,
+                minimumInputLength: 3,
+                ajax: {
+                    url: '@Url.Action("VerificaContatto")',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            searchContatto: params.term
+                        };
+                    },
+                    processResults: function(data) {
+                        return {
+                            results: data.results
+                        };
+                    },
+                    cache: true
+                },
+                language: {
+                    searching: function() {
+                        return "Ricerca in corso...";
+                    },
+                    noResults: function() {
+                        return "Nessun risultato trovato";
+                    },
+                    inputTooShort: function() {
+                        return "Inserisci almeno 3 caratteri";
+                    }
+                }
+            });
+
+            // Se c'è un valore iniziale, lo imposta
+            @if (!string.IsNullOrEmpty(ViewBag.SearchContatto))
+            {
+                <text>
+                var initialValue = '@ViewBag.SearchContatto';
+                var $searchContatto = $('#searchContatto');
+                var option = new Option(initialValue, initialValue, true, true);
+                $searchContatto.append(option).trigger('change');
+                </text>
             }
-        );
 
-        // Aggiorna i grafici quando la finestra viene ridimensionata
-        window.addEventListener('resize', function() {
-            tipoChart.options.plugins.legend.position = window.innerWidth < 768 ? 'bottom' : 'right';
-            tipoChart.options.plugins.legend.labels.font.size = window.innerWidth < 768 ? 10 : 12;
-            tipoChart.update();
+            // Gestione del cambio del numero di risultati per i top chiamanti
+            $('#topChiamantiCount').change(function() {
+                var count = $(this).val();
+                var searchContatto = '@ViewBag.SearchContatto';
+                var dateFrom = '@ViewBag.DateFrom';
+                var dateTo = '@ViewBag.DateTo';
 
-            locazioneChart.options.plugins.legend.position = window.innerWidth < 768 ? 'bottom' : 'right';
-            locazioneChart.options.plugins.legend.labels.font.size = window.innerWidth < 768 ? 10 : 12;
-            locazioneChart.update();
+                $.get('@Url.Action("GetTopChiamanti")', {
+                    searchContatto: searchContatto,
+                    count: count,
+                    dateFrom: dateFrom,
+                    dateTo: dateTo
+                }, function(data) {
+                    var tbody = $('#topChiamantiBody');
+                    tbody.empty();
+                    
+                    data.forEach(function(chiamante) {
+                        tbody.append(`
+                            <tr>
+                                <td>${chiamante.numero}</td>
+                                <td>${chiamante.ragioneSociale}</td>
+                                <td>${chiamante.numeroChiamate}</td>
+                                <td>${formatDuration(chiamante.durataTotale)}</td>
+                                <td>${formatDuration(chiamante.durataMedia)}</td>
+                            </tr>
+                        `);
+                    });
+                });
+            });
 
-            giornoChart.options.scales.y.ticks.font.size = window.innerWidth < 768 ? 10 : 12;
-            giornoChart.options.scales.x.ticks.font.size = window.innerWidth < 768 ? 10 : 12;
-            giornoChart.update();
+            // Gestione del cambio del numero di risultati per i top chiamati
+            $('#topChiamatiCount').change(function() {
+                var count = $(this).val();
+                var searchContatto = '@ViewBag.SearchContatto';
+                var dateFrom = '@ViewBag.DateFrom';
+                var dateTo = '@ViewBag.DateTo';
+
+                $.get('@Url.Action("GetTopChiamati")', {
+                    searchContatto: searchContatto,
+                    count: count,
+                    dateFrom: dateFrom,
+                    dateTo: dateTo
+                }, function(data) {
+                    var tbody = $('#topChiamatiBody');
+                    tbody.empty();
+                    
+                    data.forEach(function(chiamato) {
+                        tbody.append(`
+                            <tr>
+                                <td>${chiamato.numero}</td>
+                                <td>${chiamato.ragioneSociale}</td>
+                                <td>${chiamato.numeroChiamate}</td>
+                                <td>${formatDuration(chiamato.durataTotale)}</td>
+                                <td>${formatDuration(chiamato.durataMedia)}</td>
+                            </tr>
+                        `);
+                    });
+                });
+            });
+
+            // Funzione per formattare la durata
+            function formatDuration(seconds) {
+                var hours = Math.floor(seconds / 3600);
+                var minutes = Math.floor((seconds % 3600) / 60);
+                var secs = Math.floor(seconds % 60);
+                
+                var parts = [];
+                if (hours > 0) parts.push(hours + 'h');
+                if (minutes > 0) parts.push(minutes + 'm');
+                if (secs > 0 || parts.length === 0) parts.push(secs + 's');
+                
+                return parts.join(' ');
+            }
+
+            @if (!string.IsNullOrEmpty(ViewBag.SearchContatto))
+            {
+                <text>
+                // Grafici per le statistiche del contatto
+                const contattoGiornoData = {
+                    labels: @Html.Raw(Json.Serialize(Model.ChiamatePerGiorno.Keys)),
+                    datasets: [{
+                        label: 'Numero Chiamate',
+                        data: @Html.Raw(Json.Serialize(Model.ChiamatePerGiorno.Values)),
+                        borderColor: '#4e73df',
+                        backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                        fill: true
+                    }]
+                };
+
+                const contattoOraData = {
+                    labels: @Html.Raw(Json.Serialize(Model.ChiamatePerOra.Keys)),
+                    datasets: [{
+                        label: 'Numero Chiamate',
+                        data: @Html.Raw(Json.Serialize(Model.ChiamatePerOra.Values)),
+                        borderColor: '#1cc88a',
+                        backgroundColor: 'rgba(28, 200, 138, 0.1)',
+                        fill: true
+                    }]
+                };
+
+                new Chart(
+                    document.getElementById('contattoGiornoChart'),
+                    {
+                        type: 'line',
+                        data: contattoGiornoData,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1
+                                    }
+                                }
+                            }
+                        }
+                    }
+                );
+
+                new Chart(
+                    document.getElementById('contattoOraChart'),
+                    {
+                        type: 'line',
+                        data: contattoOraData,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1
+                                    }
+                                }
+                            }
+                        }
+                    }
+                );
+                </text>
+            }
         });
     </script>
+}
+
+@functions {
+    public string FormatDuration(double seconds)
+    {
+        if (seconds < 60)
+        {
+            return $"{seconds:N0} sec";
+        }
+        
+        int totalSeconds = (int)seconds;
+        int hours = totalSeconds / 3600;
+        int minutes = (totalSeconds % 3600) / 60;
+        int remainingSeconds = totalSeconds % 60;
+        
+        if (hours > 0)
+        {
+            return $"{hours}h {minutes}m {remainingSeconds}s";
+        }
+        else if (minutes > 0)
+        {
+            return $"{minutes}m {remainingSeconds}s";
+        }
+        else
+        {
+            return $"{remainingSeconds}s";
+        }
+    }
 } 

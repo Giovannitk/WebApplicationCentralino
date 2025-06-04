@@ -6,6 +6,8 @@ using WebApplicationCentralino.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Authorization;
+using System.Linq;
+using WebApplicationCentralino.Extensions;
 
 namespace WebApplicationCentralino.Controllers
 {
@@ -229,6 +231,31 @@ namespace WebApplicationCentralino.Controllers
             {
                 ModelState.AddModelError("DataArrivoChiamata", "La data di arrivo non può essere più vecchia di 10 anni");
                 chiamata.DataArrivoChiamata = now;
+            }
+
+            // Gestione dell'anno 0000
+            if (chiamata.DataArrivoChiamata.Year == 1 && chiamata.DataArrivoChiamata.ToString("yyyy-MM-dd").Contains("-0000-"))
+            {
+                chiamata.DataArrivoChiamata = new DateTime(
+                    DateTime.Now.Year,
+                    chiamata.DataArrivoChiamata.Month,
+                    chiamata.DataArrivoChiamata.Day,
+                    chiamata.DataArrivoChiamata.Hour,
+                    chiamata.DataArrivoChiamata.Minute,
+                    chiamata.DataArrivoChiamata.Second
+                );
+            }
+
+            if (chiamata.DataFineChiamata.Year == 1 && chiamata.DataFineChiamata.ToString("yyyy-MM-dd").Contains("-0000-"))
+            {
+                chiamata.DataFineChiamata = new DateTime(
+                    DateTime.Now.Year,
+                    chiamata.DataFineChiamata.Month,
+                    chiamata.DataFineChiamata.Day,
+                    chiamata.DataFineChiamata.Hour,
+                    chiamata.DataFineChiamata.Minute,
+                    chiamata.DataFineChiamata.Second
+                );
             }
 
             if (!ModelState.IsValid)

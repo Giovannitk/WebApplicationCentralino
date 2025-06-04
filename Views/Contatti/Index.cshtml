@@ -66,8 +66,8 @@
                                     <td>@(contatto.RagioneSociale ?? "-")</td>
                                     <td>@(contatto.Citta ?? "-")</td>
                                     <td>@(contatto.Interno.HasValue ? (contatto.Interno.Value == 1 ? "Interno" : "Esterno") : "-")</td>
-                                    <td>
-                                        <div class="btn-group float-end">
+                                    <td class="text-end">
+                                        <div class="btn-group">
                                             <a asp-controller="GestioneContatti" asp-action="Modifica" 
                                                asp-route-numero="@contatto.NumeroContatto" 
                                                class="btn btn-sm btn-primary">

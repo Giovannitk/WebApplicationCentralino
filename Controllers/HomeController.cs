@@ -5,6 +5,9 @@ using WebApplicationCentralino.Services;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using System.Linq;
+using System.Collections.Generic;
+using WebApplicationCentralino.Extensions;
 
 namespace WebApplicationCentralino.Controllers
 {
@@ -69,43 +72,109 @@ namespace WebApplicationCentralino.Controllers
         /// <summary>
         /// Visualizza le statistiche dettagliate delle chiamate con possibilità di filtraggio
         /// </summary>
-        public async Task<IActionResult> StatisticheDettagliate(string? dateFrom = null, string? dateTo = null, bool includeInterni = false)
+        public async Task<IActionResult> StatisticheDettagliate(string? dateFrom = null, string? dateTo = null, bool includeInterni = false, string? comune = null, string? searchContatto = null)
         {
             try
             {
                 DateTime? fromDateParsed = null;
                 DateTime? toDateParsed = null;
+                var oggi = DateTime.Today;
 
                 // Parsing dei parametri di data
-                if (!string.IsNullOrEmpty(dateFrom) && DateTime.TryParse(dateFrom, out DateTime fromDate))
+                if (!string.IsNullOrEmpty(dateFrom) && DateTimeExtensions.TryParseWithYearHandling(dateFrom, out DateTime fromDate))
                 {
+                    // Se l'anno è inferiore al 2020, usa l'anno corrente
+                    if (fromDate.Year < 2020)
+                    {
+                        fromDate = new DateTime(oggi.Year, fromDate.Month, fromDate.Day, fromDate.Hour, fromDate.Minute, fromDate.Second);
+                        dateFrom = fromDate.ToString("yyyy-MM-dd");
+                    }
                     fromDateParsed = fromDate;
                 }
                 else
                 {
                     // Se non specificato, usa l'inizio del mese corrente
-                    fromDateParsed = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+                    fromDateParsed = new DateTime(oggi.Year, oggi.Month, 1);
                     dateFrom = fromDateParsed.Value.ToString("yyyy-MM-dd");
                 }
 
-                if (!string.IsNullOrEmpty(dateTo) && DateTime.TryParse(dateTo, out DateTime toDate))
+                if (!string.IsNullOrEmpty(dateTo) && DateTimeExtensions.TryParseWithYearHandling(dateTo, out DateTime toDate))
                 {
+                    // Se l'anno è inferiore al 2020, usa l'anno corrente
+                    if (toDate.Year < 2020)
+                    {
+                        toDate = new DateTime(oggi.Year, toDate.Month, toDate.Day, toDate.Hour, toDate.Minute, toDate.Second);
+                        dateTo = toDate.ToString("yyyy-MM-dd");
+                    }
                     toDateParsed = toDate.AddDays(1).AddSeconds(-1);
                 }
                 else
                 {
                     // Se non specificato, usa oggi
-                    toDateParsed = DateTime.Today.AddDays(1).AddSeconds(-1);
-                    dateTo = DateTime.Today.ToString("yyyy-MM-dd");
+                    toDateParsed = oggi.AddDays(1).AddSeconds(-1);
+                    dateTo = oggi.ToString("yyyy-MM-dd");
                 }
 
                 // Recupera le statistiche dettagliate
-                var statistiche = await _chiamataService.GetDetailedStatisticsAsync(fromDateParsed, toDateParsed, includeInterni);
+                var statistiche = await _chiamataService.GetDetailedStatisticsAsync(fromDateParsed, toDateParsed, includeInterni, comune, searchContatto);
+                
+                // Lista predefinita dei comuni
+                var comuni = new List<string>
+                {
+                    "Comune di Ali'",
+                    "Comune di Ali' Terme",
+                    "Comune di Antillo",
+                    "Comune di Barcellona Pozzo di Gotto",
+                    "Comune di Basico'",
+                    "Comune di Brolo",
+                    "Comune di Capizzi",
+                    "Comune di Capri Leone",
+                    "Comune di Capo D'Orlando",
+                    "Comune di Casalvecchio Siculo",
+                    "Comune di Falcone",
+                    "Comune di Forza d'Agro'",
+                    "Comune di Furci Siculo",
+                    "Comune di Furnari",
+                    "Comune di Gallodoro",
+                    "Comune di Itala",
+                    "Comune di Leni",
+                    "Comune di Letojanni",
+                    "Comune di Limina",
+                    "Comune di Longi",
+                    "Comune di Mandanici",
+                    "Comune di Mazzarra S. Andrea",
+                    "Comune di Messina",
+                    "Comune di Milazzo",
+                    "Comune di Mistretta",
+                    "Comune di Mongiuffi Melia",
+                    "Comune di Montalbano Elicona",
+                    "Comune di Motta Camastra",
+                    "Comune di Nizza di Sicilia",
+                    "Comune di Novara di Sicilia",
+                    "Comune di Oliveri",
+                    "Comune di Reitano",
+                    "Comune di Pace del Mela",
+                    "Comune di Patti",
+                    "Comune di Roccafiorita",
+                    "Comune di Roccalumera",
+                    "Comune di Sambuca",
+                    "Comune di Santa Lucia del Mela",
+                    "Comune di Saponara",
+                    "Comune di Scaletta Zanclea",
+                    "Comune di Spadafora",
+                    "Comune di Terme Vigliatore",
+                    "Comune di Torrenova",
+                    "Comune di Tripi",
+                    "Comune di Venetico"
+                };
                 
                 // Passa i valori alla vista per mantenere i filtri
                 ViewBag.DateFrom = dateFrom;
                 ViewBag.DateTo = dateTo;
                 ViewBag.IncludeInterni = includeInterni;
+                ViewBag.Comuni = comuni;
+                ViewBag.SelectedComune = comune;
+                ViewBag.SearchContatto = searchContatto;
                 
                 return View(statistiche);
             }
@@ -125,28 +194,41 @@ namespace WebApplicationCentralino.Controllers
             {
                 DateTime? fromDateParsed = null;
                 DateTime? toDateParsed = null;
+                var oggi = DateTime.Today;
 
                 // Parsing dei parametri di data
-                if (!string.IsNullOrEmpty(dateFrom) && DateTime.TryParse(dateFrom, out DateTime fromDate))
+                if (!string.IsNullOrEmpty(dateFrom) && DateTimeExtensions.TryParseWithYearHandling(dateFrom, out DateTime fromDate))
                 {
+                    // Se l'anno è inferiore al 2020, usa l'anno corrente
+                    if (fromDate.Year < 2020)
+                    {
+                        fromDate = new DateTime(oggi.Year, fromDate.Month, fromDate.Day, fromDate.Hour, fromDate.Minute, fromDate.Second);
+                        dateFrom = fromDate.ToString("yyyy-MM-dd");
+                    }
                     fromDateParsed = fromDate;
                 }
                 else
                 {
                     // Se non specificato, usa l'inizio del mese corrente
-                    fromDateParsed = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+                    fromDateParsed = new DateTime(oggi.Year, oggi.Month, 1);
                     dateFrom = fromDateParsed.Value.ToString("yyyy-MM-dd");
                 }
 
-                if (!string.IsNullOrEmpty(dateTo) && DateTime.TryParse(dateTo, out DateTime toDate))
+                if (!string.IsNullOrEmpty(dateTo) && DateTimeExtensions.TryParseWithYearHandling(dateTo, out DateTime toDate))
                 {
+                    // Se l'anno è inferiore al 2020, usa l'anno corrente
+                    if (toDate.Year < 2020)
+                    {
+                        toDate = new DateTime(oggi.Year, toDate.Month, toDate.Day, toDate.Hour, toDate.Minute, toDate.Second);
+                        dateTo = toDate.ToString("yyyy-MM-dd");
+                    }
                     toDateParsed = toDate.AddDays(1).AddSeconds(-1);
                 }
                 else
                 {
                     // Se non specificato, usa oggi
-                    toDateParsed = DateTime.Today.AddDays(1).AddSeconds(-1);
-                    dateTo = DateTime.Today.ToString("yyyy-MM-dd");
+                    toDateParsed = oggi.AddDays(1).AddSeconds(-1);
+                    dateTo = oggi.ToString("yyyy-MM-dd");
                 }
 
                 // Recupera le statistiche del contatto
@@ -163,6 +245,123 @@ namespace WebApplicationCentralino.Controllers
             {
                 _logger.LogError(ex, "Errore durante il recupero delle statistiche del contatto");
                 return RedirectToAction("Index");
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> VerificaContatto(string searchContatto)
+        {
+            try
+            {
+                var contatti = await _contattoService.GetAllAsync();
+                var results = contatti
+                    .Where(c => 
+                        (c.NumeroContatto != null && c.NumeroContatto.Contains(searchContatto, StringComparison.OrdinalIgnoreCase)) ||
+                        (c.RagioneSociale != null && c.RagioneSociale.Contains(searchContatto, StringComparison.OrdinalIgnoreCase)))
+                    .Select(c => new {
+                        id = c.NumeroContatto,
+                        text = $"{c.NumeroContatto} - {c.RagioneSociale}"
+                    })
+                    .ToList();
+                
+                return Json(new { results = results });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante la verifica del contatto");
+                return Json(new { results = new List<object>() });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetTopChiamanti(string searchContatto, int count = 10, string? dateFrom = null, string? dateTo = null)
+        {
+            try
+            {
+                DateTime? fromDateParsed = null;
+                DateTime? toDateParsed = null;
+                var oggi = DateTime.Today;
+
+                // Parsing dei parametri di data
+                if (!string.IsNullOrEmpty(dateFrom) && DateTimeExtensions.TryParseWithYearHandling(dateFrom, out DateTime fromDate))
+                {
+                    if (fromDate.Year < 2020)
+                    {
+                        fromDate = new DateTime(oggi.Year, fromDate.Month, fromDate.Day);
+                    }
+                    fromDateParsed = fromDate;
+                }
+
+                if (!string.IsNullOrEmpty(dateTo) && DateTimeExtensions.TryParseWithYearHandling(dateTo, out DateTime toDate))
+                {
+                    if (toDate.Year < 2020)
+                    {
+                        toDate = new DateTime(oggi.Year, toDate.Month, toDate.Day);
+                    }
+                    toDateParsed = toDate.AddDays(1).AddSeconds(-1);
+                }
+
+                var statistiche = await _chiamataService.GetDetailedStatisticsAsync(fromDateParsed, toDateParsed, true, null, searchContatto);
+                var topChiamanti = statistiche.TopChiamanti.Take(count).Select(c => new {
+                    numero = c.Numero,
+                    ragioneSociale = c.RagioneSociale,
+                    numeroChiamate = c.NumeroChiamate,
+                    durataTotale = c.DurataTotale,
+                    durataMedia = c.DurataMedia
+                });
+
+                return Json(topChiamanti);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante il recupero dei top chiamanti");
+                return Json(new List<object>());
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetTopChiamati(string searchContatto, int count = 10, string? dateFrom = null, string? dateTo = null)
+        {
+            try
+            {
+                DateTime? fromDateParsed = null;
+                DateTime? toDateParsed = null;
+                var oggi = DateTime.Today;
+
+                // Parsing dei parametri di data
+                if (!string.IsNullOrEmpty(dateFrom) && DateTimeExtensions.TryParseWithYearHandling(dateFrom, out DateTime fromDate))
+                {
+                    if (fromDate.Year < 2020)
+                    {
+                        fromDate = new DateTime(oggi.Year, fromDate.Month, fromDate.Day);
+                    }
+                    fromDateParsed = fromDate;
+                }
+
+                if (!string.IsNullOrEmpty(dateTo) && DateTimeExtensions.TryParseWithYearHandling(dateTo, out DateTime toDate))
+                {
+                    if (toDate.Year < 2020)
+                    {
+                        toDate = new DateTime(oggi.Year, toDate.Month, toDate.Day);
+                    }
+                    toDateParsed = toDate.AddDays(1).AddSeconds(-1);
+                }
+
+                var statistiche = await _chiamataService.GetDetailedStatisticsAsync(fromDateParsed, toDateParsed, true, null, searchContatto);
+                var topChiamati = statistiche.TopChiamati.Take(count).Select(c => new {
+                    numero = c.Numero,
+                    ragioneSociale = c.RagioneSociale,
+                    numeroChiamate = c.NumeroChiamate,
+                    durataTotale = c.DurataTotale,
+                    durataMedia = c.DurataMedia
+                });
+
+                return Json(topChiamati);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante il recupero dei top chiamati");
+                return Json(new List<object>());
             }
         }
 

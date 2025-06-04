@@ -22,11 +22,11 @@
                 <input type="hidden" name="numeroContatto" value="@ViewBag.NumeroContatto">
                 <div class="col-md-4">
                     <label for="dateFrom" class="form-label">Data da:</label>
-                    <input type="date" id="dateFrom" name="dateFrom" class="form-control" value="@ViewBag.DateFrom">
+                    <input type="date" id="dateFrom" name="dateFrom" class="form-control" min="2020-01-01" value="@ViewBag.DateFrom">
                 </div>
                 <div class="col-md-4">
                     <label for="dateTo" class="form-label">Data a:</label>
-                    <input type="date" id="dateTo" name="dateTo" class="form-control" value="@ViewBag.DateTo">
+                    <input type="date" id="dateTo" name="dateTo" class="form-control" min="2020-01-01" value="@ViewBag.DateTo">
                 </div>
                 <div class="col-md-4 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary w-100">
@@ -59,7 +59,7 @@
             <div class="card bg-warning text-white">
                 <div class="card-body">
                     <h5 class="card-title">Durata Totale</h5>
-                    <h2 class="card-text">@Model.DurataTotaleChiamate.ToString("N0") sec</h2>
+                    <h2 class="card-text">@FormatDuration(Model.DurataTotaleChiamate)</h2>
                 </div>
             </div>
         </div>
@@ -67,7 +67,7 @@
             <div class="card bg-info text-white">
                 <div class="card-body">
                     <h5 class="card-title">Durata Media</h5>
-                    <h2 class="card-text">@Model.DurataMediaChiamate.ToString("N0") sec</h2>
+                    <h2 class="card-text">@FormatDuration(Model.DurataMediaChiamate)</h2>
                 </div>
             </div>
         </div>
@@ -131,7 +131,7 @@
                                 </td>
                                 <td>@(chiamata.NumeroChiamato == Model.Numero ? chiamata.NumeroChiamante : chiamata.NumeroChiamato)</td>
                                 <td>@(chiamata.NumeroChiamato == Model.Numero ? chiamata.RagioneSocialeChiamante : chiamata.RagioneSocialeChiamato)</td>
-                                <td>@chiamata.Durata.TotalSeconds.ToString("N0") sec</td>
+                                <td>@FormatDuration(chiamata.Durata.TotalSeconds)</td>
                                 <td>@(chiamata.Locazione ?? "-")</td>
                             </tr>
                         }
@@ -145,68 +145,119 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Dati per i grafici
-        const giornoData = {
-            labels: @Html.Raw(Json.Serialize(Model.ChiamatePerGiorno.Keys)),
-            datasets: [{
-                label: 'Numero Chiamate',
-                data: @Html.Raw(Json.Serialize(Model.ChiamatePerGiorno.Values)),
-                borderColor: '#4e73df',
-                backgroundColor: 'rgba(78, 115, 223, 0.1)',
-                fill: true
-            }]
-        };
+        $(document).ready(function() {
+            // Funzione per gestire date non valide
+            function fixInvalidDate(input) {
+                if (!input.value) return;
 
-        const oraData = {
-            labels: @Html.Raw(Json.Serialize(Model.ChiamatePerOra.Keys)),
-            datasets: [{
-                label: 'Numero Chiamate',
-                data: @Html.Raw(Json.Serialize(Model.ChiamatePerOra.Values)),
-                borderColor: '#1cc88a',
-                backgroundColor: 'rgba(28, 200, 138, 0.1)',
-                fill: true
-            }]
-        };
+                const parts = input.value.split("-");
+                if (parts.length !== 3) return;
 
-        // Configurazione dei grafici
-        new Chart(
-            document.getElementById('giornoChart'),
-            {
-                type: 'line',
-                data: giornoData,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 1
+                let year = parseInt(parts[0], 10);
+                const currentYear = new Date().getFullYear();
+
+                if (isNaN(year) || year < 2020) {
+                    parts[0] = currentYear;
+                    input.value = parts.join("-");
+                }
+            }
+
+            // Aggiungi event listeners per i campi data
+            $('#dateFrom, #dateTo').on('change blur', function() {
+                fixInvalidDate(this);
+            });
+
+            // Dati per i grafici
+            const giornoData = {
+                labels: @Html.Raw(Json.Serialize(Model.ChiamatePerGiorno.Keys)),
+                datasets: [{
+                    label: 'Numero Chiamate',
+                    data: @Html.Raw(Json.Serialize(Model.ChiamatePerGiorno.Values)),
+                    borderColor: '#4e73df',
+                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                    fill: true
+                }]
+            };
+
+            const oraData = {
+                labels: @Html.Raw(Json.Serialize(Model.ChiamatePerOra.Keys)),
+                datasets: [{
+                    label: 'Numero Chiamate',
+                    data: @Html.Raw(Json.Serialize(Model.ChiamatePerOra.Values)),
+                    borderColor: '#1cc88a',
+                    backgroundColor: 'rgba(28, 200, 138, 0.1)',
+                    fill: true
+                }]
+            };
+
+            // Configurazione dei grafici
+            new Chart(
+                document.getElementById('giornoChart'),
+                {
+                    type: 'line',
+                    data: giornoData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
                             }
                         }
                     }
                 }
-            }
-        );
+            );
 
-        new Chart(
-            document.getElementById('oraChart'),
-            {
-                type: 'line',
-                data: oraData,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 1
+            new Chart(
+                document.getElementById('oraChart'),
+                {
+                    type: 'line',
+                    data: oraData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
                             }
                         }
                     }
                 }
-            }
-        );
+            );
+        });
     </script>
+}
+
+@functions {
+    public string FormatDuration(double seconds)
+    {
+        if (seconds < 60)
+        {
+            return $"{seconds:N0} sec";
+        }
+        
+        int totalSeconds = (int)seconds;
+        int hours = totalSeconds / 3600;
+        int minutes = (totalSeconds % 3600) / 60;
+        int remainingSeconds = totalSeconds % 60;
+        
+        if (hours > 0)
+        {
+            return $"{hours}h {minutes}m {remainingSeconds}s";
+        }
+        else if (minutes > 0)
+        {
+            return $"{minutes}m {remainingSeconds}s";
+        }
+        else
+        {
+            return $"{remainingSeconds}s";
+        }
+    }
 } 

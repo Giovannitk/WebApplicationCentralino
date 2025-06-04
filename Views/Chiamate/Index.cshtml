@@ -50,11 +50,11 @@
             <div class="row mb-4">
                 <div class="col-md-3 mb-2">
                     <label for="dateFrom" class="form-label">Data da:</label>
-                    <input type="date" id="dateFrom" class="form-control" value="@(ViewBag.DateFrom ?? DateTime.Today.ToString("yyyy-MM-dd"))">
+                    <input type="date" id="dateFrom" class="form-control" min="2020-01-01" value="@(ViewBag.DateFrom ?? DateTime.Today.ToString("yyyy-MM-dd"))">
                 </div>
                 <div class="col-md-3 mb-2">
                     <label for="dateTo" class="form-label">Data a:</label>
-                    <input type="date" id="dateTo" class="form-control" value="@(ViewBag.DateTo ?? DateTime.Today.ToString("yyyy-MM-dd"))">
+                    <input type="date" id="dateTo" class="form-control" min="2020-01-01" value="@(ViewBag.DateTo ?? DateTime.Today.ToString("yyyy-MM-dd"))">
                 </div>
                 <div class="col-md-3 mb-2">
                     <label for="minDuration" class="form-label">Durata min (sec):</label>
@@ -62,11 +62,20 @@
                 </div>
                 <div class="col-md-3 mb-2">
                     <label for="tipoInserimento" class="form-label">Tipo Inserimento:</label>
-                    <select id="tipoInserimento" class="form-control">
+                    <select id="tipoInserimento" class="form-select">
                         <option value="">Tutti</option>
                         <option value="Manuale">Manuale</option>
                         <option value="Automatico">Automatico</option>
                     </select>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label for="includeInterni" class="form-label">Includi chiamate interne:</label>
+                    <div class="input-group">
+                        <select id="includeInterni" class="form-select">
+                            <option value="false" selected>No</option>
+                            <option value="true">Sì</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="col-md-3 d-flex align-items-end mb-2">
                     <button id="applyFilters" class="btn btn-primary w-100">
@@ -169,6 +178,27 @@
         let tabella;
 
         $(document).ready(function() {
+            // Funzione per gestire date non valide
+            function fixInvalidDate(input) {
+                if (!input.value) return;
+
+                const parts = input.value.split("-");
+                if (parts.length !== 3) return;
+
+                let year = parseInt(parts[0], 10);
+                const currentYear = new Date().getFullYear();
+
+                if (isNaN(year) || year < 2020) {
+                    parts[0] = currentYear;
+                    input.value = parts.join("-");
+                }
+            }
+
+            // Aggiungi event listeners per i campi data
+            $('#dateFrom, #dateTo').on('change blur', function() {
+                fixInvalidDate(this);
+            });
+
             // Inizializza DataTables con opzioni avanzate
             tabella = $('#tabellaChiamate').DataTable({
                 "language": {
@@ -208,9 +238,10 @@
                 let dateTo = $("#dateTo").val();
                 let minDuration = $("#minDuration").val();
                 let tipoInserimento = $("#tipoInserimento").val();
+                let includeInterni = $("#includeInterni").val();
 
                 // Reindirizza alla stessa pagina con parametri di query
-                window.location.href = `@Url.Action("Index")?dateFrom=${dateFrom}&dateTo=${dateTo}&minDuration=${minDuration}&tipoInserimento=${tipoInserimento}`;
+                window.location.href = `@Url.Action("Index")?dateFrom=${dateFrom}&dateTo=${dateTo}&minDuration=${minDuration}&tipoInserimento=${tipoInserimento}&includeInterni=${includeInterni}`;
             });
             
             // Gestione esportazione Excel
@@ -219,9 +250,10 @@
                 let dateTo = $("#dateTo").val();
                 let minDuration = $("#minDuration").val();
                 let searchValue = tabella.search();
+                let includeInterni = $("#includeInterni").val();
                 
                 // Crea l'URL per l'esportazione in Excel con gli stessi filtri
-                let exportUrl = `@Url.Action("ExportToExcel")?dateFrom=${dateFrom}&dateTo=${dateTo}&minDuration=${minDuration}&searchTerm=${encodeURIComponent(searchValue)}`;
+                let exportUrl = `@Url.Action("ExportToExcel")?dateFrom=${dateFrom}&dateTo=${dateTo}&minDuration=${minDuration}&searchTerm=${encodeURIComponent(searchValue)}&includeInterni=${includeInterni}`;
                 window.location.href = exportUrl;
             });
             
@@ -231,9 +263,10 @@
                 let dateTo = $("#dateTo").val();
                 let minDuration = $("#minDuration").val();
                 let searchValue = tabella.search();
+                let includeInterni = $("#includeInterni").val();
                 
                 // Crea l'URL per l'esportazione in CSV con gli stessi filtri
-                let exportUrl = `@Url.Action("ExportToCsv")?dateFrom=${dateFrom}&dateTo=${dateTo}&minDuration=${minDuration}&searchTerm=${encodeURIComponent(searchValue)}`;
+                let exportUrl = `@Url.Action("ExportToCsv")?dateFrom=${dateFrom}&dateTo=${dateTo}&minDuration=${minDuration}&searchTerm=${encodeURIComponent(searchValue)}&includeInterni=${includeInterni}`;
                 window.location.href = exportUrl;
             });
         });

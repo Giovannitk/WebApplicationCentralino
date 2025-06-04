@@ -25,5 +25,4 @@ namespace WebApplicationCentralino.Controllers
             return View(contatti);
         }
     }
-
 }

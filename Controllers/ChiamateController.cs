@@ -11,6 +11,7 @@ using CsvHelper;
 using System.Globalization;
 using WebApplicationCentralino.Services;
 using WebApplicationCentralino.Models;
+using WebApplicationCentralino.Extensions;
 
 namespace WebApplicationCentralino.Controllers
 {
@@ -24,83 +25,86 @@ namespace WebApplicationCentralino.Controllers
             _chiamataService = chiamataService;
         }
 
-        public async Task<IActionResult> Index(string? dateFrom = null, string? dateTo = null, double minDuration = 5, string? tipoInserimento = null)
+        public async Task<IActionResult> Index(string? dateFrom = null, string? dateTo = null, double minDuration = 5, string? tipoInserimento = null, bool includeInterni = false)
         {
             DateTime? fromDateParsed = null;
             DateTime? toDateParsed = null;
+            var oggi = DateTime.Today;
+
             // Parsing dei parametri di data
-            if (!string.IsNullOrEmpty(dateFrom) && DateTime.TryParse(dateFrom, out DateTime fromDate))
+            if (!string.IsNullOrEmpty(dateFrom) && DateTimeExtensions.TryParseWithYearHandling(dateFrom, out DateTime fromDate))
             {
+                // Se l'anno è inferiore al 2020, usa l'anno corrente
+                if (fromDate.Year < 2020)
+                {
+                    fromDate = new DateTime(oggi.Year, fromDate.Month, fromDate.Day, fromDate.Hour, fromDate.Minute, fromDate.Second);
+                    dateFrom = fromDate.ToString("yyyy-MM-dd");
+                }
                 fromDateParsed = fromDate;
             }
             else
             {
                 // Se non specificato, usa oggi come default
-                fromDateParsed = DateTime.Today;
-                dateFrom = DateTime.Today.ToString("yyyy-MM-dd");
+                fromDateParsed = oggi;
+                dateFrom = oggi.ToString("yyyy-MM-dd");
             }
 
-            if (!string.IsNullOrEmpty(dateTo) && DateTime.TryParse(dateTo, out DateTime toDate))
+            if (!string.IsNullOrEmpty(dateTo) && DateTimeExtensions.TryParseWithYearHandling(dateTo, out DateTime toDate))
             {
+                // Se l'anno è inferiore al 2020, usa l'anno corrente
+                if (toDate.Year < 2020)
+                {
+                    toDate = new DateTime(oggi.Year, toDate.Month, toDate.Day, toDate.Hour, toDate.Minute, toDate.Second);
+                    dateTo = toDate.ToString("yyyy-MM-dd");
+                }
                 // Aggiunge un giorno alla data finale per includerla completamente
                 toDateParsed = toDate.AddDays(1).AddSeconds(-1);
             }
             else
             {
                 // Se non specificato, usa oggi come default
-                toDateParsed = DateTime.Today.AddDays(1).AddSeconds(-1);
-                dateTo = DateTime.Today.ToString("yyyy-MM-dd");
+                toDateParsed = oggi.AddDays(1).AddSeconds(-1);
+                dateTo = oggi.ToString("yyyy-MM-dd");
             }
 
-            // Ottieni le chiamate filtrate
-            var chiamate = await _chiamataService.GetFilteredChiamateAsync(fromDateParsed, toDateParsed, minDuration);
-
-            // Applica il filtro per tipo inserimento
-            if (!string.IsNullOrEmpty(tipoInserimento))
-            {
-                chiamate = chiamate.Where(c => 
-                    (tipoInserimento == "Manuale" && c.CampoExtra1 == "Manuale") ||
-                    (tipoInserimento == "Automatico" && (c.CampoExtra1 == null || c.CampoExtra1 != "Manuale"))
-                ).ToList();
-            }
-
-            // Passa i valori alla vista per mantenere i filtri
+            // Passa i parametri alla view per mantenere i valori nei filtri
             ViewBag.DateFrom = dateFrom;
             ViewBag.DateTo = dateTo;
             ViewBag.MinDuration = minDuration;
             ViewBag.TipoInserimento = tipoInserimento;
+            ViewBag.IncludeInterni = includeInterni;
             ViewBag.UltimoAggiornamento = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
+
+            // Ottieni le chiamate filtrate
+            var chiamate = await _chiamataService.GetFilteredChiamateAsync(fromDateParsed, toDateParsed, minDuration, includeInterni);
+
+            // Applica il filtro per tipo di inserimento se specificato
+            if (!string.IsNullOrEmpty(tipoInserimento))
+            {
+                chiamate = chiamate.Where(c => c.CampoExtra1 == tipoInserimento).ToList();
+            }
 
             return View(chiamate);
         }
 
         [HttpGet]
-        public async Task<IActionResult> ExportToExcel(string? dateFrom = null, string? dateTo = null, double minDuration = 5, string? searchTerm = null)
+        public async Task<IActionResult> ExportToExcel(string? dateFrom = null, string? dateTo = null, double minDuration = 5, string? searchTerm = null, bool includeInterni = false)
         {
-            // Riutilizziamo la stessa logica di filtro dell'Index
             DateTime? fromDateParsed = null;
             DateTime? toDateParsed = null;
 
-            if (!string.IsNullOrEmpty(dateFrom) && DateTime.TryParse(dateFrom, out DateTime fromDate))
+            if (!string.IsNullOrEmpty(dateFrom) && DateTimeExtensions.TryParseWithYearHandling(dateFrom, out DateTime fromDate))
             {
                 fromDateParsed = fromDate;
             }
-            else
-            {
-                fromDateParsed = DateTime.Today;
-            }
 
-            if (!string.IsNullOrEmpty(dateTo) && DateTime.TryParse(dateTo, out DateTime toDate))
+            if (!string.IsNullOrEmpty(dateTo) && DateTimeExtensions.TryParseWithYearHandling(dateTo, out DateTime toDate))
             {
                 toDateParsed = toDate.AddDays(1).AddSeconds(-1);
             }
-            else
-            {
-                toDateParsed = DateTime.Today.AddDays(1).AddSeconds(-1);
-            }
 
             // Ottieni le chiamate filtrate
-            var chiamate = await _chiamataService.GetFilteredChiamateAsync(fromDateParsed, toDateParsed, minDuration);
+            var chiamate = await _chiamataService.GetFilteredChiamateAsync(fromDateParsed, toDateParsed, minDuration, includeInterni);
 
             // Applica il filtro di ricerca se specificato
             if (!string.IsNullOrWhiteSpace(searchTerm))
@@ -180,32 +184,23 @@ namespace WebApplicationCentralino.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ExportToCsv(string? dateFrom = null, string? dateTo = null, double minDuration = 5, string? searchTerm = null)
+        public async Task<IActionResult> ExportToCsv(string? dateFrom = null, string? dateTo = null, double minDuration = 5, string? searchTerm = null, bool includeInterni = false)
         {
-            // Riutilizziamo la stessa logica di filtro dell'Index
             DateTime? fromDateParsed = null;
             DateTime? toDateParsed = null;
 
-            if (!string.IsNullOrEmpty(dateFrom) && DateTime.TryParse(dateFrom, out DateTime fromDate))
+            if (!string.IsNullOrEmpty(dateFrom) && DateTimeExtensions.TryParseWithYearHandling(dateFrom, out DateTime fromDate))
             {
                 fromDateParsed = fromDate;
             }
-            else
-            {
-                fromDateParsed = DateTime.Today;
-            }
 
-            if (!string.IsNullOrEmpty(dateTo) && DateTime.TryParse(dateTo, out DateTime toDate))
+            if (!string.IsNullOrEmpty(dateTo) && DateTimeExtensions.TryParseWithYearHandling(dateTo, out DateTime toDate))
             {
                 toDateParsed = toDate.AddDays(1).AddSeconds(-1);
             }
-            else
-            {
-                toDateParsed = DateTime.Today.AddDays(1).AddSeconds(-1);
-            }
 
             // Ottieni le chiamate filtrate
-            var chiamate = await _chiamataService.GetFilteredChiamateAsync(fromDateParsed, toDateParsed, minDuration);
+            var chiamate = await _chiamataService.GetFilteredChiamateAsync(fromDateParsed, toDateParsed, minDuration, includeInterni);
 
             // Applica il filtro di ricerca se specificato
             if (!string.IsNullOrWhiteSpace(searchTerm))

@@ -41,11 +41,24 @@
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="RagioneSociale" class="form-label">Ragione Sociale</label>
-                        <input asp-for="RagioneSociale" class="form-control" required 
-                               pattern="^.* - Comune di [A-Za-z\s']+$"
-                               title="Formato: ragioneSociale - Comune di PaeseX" />
-                        <div class="form-text">Formato richiesto: ragioneSociale - Comune di PaeseX (es. "Ufficio Tecnico - Comune di Roccalumera")</div>
+                        <label class="form-label">Ragione Sociale</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <input type="text" id="primaParte" class="form-control" placeholder="Es. Ufficio Tecnico" />
+                            </div>
+                            <div class="col-md-6">
+                                <select id="secondaParte" class="form-select select2">
+                                    <option value="">Nessun comune selezionato</option>
+                                    <option value="custom">Inserisci testo personalizzato</option>
+                                    @foreach (var comune in ViewBag.Comuni as Dictionary<string, string>)
+                                    {
+                                        <option value="Comune di @comune.Value">Comune di @comune.Key</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <input type="hidden" asp-for="RagioneSociale" id="ragioneSocialeCompleta" />
+                        <div class="form-text">Inserisci la prima parte della ragione sociale e seleziona un comune o inserisci un testo personalizzato</div>
                         <span asp-validation-for="RagioneSociale" class="text-danger"></span>
                     </div>
 
@@ -89,6 +102,63 @@
 @section Scripts {
     <script>
         $(document).ready(function() {
+            // Inizializza Select2
+            $('#secondaParte').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Seleziona un comune o inserisci testo personalizzato',
+                allowClear: true
+            });
+
+            // Gestisci il cambio di opzione "Inserisci testo personalizzato"
+            $('#secondaParte').on('change', function() {
+                if ($(this).val() === 'custom') {
+                    $(this).select2('destroy');
+                    $(this).replaceWith('<input type="text" id="secondaParte" class="form-control" placeholder="Inserisci testo personalizzato" />');
+                }
+            });
+
+            // Aggiorna il campo nascosto quando cambiano i valori
+            function aggiornaRagioneSociale() {
+                const primaParte = $('#primaParte').val().trim();
+                const secondaParte = $('#secondaParte').val().trim();
+                
+                if (primaParte && secondaParte) {
+                    $('#ragioneSocialeCompleta').val(`${primaParte} - ${secondaParte}`);
+                } else if (primaParte) {
+                    $('#ragioneSocialeCompleta').val(primaParte);
+                } else {
+                    $('#ragioneSocialeCompleta').val('');
+                }
+            }
+
+            // Aggiungi gli event listener
+            $('#primaParte, #secondaParte').on('input change', aggiornaRagioneSociale);
+
+            // Se c'è un valore iniziale, dividilo e imposta i campi
+            const ragioneSocialeIniziale = $('#ragioneSocialeCompleta').val();
+            if (ragioneSocialeIniziale) {
+                const parti = ragioneSocialeIniziale.split(' - ');
+                if (parti.length > 1) {
+                    $('#primaParte').val(parti[0]);
+                    // Cerca il valore corretto nel select
+                    const comuneValue = parti[1];
+                    const option = $('#secondaParte option').filter(function() {
+                        return $(this).val() === comuneValue;
+                    });
+                    if (option.length) {
+                        $('#secondaParte').val(comuneValue).trigger('change');
+                    } else {
+                        // Se non trova il comune, imposta come testo personalizzato
+                        $('#secondaParte').val('custom').trigger('change');
+                        setTimeout(() => {
+                            $('#secondaParte').val(comuneValue);
+                        }, 100);
+                    }
+                } else {
+                    $('#primaParte').val(ragioneSocialeIniziale);
+                }
+            }
+
             // Abilita la validazione del form
             $("#formContatto").validate({
                 rules: {
@@ -97,8 +167,7 @@
                         pattern: /^\d{1,15}$/
                     },
                     RagioneSociale: {
-                        required: true,
-                        pattern: /^.* - Comune di [A-Za-z\s']+$/
+                        required: true
                     },
                     Citta: {
                         pattern: /^[A-Za-z\s']+$/
@@ -113,8 +182,7 @@
                         pattern: "Inserire solo numeri (max 15 cifre)"
                     },
                     RagioneSociale: {
-                        required: "La ragione sociale è obbligatoria",
-                        pattern: "Formato richiesto: ragioneSociale - Comune di PaeseX"
+                        required: "La ragione sociale è obbligatoria"
                     },
                     Citta: {
                         pattern: "Inserire solo lettere, senza numeri"
@@ -137,6 +205,33 @@
             $("#Citta").on("input", function() {
                 this.value = this.value.replace(/[0-9]/g, '');
             });
+
+            function confermaEliminazione(numero) {
+                if (confirm('Sei sicuro di voler eliminare questo contatto?')) {
+                    var password = prompt('Inserisci la password per confermare l\'eliminazione:');
+                    if (password) {
+                        var form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '@Url.Action("Elimina", "GestioneContatti")';
+
+                        var numeroInput = document.createElement('input');
+                        
+                        numeroInput.type = 'hidden';
+                        numeroInput.name = 'numero';
+                        numeroInput.value = numero;
+
+                        var passwordInput = document.createElement('input');
+                        passwordInput.type = 'hidden';
+                        passwordInput.name = 'password';
+                        passwordInput.value = password;
+
+                        form.appendChild(numeroInput);
+                        form.appendChild(passwordInput);
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                }
+            }
         });
     </script>
 }

@@ -100,12 +100,35 @@
             color: rgba(255,255,255,0.8);
             padding: 0.75rem 1rem;
             border-radius: 0;
+            transition: all 0.3s ease;
         }
 
             .sidebar .nav-link:hover, .sidebar .nav-link.active {
                 color: white;
                 background-color: rgba(255,255,255,0.1);
             }
+
+        /* Stili per il sottomenu statistiche */
+        .sidebar .collapse {
+            background-color: rgba(0,0,0,0.1);
+        }
+
+        .sidebar .collapse .nav-link {
+            padding-left: 2.5rem;
+            font-size: 0.95rem;
+        }
+
+        .sidebar .collapse .nav-link:hover {
+            background-color: rgba(255,255,255,0.05);
+        }
+
+        .sidebar .nav-link[aria-expanded="true"] .bi-chevron-down {
+            transform: rotate(180deg);
+        }
+
+        .sidebar .bi-chevron-down {
+            transition: transform 0.3s ease;
+        }
 
         .main-content {
             margin-left: 250px;
@@ -228,6 +251,92 @@
                 margin-bottom: 1rem;
             }
         }
+
+        .navbar {
+            background-color: #1a237e !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-brand:hover {
+            transform: translateY(-1px);
+        }
+
+        .nav-link {
+            position: relative;
+            padding: 0.5rem 1rem !important;
+            margin: 0 0.2rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        .nav-link.active {
+            background-color: rgba(255,255,255,0.15);
+            font-weight: 500;
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 2px;
+            background-color: #fff;
+            border-radius: 2px;
+        }
+
+        .dropdown-menu {
+            background-color: #1a237e;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 0.5rem;
+        }
+
+        .dropdown-item {
+            color: white !important;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-item:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        .dropdown-item.active {
+            background-color: rgba(255,255,255,0.15);
+        }
+
+        .statistics-dropdown {
+            position: relative;
+        }
+
+        .statistics-dropdown .dropdown-menu {
+            min-width: 200px;
+        }
+
+        .statistics-dropdown .dropdown-item {
+            padding-left: 1.5rem;
+        }
+
+        .statistics-dropdown .dropdown-item.sub-item {
+            padding-left: 2.5rem;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
     </style>
 
     @RenderSection("Styles", required: false)
@@ -277,11 +386,33 @@
                         </a>
                     </li>
 
-                    <!-- Voce Statistiche -->
+                    <!-- Voce Statistiche con sottomenu -->
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Home" asp-action="StatisticheDettagliate">
-                            <i class="bi bi-bar-chart-line me-2"></i>Statistiche Dettagliate
+                        <a class="nav-link d-flex justify-content-between align-items-center" 
+                           data-bs-toggle="collapse" 
+                           href="#statisticheSubmenu" 
+                           role="button" 
+                           aria-expanded="false" 
+                           aria-controls="statisticheSubmenu">
+                            <span>
+                                <i class="bi bi-bar-chart-line me-2"></i>Statistiche Dettagliate
+                            </span>
+                            <i class="bi bi-chevron-down ms-2"></i>
                         </a>
+                        <div class="collapse" id="statisticheSubmenu">
+                            <ul class="nav flex-column ms-3">
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Home" asp-action="StatisticheDettagliate">
+                                        <i class="bi bi-graph-up me-2"></i>Generale
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Home" asp-action="StatisticheComuni">
+                                        <i class="bi bi-geo-alt me-2"></i>Statistiche Comuni
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </li>
 
                     @if (User.IsInRole("Admin"))
@@ -353,6 +484,8 @@
 
     <!-- Script -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>

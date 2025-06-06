@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Authorization;
 using System.Linq;
 using WebApplicationCentralino.Extensions;
+using WebApplicationCentralino.Managers;
 
 namespace WebApplicationCentralino.Controllers
 {
@@ -546,56 +547,9 @@ namespace WebApplicationCentralino.Controllers
 
         private List<SelectListItem> GetComuni()
         {
-            var comuni = new List<string>
-            {
-                "Comune di Ali'",
-                "Comune di Ali' Terme",
-                "Comune di Antillo",
-                "Comune di Barcellona Pozzo di Gotto",
-                "Comune di Basico'",
-                "Comune di Brolo",
-                "Comune di Capizzi",
-                "Comune di Capri Leone",
-                "Comune di Capo D'Orlando",
-                "Comune di Casalvecchio Siculo",
-                "Comune di Falcone",
-                "Comune di Forza d'Agro'",
-                "Comune di Furci Siculo",
-                "Comune di Furnari",
-                "Comune di Gallodoro",
-                "Comune di Itala",
-                "Comune di Leni",
-                "Comune di Letojanni",
-                "Comune di Limina",
-                "Comune di Longi",
-                "Comune di Mandanici",
-                "Comune di Mazzarra S. Andrea",
-                "Comune di Messina",
-                "Comune di Milazzo",
-                "Comune di Mistretta",
-                "Comune di Mongiuffi Melia",
-                "Comune di Montalbano Elicona",
-                "Comune di Motta Camastra",
-                "Comune di Nizza di Sicilia",
-                "Comune di Novara di Sicilia",
-                "Comune di Oliveri",
-                "Comune di Reitano",
-                "Comune di Pace del Mela",
-                "Comune di Patti",
-                "Comune di Roccafiorita",
-                "Comune di Roccalumera",
-                "Comune di Sambuca",
-                "Comune di Santa Lucia del Mela",
-                "Comune di Saponara",
-                "Comune di Scaletta Zanclea",
-                "Comune di Spadafora",
-                "Comune di Terme Vigliatore",
-                "Comune di Torrenova",
-                "Comune di Tripi",
-                "Comune di Venetico"
-            };
-
-            return comuni.Select(c => new SelectListItem { Text = c, Value = c }).ToList();
+            return ComuniManager.GetComuniList()
+                .Select(c => new SelectListItem { Text = c, Value = c })
+                .ToList();
         }
 
     }

@@ -6,6 +6,66 @@
 @section Styles {
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    
+    <style>
+        /* Stili per la visualizzazione responsive delle tabelle */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Stili per le celle della tabella */
+        .table td, .table th {
+            white-space: nowrap;
+            padding: 0.5rem;
+        }
+        
+        /* Stili per il testo lungo nelle celle */
+        .table td {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* Stili per i badge */
+        .badge {
+            white-space: nowrap;
+        }
+        
+        /* Stili per i bottoni delle azioni */
+        .btn-group {
+            white-space: nowrap;
+        }
+        
+        .btn-group .btn {
+            padding: 0.25rem 0.5rem;
+        }
+        
+        /* Stili per le tabelle nelle statistiche */
+        .stats-table {
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        
+        .stats-table th {
+            background-color: #f8f9fa;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        
+        /* Stili per la visualizzazione su dispositivi mobili */
+        @@media (max-width: 768px) {
+            .table-responsive {
+                margin-bottom: 1rem;
+            }
+            
+            .stats-table th,
+            .stats-table td {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
 }
 
 <div class="container-fluid mt-4">
@@ -433,6 +493,36 @@
                     ]
                 }]
             };
+
+            // Calcola le percentuali per tutte le chiamate
+            const totalCalls = @Model.TotaleChiamate;
+            const incomingCalls = @Model.ChiamateInEntrata;
+            const outgoingCalls = @Model.ChiamateInUscita;
+            
+            // Calcola le percentuali
+            const incomingPercentage = ((incomingCalls / totalCalls) * 100).toFixed(1);
+            const outgoingPercentage = ((outgoingCalls / totalCalls) * 100).toFixed(1);
+
+            // Aggiorna le etichette con le percentuali per chiamate in entrata e uscita
+            tipoData.labels = tipoData.labels.map(label => {
+                if (label === 'In Entrata') return `In Entrata (${incomingPercentage}%)`;
+                if (label === 'In Uscita') return `In Uscita (${outgoingPercentage}%)`;
+                return label;
+            });
+
+            // Aggiungi le chiamate interne al grafico se non ci sono filtri specifici e le chiamate interne sono incluse
+            @if (string.IsNullOrEmpty(ViewBag.SearchContatto) && string.IsNullOrEmpty(ViewBag.SelectedComune) && ViewBag.IncludeInterni == true)
+            {
+                <text>
+                const internalCalls = @Model.ChiamateInterne;
+                const internalPercentage = ((internalCalls / totalCalls) * 100).toFixed(1);
+
+                // Aggiungi le chiamate interne con la percentuale
+                tipoData.labels.push(`Chiamate Interne (${internalPercentage}%)`);
+                tipoData.datasets[0].data.push(internalCalls);
+                tipoData.datasets[0].backgroundColor.push('#6f42c1');
+                </text>
+            }
 
             const locazioneData = {
                 labels: @Html.Raw(Json.Serialize(Model.ChiamatePerLocazione.Keys)),

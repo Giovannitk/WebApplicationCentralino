@@ -144,6 +144,43 @@
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Stili per la visualizzazione responsive delle tabelle */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Stili per le celle della tabella */
+        .table td, .table th {
+            white-space: nowrap;
+            padding: 0.5rem;
+        }
+        
+        /* Stili per il testo lungo nelle celle */
+        .table td {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* Stili per i badge */
+        .badge {
+            white-space: nowrap;
+        }
+        
+        /* Stili per la visualizzazione su dispositivi mobili */
+        @@media (max-width: 768px) {
+            .table-responsive {
+                margin-bottom: 1rem;
+            }
+            
+            .table th,
+            .table td {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
     <script>
         $(document).ready(function() {
             // Funzione per gestire date non valide

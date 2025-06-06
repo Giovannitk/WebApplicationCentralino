@@ -1,0 +1,406 @@
+@model WebApplicationCentralino.Models.DetailedCallStatistics
+@{
+    ViewData["Title"] = "Statistiche Comuni";
+}
+
+@section Styles {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    
+    <style>
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .table td, .table th {
+            padding: 0.5rem;
+        }
+        
+        .table td {
+            padding: 0.5rem;
+        }
+        
+        .badge {
+            white-space: nowrap;
+        }
+        
+        .btn-group {
+            white-space: nowrap;
+        }
+        
+        .btn-group .btn {
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .stats-table {
+            width: 100%;
+            margin-bottom: 1rem;
+            table-layout: fixed;
+        }
+        
+        .stats-table th {
+            background-color: #f8f9fa;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        
+        .comune-card {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .comune-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .comune-card.selected {
+            border: 2px solid #0d6efd;
+        }
+        
+        @@media (max-width: 768px) {
+            .table-responsive {
+                margin-bottom: 1rem;
+            }
+            
+            .stats-table th,
+            .stats-table td {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Update the statistics table styles */
+        .stats-table td.ragione-sociale {
+            white-space: normal;
+            word-wrap: break-word;
+            min-width: 250px;
+            max-width: none;
+            width: 40%;
+        }
+
+        .stats-table td.numero {
+            width: 15%;
+            white-space: nowrap;
+        }
+
+        .stats-table td.chiamate {
+            width: 10%;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        .stats-table td.durata {
+            width: 15%;
+            white-space: nowrap;
+            text-align: right;
+        }
+    </style>
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Statistiche Comuni</h2>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Filtri</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3" id="filterForm">
+                <div class="col-12 col-md-3">
+                    <label for="dateFrom" class="form-label">Data da:</label>
+                    <input type="date" id="dateFrom" name="dateFrom" class="form-control" min="2020-01-01" value="@ViewBag.DateFrom">
+                </div>
+                <div class="col-12 col-md-3">
+                    <label for="dateTo" class="form-label">Data a:</label>
+                    <input type="date" id="dateTo" name="dateTo" class="form-control" min="2020-01-01" value="@ViewBag.DateTo">
+                </div>
+
+                <div class="col-12 col-md-3">
+                    <label for="includeInterni" class="form-label">Includi chiamate interne:</label>
+                    <select id="includeInterni" name="includeInterni" class="form-select">
+                        @if (ViewBag.IncludeInterni == false)
+                        {
+                            <option value="false" selected>No</option>
+                            <option value="true">Sì</option>
+                        }
+                        else
+                        {
+                            <option value="false">No</option>
+                            <option value="true" selected>Sì</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-3">
+                    <label for="selectedComune" class="form-label">Seleziona Comune:</label>
+                    <select id="selectedComune" name="selectedComune" class="form-control select2">
+                        <option value="">Tutti i comuni</option>
+                        @foreach (var comune in ViewBag.Comuni ?? new List<string>())
+                        {
+                            <option value="@comune" selected="@(ViewBag.SelectedComune == comune)">@comune</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-filter"></i> Applica Filtri
+                    </button>
+                    <a href="@Url.Action("StatisticheComuni")" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Reset Filtri
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ViewBag.SelectedComune))
+    {
+        <!-- Statistiche del Comune Selezionato -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Statistiche del Comune: @ViewBag.SelectedComune</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Totale Chiamate</h5>
+                                <h2 class="card-text">@Model.TotaleChiamate</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Chiamate in Entrata</h5>
+                                <h2 class="card-text">@Model.ChiamateInEntrata</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Chiamate in Uscita</h5>
+                                <h2 class="card-text">@Model.ChiamateInUscita</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Durata Media</h5>
+                                <h2 class="card-text">@FormatDuration(Model.DurataMediaChiamate)</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribuzione Chiamate -->
+        <div class="row mb-4">
+            <div class="col-12 col-md-4 mb-4">
+                <div class="card shadow h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Distribuzione per Tipo</h5>
+                    </div>
+                    <div class="card-body">
+                        <div style="height: 300px;">
+                            <canvas id="tipoChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4 mb-4">
+                <div class="card shadow h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Distribuzione per Locazione</h5>
+                    </div>
+                    <div class="card-body">
+                        <div style="height: 300px;">
+                            <canvas id="locazioneChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4 mb-4">
+                <div class="card shadow h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Andamento Giornaliero</h5>
+                    </div>
+                    <div class="card-body">
+                        <div style="height: 300px;">
+                            <canvas id="giornoChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Chiamanti e Chiamati -->
+        <div class="row mb-4">
+            <div class="col-12 col-md-6 mb-4">
+                <div class="card shadow h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Top Chiamanti</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th class="numero">Numero</th>
+                                        <th class="ragione-sociale">Ragione Sociale</th>
+                                        <th class="chiamate">Chiamate</th>
+                                        <th class="durata">Durata Totale</th>
+                                        <th class="durata">Durata Media</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var chiamante in Model.TopChiamanti)
+                                    {
+                                        <tr>
+                                            <td class="numero">@chiamante.Numero</td>
+                                            <td class="ragione-sociale">@chiamante.RagioneSociale</td>
+                                            <td class="chiamate">@chiamante.NumeroChiamate</td>
+                                            <td class="durata">@FormatDuration(chiamante.DurataTotale)</td>
+                                            <td class="durata">@FormatDuration(chiamante.DurataMedia)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 mb-4">
+                <div class="card shadow h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Top Chiamati</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th class="numero">Numero</th>
+                                        <th class="ragione-sociale">Ragione Sociale</th>
+                                        <th class="chiamate">Chiamate</th>
+                                        <th class="durata">Durata Totale</th>
+                                        <th class="durata">Durata Media</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var chiamato in Model.TopChiamati)
+                                    {
+                                        <tr>
+                                            <td class="numero">@chiamato.Numero</td>
+                                            <td class="ragione-sociale">@chiamato.RagioneSociale</td>
+                                            <td class="chiamate">@chiamato.NumeroChiamate</td>
+                                            <td class="durata">@FormatDuration(chiamato.DurataTotale)</td>
+                                            <td class="durata">@FormatDuration(chiamato.DurataMedia)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Lista dei Comuni -->
+        <div class="row">
+            @foreach (var comune in ViewBag.Comuni)
+            {
+                <div class="col-12 col-md-4 col-lg-3 mb-4">
+                    <div class="card comune-card h-100" data-comune="@comune">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">@comune</h5>
+                            <p class="card-text">
+                                <i class="bi bi-telephone-fill"></i> Visualizza statistiche
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="~/js/statistiche-comuni.js"></script>
+
+    @if (!string.IsNullOrEmpty(ViewBag.SelectedComune))
+    {
+        <script>
+            var tipoData = {
+                labels: @Html.Raw(Json.Serialize(Model.ChiamatePerTipo.Keys)),
+                datasets: [{
+                    data: @Html.Raw(Json.Serialize(Model.ChiamatePerTipo.Values)),
+                    backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b']
+                }]
+            };
+
+            var locazioneData = {
+                labels: @Html.Raw(Json.Serialize(Model.ChiamatePerLocazione.Keys)),
+                datasets: [{
+                    data: @Html.Raw(Json.Serialize(Model.ChiamatePerLocazione.Values)),
+                    backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b']
+                }]
+            };
+
+            var giornoData = {
+                labels: @Html.Raw(Json.Serialize(Model.ChiamatePerGiorno.Keys)),
+                datasets: [{
+                    label: 'Numero Chiamate',
+                    data: @Html.Raw(Json.Serialize(Model.ChiamatePerGiorno.Values)),
+                    borderColor: '#4e73df',
+                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                    fill: true
+                }]
+            };
+
+            $(document).ready(function() {
+                initializeCharts(tipoData, locazioneData, giornoData);
+            });
+        </script>
+    }
+}
+
+@functions {
+    public string FormatDuration(double seconds)
+    {
+        if (seconds < 60)
+        {
+            return $"{seconds:N0} sec";
+        }
+        
+        int totalSeconds = (int)seconds;
+        int hours = totalSeconds / 3600;
+        int minutes = (totalSeconds % 3600) / 60;
+        int remainingSeconds = totalSeconds % 60;
+        
+        if (hours > 0)
+        {
+            return $"{hours}h {minutes}m {remainingSeconds}s";
+        }
+        else if (minutes > 0)
+        {
+            return $"{minutes}m {remainingSeconds}s";
+        }
+        else
+        {
+            return $"{remainingSeconds}s";
+        }
+    }
+} 

@@ -47,6 +47,11 @@ namespace WebApplicationCentralino.Services
                 var response = await _httpClient.GetFromJsonAsync<List<Chiamata>>("api/call/get-all-calls");
                 return response ?? new List<Chiamata>();
             }
+            catch (HttpRequestException ex) when (ex.Message.Contains("401"))
+            {
+                _logger.LogError(ex, "Token scaduto o non valido");
+                throw; // Let the middleware handle the 401
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Errore durante il recupero delle chiamate");
@@ -170,16 +175,20 @@ namespace WebApplicationCentralino.Services
                     (dateTo == null || c.DataArrivoChiamata <= dateTo)
                 ).ToList();
 
+                // Ottieni tutti i numeri che sono interni (Interno != Entrata)
+                var numeriInterni = contatti
+                    .Where(c => c.Interno != 0)
+                    .Select(c => c.NumeroContatto)
+                    .ToHashSet();
+
+                // Calcola le chiamate interne
+                var chiamateInterne = chiamate.Where(c => 
+                    numeriInterni.Contains(c.NumeroChiamante) && numeriInterni.Contains(c.NumeroChiamato)
+                ).ToList();
+
                 // Filtra per chiamate interne se necessario
                 if (!includeInterni)
                 {
-                    // Ottieni tutti i numeri che sono interni (Interno != Entrata)
-                    var numeriInterni = contatti
-                        .Where(c => c.Interno != 0)
-                        .Select(c => c.NumeroContatto)
-                        .ToHashSet();
-
-                    // Escludiamo solo le chiamate dove entrambi i numeri sono interni
                     chiamate = chiamate.Where(c => 
                         !(numeriInterni.Contains(c.NumeroChiamante) && numeriInterni.Contains(c.NumeroChiamato))
                     ).ToList();
@@ -237,6 +246,7 @@ namespace WebApplicationCentralino.Services
                         c.TipoChiamata?.ToLower() == "non risposta");
                     statistiche.ChiamateManuali = chiamateContatto.Count(c => c.CampoExtra1 == "Manuale");
                     statistiche.ChiamateAutomatiche = chiamateContatto.Count(c => c.CampoExtra1 != "Manuale");
+                    statistiche.ChiamateInterne = chiamateInterne.Count;
                     statistiche.DurataTotaleChiamate = chiamateContatto.Sum(c => c.Durata.TotalSeconds);
 
                     // Calcola la durata media
@@ -305,6 +315,7 @@ namespace WebApplicationCentralino.Services
                 statistiche.ChiamateNonRisposta = chiamate.Count(c => c.TipoChiamata?.ToLower() == "non risposta");
                 statistiche.ChiamateManuali = chiamate.Count(c => c.CampoExtra1 == "Manuale");
                 statistiche.ChiamateAutomatiche = chiamate.Count(c => c.CampoExtra1 != "Manuale");
+                statistiche.ChiamateInterne = chiamateInterne.Count;
                 statistiche.DurataTotaleChiamate = chiamate.Sum(c => c.Durata.TotalSeconds);
 
                 // Calcola la durata media

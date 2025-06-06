@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Linq;
 using System.Collections.Generic;
 using WebApplicationCentralino.Extensions;
+using WebApplicationCentralino.Managers;
 
 namespace WebApplicationCentralino.Controllers
 {
@@ -119,60 +120,7 @@ namespace WebApplicationCentralino.Controllers
                 var statistiche = await _chiamataService.GetDetailedStatisticsAsync(fromDateParsed, toDateParsed, includeInterni, comune, searchContatto);
                 
                 // Lista predefinita dei comuni
-                var comuni = new List<string>
-                {
-                    "Comune di Ali'",
-                    "Comune di Ali' Terme",
-                    "Comune di Antillo",
-                    "Comune di Barcellona Pozzo di Gotto",
-                    "Comune di Basico'",
-                    "Comune di Brolo",
-                    "Comune di Capizzi",
-                    "Comune di Capri Leone",
-                    "Comune di Capo D'Orlando",
-                    "Comune di Casalvecchio Siculo",
-                    "Comune di Falcone",
-                    "Comune di Forza d'Agro'",
-                    "Comune di Furci Siculo",
-                    "Comune di Furnari",
-                    "Comune di Gallodoro",
-                    "Comune di Itala",
-                    "Comune di Leni",
-                    "Comune di Letojanni",
-                    "Comune di Limina",
-                    "Comune di Longi",
-                    "Comune di Mandanici",
-                    "Comune di Mazzarra S. Andrea",
-                    "Comune di Messina",
-                    "Comune di Milazzo",
-                    "Comune di Mistretta",
-                    "Comune di Mongiuffi Melia",
-                    "Comune di Montalbano Elicona",
-                    "Comune di Motta Camastra",
-                    "Comune di Nizza di Sicilia",
-                    "Comune di Novara di Sicilia",
-                    "Comune di Oliveri",
-                    "Comune di Reitano",
-                    "Comune di Pace del Mela",
-                    "Comune di Patti",
-                    "Comune di Roccafiorita",
-                    "Comune di Roccalumera",
-                    "Comune di Sambuca",
-                    "Comune di Santa Lucia del Mela",
-                    "Comune di Saponara",
-                    "Comune di Scaletta Zanclea",
-                    "Comune di Spadafora",
-                    "Comune di Terme Vigliatore",
-                    "Comune di Torrenova",
-                    "Comune di Tripi",
-                    "Comune di Venetico"
-                };
-                
-                // Passa i valori alla vista per mantenere i filtri
-                ViewBag.DateFrom = dateFrom;
-                ViewBag.DateTo = dateTo;
-                ViewBag.IncludeInterni = includeInterni;
-                ViewBag.Comuni = comuni;
+                ViewBag.Comuni = ComuniManager.GetComuniList();
                 ViewBag.SelectedComune = comune;
                 ViewBag.SearchContatto = searchContatto;
                 
@@ -181,6 +129,62 @@ namespace WebApplicationCentralino.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Errore durante il recupero delle statistiche dettagliate");
+                return RedirectToAction("Index");
+            }
+        }
+
+        /// <summary>
+        /// Visualizza le statistiche dettagliate per i comuni
+        /// </summary>
+        public async Task<IActionResult> StatisticheComuni(string? dateFrom = null, string? dateTo = null, bool includeInterni = false, string? selectedComune = null)
+        {
+            try
+            {
+                DateTime? fromDateParsed = null;
+                DateTime? toDateParsed = null;
+                var oggi = DateTime.Today;
+
+                // Parsing dei parametri di data
+                if (!string.IsNullOrEmpty(dateFrom) && DateTimeExtensions.TryParseWithYearHandling(dateFrom, out DateTime fromDate))
+                {
+                    if (fromDate.Year < 2020)
+                    {
+                        fromDate = new DateTime(oggi.Year, fromDate.Month, fromDate.Day);
+                    }
+                    fromDateParsed = fromDate;
+                }
+                else
+                {
+                    fromDateParsed = new DateTime(oggi.Year, oggi.Month, 1);
+                    dateFrom = fromDateParsed.Value.ToString("yyyy-MM-dd");
+                }
+
+                if (!string.IsNullOrEmpty(dateTo) && DateTimeExtensions.TryParseWithYearHandling(dateTo, out DateTime toDate))
+                {
+                    if (toDate.Year < 2020)
+                    {
+                        toDate = new DateTime(oggi.Year, toDate.Month, toDate.Day);
+                    }
+                    toDateParsed = toDate.AddDays(1).AddSeconds(-1);
+                }
+                else
+                {
+                    toDateParsed = oggi.AddDays(1).AddSeconds(-1);
+                    dateTo = oggi.ToString("yyyy-MM-dd");
+                }
+
+                // Recupera le statistiche dettagliate
+                var statistiche = await _chiamataService.GetDetailedStatisticsAsync(fromDateParsed, toDateParsed, includeInterni, selectedComune);
+                
+                // Lista predefinita dei comuni
+                ViewBag.Comuni = ComuniManager.GetComuniList();
+                ViewBag.SelectedComune = selectedComune;
+                
+                return View(statistiche);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante il recupero delle statistiche dei comuni");
                 return RedirectToAction("Index");
             }
         }

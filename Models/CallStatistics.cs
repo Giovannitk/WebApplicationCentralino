@@ -14,6 +14,7 @@ namespace WebApplicationCentralino.Models
         public int ChiamateNonRisposta { get; set; }
         public int ChiamateManuali { get; set; }
         public int ChiamateAutomatiche { get; set; }
+        public int ChiamateInterne { get; set; }
         public double DurataMediaChiamate { get; set; }
         public double DurataTotaleChiamate { get; set; }
         public Dictionary<string, int> ChiamatePerTipo { get; set; } = new();

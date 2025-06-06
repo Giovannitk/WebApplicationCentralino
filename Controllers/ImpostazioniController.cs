@@ -9,6 +9,7 @@ using Newtonsoft.Json.Linq;
 using WebApplicationCentralino.Services;
 using System.Diagnostics;
 using System.Threading;
+using System.Linq;
 
 namespace WebApplicationCentralino.Controllers
 {
@@ -41,6 +42,11 @@ namespace WebApplicationCentralino.Controllers
             ViewBag.CurrentLanguage = _configuration.GetValue<string>("Interface:Language", "it");
             ViewBag.CurrentDateFormat = _configuration.GetValue<string>("Interface:DateFormat", "dd/MM/yyyy");
             ViewBag.CurrentTimezone = _configuration.GetValue<string>("Interface:Timezone", "Europe/Rome");
+
+            // Aggiungi alcuni log di esempio
+            await _systemLogService.WriteLogAsync("Accesso alla pagina impostazioni", "INFO", "ImpostazioniController");
+            await _systemLogService.WriteLogAsync($"Tema attuale: {ViewBag.CurrentTheme}", "INFO", "ImpostazioniController");
+            await _systemLogService.WriteLogAsync($"Durata token: {ViewBag.ExpireTimeSpan.TotalHours} ore", "INFO", "ImpostazioniController");
 
             // Recupera i log di sistema
             ViewBag.SystemLogs = await _systemLogService.GetSystemLogsAsync();
@@ -77,11 +83,12 @@ namespace WebApplicationCentralino.Controllers
                 // Aggiorna la configurazione
                 _configuration["Authentication:ExpireTimeSpan"] = newExpireTime.ToString();
                 
+                _systemLogService.WriteLogAsync($"Durata token aggiornata a {value} {unit}", "INFO", "ImpostazioniController").Wait();
                 TempData["SuccessMessage"] = "Durata token aggiornata con successo";
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Errore durante l'aggiornamento della durata del token");
+                _systemLogService.WriteLogAsync($"Errore durante l'aggiornamento della durata del token: {ex.Message}", "ERROR", "ImpostazioniController").Wait();
                 TempData["ErrorMessage"] = "Si è verificato un errore durante l'aggiornamento";
             }
 
@@ -96,11 +103,12 @@ namespace WebApplicationCentralino.Controllers
                 _configuration["Authentication:MaxLoginAttempts"] = maxAttempts.ToString();
                 _configuration["Authentication:LockoutDuration"] = lockoutDuration.ToString();
                 
+                _systemLogService.WriteLogAsync($"Impostazioni di sicurezza aggiornate: Max tentativi={maxAttempts}, Durata blocco={lockoutDuration} min", "INFO", "ImpostazioniController").Wait();
                 TempData["SuccessMessage"] = "Impostazioni di sicurezza aggiornate con successo";
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Errore durante l'aggiornamento delle impostazioni di sicurezza");
+                _systemLogService.WriteLogAsync($"Errore durante l'aggiornamento delle impostazioni di sicurezza: {ex.Message}", "ERROR", "ImpostazioniController").Wait();
                 TempData["ErrorMessage"] = "Si è verificato un errore durante l'aggiornamento";
             }
 
@@ -117,11 +125,12 @@ namespace WebApplicationCentralino.Controllers
                 _configuration["Interface:DateFormat"] = dateFormat;
                 _configuration["Interface:Timezone"] = timezone;
                 
+                _systemLogService.WriteLogAsync($"Impostazioni interfaccia aggiornate: Tema={theme}, Lingua={language}, Formato data={dateFormat}, Timezone={timezone}", "INFO", "ImpostazioniController").Wait();
                 TempData["SuccessMessage"] = "Impostazioni interfaccia aggiornate con successo";
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Errore durante l'aggiornamento delle impostazioni interfaccia");
+                _systemLogService.WriteLogAsync($"Errore durante l'aggiornamento delle impostazioni interfaccia: {ex.Message}", "ERROR", "ImpostazioniController").Wait();
                 TempData["ErrorMessage"] = "Si è verificato un errore durante l'aggiornamento";
             }
 
@@ -157,6 +166,42 @@ namespace WebApplicationCentralino.Controllers
                 ramUsage = GetRamUsage(),
                 diskUsage = GetDiskUsage()
             });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DownloadAllLogs()
+        {
+            try
+            {
+                var logs = await _systemLogService.GetSystemLogsAsync();
+                var logContent = string.Join(Environment.NewLine, logs.Select(l => 
+                    $"[{l.Timestamp:yyyy-MM-dd HH:mm:ss}] [{l.Type}] [{l.Source}] {l.Message}"));
+
+                var fileName = $"system_logs_{DateTime.Now:yyyy-MM-dd}.txt";
+                return File(System.Text.Encoding.UTF8.GetBytes(logContent), "text/plain", fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante il download di tutti i log");
+                return StatusCode(500, "Errore durante il download dei log");
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ClearAllLogs()
+        {
+            try
+            {
+                await _systemLogService.ClearAllLogsAsync();
+                TempData["SuccessMessage"] = "Tutti i log sono stati cancellati con successo";
+            }
+            catch (Exception ex)
+            {
+                _systemLogService.WriteLogAsync($"Errore durante la cancellazione dei log: {ex.Message}", "ERROR", "ImpostazioniController").Wait();
+                TempData["ErrorMessage"] = "Si è verificato un errore durante la cancellazione dei log";
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
         private double GetCpuUsage()

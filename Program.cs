@@ -1,5 +1,10 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using WebApplicationCentralino.Services;
+using WebApplicationCentralino.Managers;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +27,18 @@ builder.Services.AddScoped<GestioneChiamataService>();
 builder.Services.AddScoped<IContattoService, ContattoService>();
 builder.Services.AddScoped<ISystemLogService, SystemLogService>();
 builder.Services.AddScoped<ILoginAttemptService, LoginAttemptService>();
+
+// Configure logging
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+
+// Add SystemLogProvider after registering ISystemLogService
+var serviceProvider = builder.Services.BuildServiceProvider();
+builder.Logging.AddProvider(new SystemLogProvider(
+    serviceProvider.GetRequiredService<ISystemLogService>(),
+    "Application"
+));
 
 // Add authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -82,6 +99,26 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+// Add custom exception handler middleware
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (HttpRequestException ex) when (ex.Message.Contains("401"))
+    {
+        // Clear the JWT token cookie
+        context.Response.Cookies.Delete("JWTToken");
+        
+        // Sign out the user
+        await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        
+        // Redirect to login page
+        context.Response.Redirect("/Auth/Login");
+    }
+});
 
 app.UseAuthentication();
 app.UseAuthorization();

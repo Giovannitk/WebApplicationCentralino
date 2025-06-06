@@ -11,6 +11,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationCentralino.Services
 {
@@ -18,11 +19,13 @@ namespace WebApplicationCentralino.Services
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<GestioneChiamataService> _logger;
 
-        public GestioneChiamataService(IHttpClientFactory httpClientFactory, IConfiguration configuration)
+        public GestioneChiamataService(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<GestioneChiamataService> logger)
         {
             _httpClient = httpClientFactory.CreateClient("GestioneChiamataService");
             _configuration = configuration;
+            _logger = logger;
         }
 
         public async Task<bool> AggiungiChiamataAsync(Chiamata chiamata)
@@ -82,9 +85,14 @@ namespace WebApplicationCentralino.Services
                 var response = await _httpClient.PostAsync("api/call/add-call", content);
                 return response.IsSuccessStatusCode;
             }
+            catch (HttpRequestException ex) when (ex.Message.Contains("401"))
+            {
+                _logger.LogError(ex, "Token scaduto o non valido");
+                throw; // Let the middleware handle the 401
+            }
             catch (Exception ex)
             {
-                Console.WriteLine($"Errore nell'aggiunta della chiamata: {ex.Message}");
+                _logger.LogError(ex, "Errore nell'aggiunta della chiamata");
                 return false;
             }
         }
@@ -120,23 +128,37 @@ namespace WebApplicationCentralino.Services
                     "application/json");
 
                 var response = await _httpClient.PutAsync("api/call/update-call", content);
-
-                var responseContent = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Risposta API aggiornamento: {response.StatusCode} - {responseContent}");
-
                 return response.IsSuccessStatusCode;
+            }
+            catch (HttpRequestException ex) when (ex.Message.Contains("401"))
+            {
+                _logger.LogError(ex, "Token scaduto o non valido");
+                throw; // Let the middleware handle the 401
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Errore nell'aggiornamento della chiamata: {ex.Message}");
+                _logger.LogError(ex, "Errore nell'aggiornamento della chiamata");
                 return false;
             }
         }
 
         public async Task<bool> EliminaChiamataAsync(int id)
         {
-            var response = await _httpClient.DeleteAsync($"api/call/delete-call-by-id?id={id}");
-            return response.IsSuccessStatusCode;
+            try
+            {
+                var response = await _httpClient.DeleteAsync($"api/call/delete-call-by-id?id={id}");
+                return response.IsSuccessStatusCode;
+            }
+            catch (HttpRequestException ex) when (ex.Message.Contains("401"))
+            {
+                _logger.LogError(ex, "Token scaduto o non valido");
+                throw; // Let the middleware handle the 401
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore nell'eliminazione della chiamata");
+                return false;
+            }
         }
 
         public async Task<List<Chiamata>> GetAllChiamateAsync()
@@ -146,9 +168,14 @@ namespace WebApplicationCentralino.Services
                 var response = await _httpClient.GetFromJsonAsync<List<Chiamata>>("api/call/get-all-calls");
                 return response ?? new List<Chiamata>();
             }
+            catch (HttpRequestException ex) when (ex.Message.Contains("401"))
+            {
+                _logger.LogError(ex, "Token scaduto o non valido");
+                throw; // Let the middleware handle the 401
+            }
             catch (Exception ex)
             {
-                Console.WriteLine($"Errore durante il recupero delle chiamate: {ex.Message}");
+                _logger.LogError(ex, "Errore durante il recupero delle chiamate");
                 return new List<Chiamata>();
             }
         }
@@ -207,22 +234,24 @@ namespace WebApplicationCentralino.Services
         {
             try
             {
-                // CORREZIONE: Modifica della URL per passare callId come parametro di query
                 var response = await _httpClient.GetAsync($"api/call/find-call?callId={id}");
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    // Loggare l'errore è importante
-                    Console.WriteLine($"Errore API: {response.StatusCode}, Richiesta: api/call/find-call?callId={id}");
+                    _logger.LogError("Errore API: {StatusCode}, Richiesta: api/call/find-call?callId={Id}", response.StatusCode, id);
                     return null;
                 }
 
                 return await response.Content.ReadFromJsonAsync<Chiamata>();
             }
+            catch (HttpRequestException ex) when (ex.Message.Contains("401"))
+            {
+                _logger.LogError(ex, "Token scaduto o non valido");
+                throw; // Let the middleware handle the 401
+            }
             catch (Exception ex)
             {
-                // Loggare l'eccezione
-                Console.WriteLine($"Eccezione durante la chiamata API: {ex.Message}");
+                _logger.LogError(ex, "Errore durante il recupero della chiamata {Id}", id);
                 throw new ApplicationException($"Errore durante il recupero della chiamata {id}", ex);
             }
         }

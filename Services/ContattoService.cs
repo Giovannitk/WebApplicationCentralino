@@ -1,28 +1,35 @@
 ﻿using System.Net.Http;
 using System.Net.Http.Json;
 using WebApplicationCentralino.Models;
+using Microsoft.Extensions.Logging;
 
 namespace WebApplicationCentralino.Services
 {
     public class ContattoService : IContattoService
     {
         private readonly HttpClient _httpClient;
+        private readonly ILogger<ContattoService> _logger;
 
-        public ContattoService(IHttpClientFactory httpClientFactory, IConfiguration configuration)
+        public ContattoService(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<ContattoService> logger)
         {
             _httpClient = httpClientFactory.CreateClient("ContattoService");
+            _logger = logger;
         }
 
         public async Task<List<Contatto>> GetAllAsync()
         {
-            try 
+            try
             {
                 return await _httpClient.GetFromJsonAsync<List<Contatto>>("api/call/all-contacts") ?? new List<Contatto>();
             }
+            catch (HttpRequestException ex) when (ex.Message.Contains("401"))
+            {
+                _logger.LogError(ex, "Token scaduto o non valido");
+                throw; // Let the middleware handle the 401
+            }
             catch (Exception ex)
             {
-                // Log dell'errore
-                Console.WriteLine($"Errore durante il recupero dei contatti: {ex.Message}");
+                _logger.LogError(ex, "Errore durante il recupero dei contatti");
                 return new List<Contatto>();
             }
         }

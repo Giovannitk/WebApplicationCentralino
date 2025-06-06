@@ -103,7 +103,7 @@ namespace WebApplicationCentralino.Controllers
                                 HttpOnly = true,
                                 Secure = true,
                                 SameSite = SameSiteMode.Strict,
-                                Expires = DateTime.Now.AddMinutes(60) // Match the token expiration
+                                Expires = DateTime.Now.Add(_configuration.GetValue<TimeSpan>("Authentication:ExpireTimeSpan", TimeSpan.FromHours(8)))
                             };
 
                             Response.Cookies.Append("JWTToken", authResponse.Token, tokenCookie);

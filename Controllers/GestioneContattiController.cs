@@ -4,6 +4,8 @@ using WebApplicationCentralino.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authorization;
+using System.Collections.Generic;
+using WebApplicationCentralino.Managers;
 
 namespace WebApplicationCentralino.Controllers
 {
@@ -24,13 +26,16 @@ namespace WebApplicationCentralino.Controllers
             _configuration = configuration;
         }
 
-        public async Task<IActionResult> Index(string? id, string? numero)
+        public async Task<IActionResult> Index(string? id, string? numero, string? ragioneSociale)
         {   
             try
             {
+                // Carica la lista dei comuni con i loro valori per il database
+                ViewBag.Comuni = ComuniManager.GetComuniDictionary();
+
                 if (!string.IsNullOrEmpty(numero))
                 {
-                    // Se viene fornito un numero, carica il contatto esistente
+                    // Se viene fornito un numero, carica il contatto esistente o crea un nuovo contatto con il numero
                     var contatti = await _contattoService.GetAllAsync();
                     var contatto = contatti.FirstOrDefault(c => c.NumeroContatto == numero);
                     
@@ -38,6 +43,16 @@ namespace WebApplicationCentralino.Controllers
                     {
                         return View(contatto);
                     }
+                    else
+                    {
+                        // Crea un nuovo contatto con il numero fornito
+                        return View(new Contatto { NumeroContatto = numero });
+                    }
+                }
+                else if (!string.IsNullOrEmpty(ragioneSociale))
+                {
+                    // Se viene fornita una ragione sociale, crea un nuovo contatto con la ragione sociale
+                    return View(new Contatto { RagioneSociale = ragioneSociale });
                 }
                 else if (!string.IsNullOrEmpty(id))
                 {
@@ -51,7 +66,7 @@ namespace WebApplicationCentralino.Controllers
                     }
                 }
                 
-                // Se non viene fornito né un ID né un numero, o il contatto non viene trovato, mostra il form vuoto
+                // Se non viene fornito né un ID né un numero né una ragione sociale, o il contatto non viene trovato, mostra il form vuoto
                 return View(new Contatto());
             }
             catch (Exception ex)
@@ -67,6 +82,9 @@ namespace WebApplicationCentralino.Controllers
         {
             try
             {
+                // Carica la lista dei comuni
+                ViewBag.Comuni = ComuniManager.GetComuniDictionary();
+
                 if (!ModelState.IsValid)
                 {
                     var contatti = await _contattoService.GetAllAsync();
@@ -103,6 +121,7 @@ namespace WebApplicationCentralino.Controllers
                 TempData["ErrorMessage"] = "Errore durante il salvataggio del contatto";
                 var contatti = await _contattoService.GetAllAsync();
                 ViewBag.Contatti = contatti;
+                ViewBag.Comuni = ComuniManager.GetComuniDictionary();
                 return View("Index", contatto);
             }
         }
@@ -112,6 +131,9 @@ namespace WebApplicationCentralino.Controllers
         {
             try
             {
+                // Carica la lista dei comuni
+                ViewBag.Comuni = ComuniManager.GetComuniDictionary();
+
                 var contatti = await _contattoService.GetAllAsync();
                 var contatto = contatti.FirstOrDefault(c => c.NumeroContatto == numero);
                 

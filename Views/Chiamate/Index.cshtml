@@ -89,17 +89,17 @@
                     <thead>
                         <tr>
                             @* <th>ID</th> *@
-                            <th>Numero Chiamante</th>
-                            <th>Ragione Sociale</th>
-                            <th>Numero Chiamato</th>
-                            <th>Ragione Sociale</th>
-                            <th>Data Arrivo</th>
-                            <th>Data Fine</th>
-                            <th>Durata</th>
-                            <th>Tipo</th>
-                            <th>Locazione</th>
-                            <th>Inserimento</th>
-                            <th>Azioni</th>
+                            <th class="min-width-120">Numero Chiamante</th>
+                            <th class="min-width-180">Ragione Sociale</th>
+                            <th class="min-width-120">Numero Chiamato</th>
+                            <th class="min-width-180">Ragione Sociale</th>
+                            <th class="min-width-150">Data Arrivo</th>
+                            <th class="min-width-150">Data Fine</th>
+                            <th class="min-width-80">Durata</th>
+                            <th class="min-width-100">Tipo</th>
+                            <th class="min-width-120">Locazione</th>
+                            <th class="min-width-100">Inserimento</th>
+                            <th class="min-width-80">Azioni</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -174,6 +174,44 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 
+    <style>
+        .min-width-80 { min-width: 80px; }
+        .min-width-100 { min-width: 100px; }
+        .min-width-120 { min-width: 120px; }
+        .min-width-150 { min-width: 150px; }
+        .min-width-180 { min-width: 180px; }
+        .min-width-250 { min-width: 250px; }
+        
+        /* Stili per la visualizzazione responsive */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Stili per le celle della tabella */
+        .table td, .table th {
+            padding: 0.5rem;
+        }
+        
+        /* Stili per le celle con testo lungo */
+        .table td.text-wrap {
+            white-space: normal;
+            min-width: 250px;
+            max-width: 300px;
+            word-wrap: break-word;
+        }
+        
+        /* Stili per le celle con testo normale */
+        .table td:not(.text-wrap) {
+            white-space: nowrap;
+        }
+        
+        /* Stili per i badge */
+        .badge {
+            white-space: nowrap;
+        }
+    </style>
+
     <script>
         let tabella;
 
@@ -214,17 +252,23 @@
                 "responsive": true,
                 "columnDefs": [
                     { "width": "120px", "targets": [0, 2] }, // Numeri telefonici
-                    { "width": "180px", "targets": [1, 3] }, // Ragioni sociali
+                    { "width": "250px", "targets": [1, 3], "className": "text-wrap" }, // Ragioni sociali
                     { "width": "150px", "targets": [4, 5] }, // Date
                     { "width": "80px", "targets": 6 }, // Durata
                     { "width": "100px", "targets": 7 }, // Tipo
-                    { "width": "120px", "targets": 8 }, // Locazione
+                    { "width": "250px", "targets": 8, "className": "text-wrap" }, // Locazione
                     { "width": "100px", "targets": 9 }, // Inserimento
                     { "width": "80px", "targets": 10 } // Azioni
                 ],
                 "destroy": true,
                 "deferRender": true,
-                "processing": true
+                "processing": true,
+                "responsive": {
+                    details: {
+                        type: 'column',
+                        target: 'tr'
+                    }
+                }
             });
 
             // Gestisce il refresh della tabella

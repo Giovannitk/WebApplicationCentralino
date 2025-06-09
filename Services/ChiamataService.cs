@@ -162,7 +162,7 @@ namespace WebApplicationCentralino.Services
         /// <summary>
         /// Calcola le statistiche dettagliate delle chiamate per un periodo specifico
         /// </summary>
-        public async Task<DetailedCallStatistics> GetDetailedStatisticsAsync(DateTime? dateFrom, DateTime? dateTo, bool includeInterni, string? comune = null, string? searchContatto = null)
+        public async Task<DetailedCallStatistics> GetDetailedStatisticsAsync(DateTime? dateFrom, DateTime? dateTo, bool includeInterni, string? comune = null, string? searchContatto = null, int topCount = 10)
         {
             try
             {
@@ -278,6 +278,20 @@ namespace WebApplicationCentralino.Services
                         ? statistiche.DurataTotaleChiamate / statistiche.TotaleChiamate 
                         : 0;
 
+                    // Calcola le durate per chiamate in entrata
+                    var chiamateInEntrataContatto = chiamateContatto.Where(c => numeriContattiRicerca.Contains(c.NumeroChiamato));
+                    statistiche.DurataTotaleInEntrata = chiamateInEntrataContatto.Sum(c => c.Durata.TotalSeconds);
+                    statistiche.DurataMediaInEntrata = statistiche.ChiamateInEntrata > 0 
+                        ? statistiche.DurataTotaleInEntrata / statistiche.ChiamateInEntrata 
+                        : 0;
+
+                    // Calcola le durate per chiamate in uscita
+                    var chiamateInUscitaContatto = chiamateContatto.Where(c => numeriContattiRicerca.Contains(c.NumeroChiamante));
+                    statistiche.DurataTotaleInUscita = chiamateInUscitaContatto.Sum(c => c.Durata.TotalSeconds);
+                    statistiche.DurataMediaInUscita = statistiche.ChiamateInUscita > 0 
+                        ? statistiche.DurataTotaleInUscita / statistiche.ChiamateInUscita 
+                        : 0;
+
                     // Raggruppa per tipo di chiamata
                     statistiche.ChiamatePerTipo = chiamateContatto
                         .GroupBy(c => c.TipoChiamata ?? "Non specificato")
@@ -310,7 +324,7 @@ namespace WebApplicationCentralino.Services
                             DurataTotale = g.Sum(c => c.Durata.TotalSeconds)
                         })
                         .OrderByDescending(x => x.NumeroChiamate)
-                        .Take(10)
+                        .Take(topCount)
                         .ToList();
 
                     // Top chiamati per il contatto
@@ -325,7 +339,7 @@ namespace WebApplicationCentralino.Services
                             DurataTotale = g.Sum(c => c.Durata.TotalSeconds)
                         })
                         .OrderByDescending(x => x.NumeroChiamate)
-                        .Take(10)
+                        .Take(topCount)
                         .ToList();
 
                     return statistiche;
@@ -333,18 +347,30 @@ namespace WebApplicationCentralino.Services
 
                 // Se non ci sono filtri di comune o ricerca, usa tutte le chiamate filtrate solo per data e interni
                 statistiche.TotaleChiamate = chiamate.Count;
-                statistiche.ChiamateInEntrata = chiamate.Count(c => c.TipoChiamata?.ToLower() == "in entrata");
-                statistiche.ChiamateInUscita = chiamate.Count(c => c.TipoChiamata?.ToLower() == "in uscita");
+                statistiche.ChiamateInEntrata = chiamate.Count(c => c.TipoChiamata?.ToLower() == "entrata");
+                statistiche.ChiamateInUscita = chiamate.Count(c => c.TipoChiamata?.ToLower() == "uscita");
                 statistiche.ChiamatePerse = chiamate.Count(c => c.TipoChiamata?.ToLower() == "persa");
                 statistiche.ChiamateNonRisposta = chiamate.Count(c => c.TipoChiamata?.ToLower() == "non risposta");
                 statistiche.ChiamateManuali = chiamate.Count(c => c.CampoExtra1 == "Manuale");
                 statistiche.ChiamateAutomatiche = chiamate.Count(c => c.CampoExtra1 != "Manuale");
                 statistiche.ChiamateInterne = chiamateInterne.Count;
                 statistiche.DurataTotaleChiamate = chiamate.Sum(c => c.Durata.TotalSeconds);
-
-                // Calcola la durata media
                 statistiche.DurataMediaChiamate = statistiche.TotaleChiamate > 0 
                     ? statistiche.DurataTotaleChiamate / statistiche.TotaleChiamate 
+                    : 0;
+
+                // Calcola le durate per chiamate in entrata
+                var chiamateInEntrata = chiamate.Where(c => c.TipoChiamata?.ToLower() == "entrata");
+                statistiche.DurataTotaleInEntrata = chiamateInEntrata.Sum(c => c.Durata.TotalSeconds);
+                statistiche.DurataMediaInEntrata = statistiche.ChiamateInEntrata > 0 
+                    ? statistiche.DurataTotaleInEntrata / statistiche.ChiamateInEntrata 
+                    : 0;
+
+                // Calcola le durate per chiamate in uscita
+                var chiamateInUscita = chiamate.Where(c => c.TipoChiamata?.ToLower() == "uscita");
+                statistiche.DurataTotaleInUscita = chiamateInUscita.Sum(c => c.Durata.TotalSeconds);
+                statistiche.DurataMediaInUscita = statistiche.ChiamateInUscita > 0 
+                    ? statistiche.DurataTotaleInUscita / statistiche.ChiamateInUscita 
                     : 0;
 
                 // Raggruppa per tipo di chiamata
@@ -367,7 +393,7 @@ namespace WebApplicationCentralino.Services
                     .GroupBy(c => c.DataArrivoChiamata.ToString("HH:00"))
                     .ToDictionary(g => g.Key, g => g.Count());
 
-                // Top 10 chiamanti
+                // Top chiamanti
                 statistiche.TopChiamanti = chiamate
                     .Where(c => !string.IsNullOrEmpty(c.NumeroChiamante))
                     .GroupBy(c => new { c.NumeroChiamante, c.RagioneSocialeChiamante })
@@ -379,10 +405,10 @@ namespace WebApplicationCentralino.Services
                         DurataTotale = g.Sum(c => c.Durata.TotalSeconds)
                     })
                     .OrderByDescending(x => x.NumeroChiamate)
-                    .Take(10)
+                    .Take(topCount)
                     .ToList();
 
-                // Top 10 chiamati
+                // Top chiamati
                 statistiche.TopChiamati = chiamate
                     .Where(c => !string.IsNullOrEmpty(c.NumeroChiamato))
                     .GroupBy(c => new { c.NumeroChiamato, c.RagioneSocialeChiamato })
@@ -394,7 +420,7 @@ namespace WebApplicationCentralino.Services
                         DurataTotale = g.Sum(c => c.Durata.TotalSeconds)
                     })
                     .OrderByDescending(x => x.NumeroChiamate)
-                    .Take(10)
+                    .Take(topCount)
                     .ToList();
 
                 return statistiche;

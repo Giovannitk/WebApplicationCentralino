@@ -202,6 +202,42 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Nuovi pannelli per le statistiche di durata -->
+                <div class="row mt-3">
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Durata Media In Entrata</h5>
+                                <h2 class="card-text">@FormatDuration(Model.DurataMediaInEntrata)</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Durata Media In Uscita</h5>
+                                <h2 class="card-text">@FormatDuration(Model.DurataMediaInUscita)</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Durata Totale In Entrata</h5>
+                                <h2 class="card-text">@FormatDuration(Model.DurataTotaleInEntrata)</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Durata Totale In Uscita</h5>
+                                <h2 class="card-text">@FormatDuration(Model.DurataTotaleInUscita)</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 

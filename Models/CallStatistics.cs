@@ -17,6 +17,10 @@ namespace WebApplicationCentralino.Models
         public int ChiamateInterne { get; set; }
         public double DurataMediaChiamate { get; set; }
         public double DurataTotaleChiamate { get; set; }
+        public double DurataMediaInEntrata { get; set; }
+        public double DurataMediaInUscita { get; set; }
+        public double DurataTotaleInEntrata { get; set; }
+        public double DurataTotaleInUscita { get; set; }
         public Dictionary<string, int> ChiamatePerTipo { get; set; } = new();
         public Dictionary<string, int> ChiamatePerLocazione { get; set; } = new();
         public Dictionary<string, int> ChiamatePerGiorno { get; set; } = new();

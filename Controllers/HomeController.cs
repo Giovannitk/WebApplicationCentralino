@@ -285,95 +285,150 @@ namespace WebApplicationCentralino.Controllers
             }
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetTopChiamanti(string searchContatto, int count = 10, string? dateFrom = null, string? dateTo = null)
+        private DateTime? ParseDate(string? dateStr)
+        {
+            if (string.IsNullOrEmpty(dateStr))
+                return null;
+
+            // Prova prima il formato dd/MM/yyyy
+            if (DateTime.TryParseExact(dateStr, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime result))
+                return result;
+
+            // Se fallisce, prova il formato yyyy-MM-dd
+            if (DateTime.TryParseExact(dateStr, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out result))
+                return result;
+
+            // Se entrambi falliscono, prova il parsing standard
+            if (DateTime.TryParse(dateStr, out result))
+                return result;
+
+            return null;
+        }
+
+        public async Task<IActionResult> GetTopChiamanti(string searchContatto, int count = 10, int page = 1, string? dateFrom = null, string? dateTo = null, string? comune = null, bool includeInterni = false, string sortField = "numeroChiamate", string sortDirection = "desc")
         {
             try
             {
-                DateTime? fromDateParsed = null;
-                DateTime? toDateParsed = null;
-                var oggi = DateTime.Today;
-
-                // Parsing dei parametri di data
-                if (!string.IsNullOrEmpty(dateFrom) && DateTimeExtensions.TryParseWithYearHandling(dateFrom, out DateTime fromDate))
+                var fromDateParsed = ParseDate(dateFrom);
+                var toDateParsed = ParseDate(dateTo);
+                if (toDateParsed.HasValue)
                 {
-                    if (fromDate.Year < 2020)
-                    {
-                        fromDate = new DateTime(oggi.Year, fromDate.Month, fromDate.Day);
-                    }
-                    fromDateParsed = fromDate;
+                    toDateParsed = toDateParsed.Value.AddDays(1).AddSeconds(-1);
                 }
 
-                if (!string.IsNullOrEmpty(dateTo) && DateTimeExtensions.TryParseWithYearHandling(dateTo, out DateTime toDate))
+                var statistiche = await _chiamataService.GetDetailedStatisticsAsync(fromDateParsed, toDateParsed, includeInterni, comune, searchContatto, count);
+
+                if (statistiche == null)
                 {
-                    if (toDate.Year < 2020)
-                    {
-                        toDate = new DateTime(oggi.Year, toDate.Month, toDate.Day);
-                    }
-                    toDateParsed = toDate.AddDays(1).AddSeconds(-1);
+                    _logger.LogWarning("GetDetailedStatisticsAsync ha restituito null");
+                    return Json(new { data = new List<object>(), totalPages = 1 });
                 }
 
-                var statistiche = await _chiamataService.GetDetailedStatisticsAsync(fromDateParsed, toDateParsed, true, null, searchContatto);
-                var topChiamanti = statistiche.TopChiamanti.Take(count).Select(c => new {
-                    numero = c.Numero,
-                    ragioneSociale = c.RagioneSociale,
-                    numeroChiamate = c.NumeroChiamate,
-                    durataTotale = c.DurataTotale,
-                    durataMedia = c.DurataMedia
-                });
+                // Applica l'ordinamento
+                var topChiamanti = statistiche.TopChiamanti?.AsQueryable();
+                if (topChiamanti == null)
+                {
+                    _logger.LogWarning("TopChiamanti è null");
+                    return Json(new { data = new List<object>(), totalPages = 1 });
+                }
 
-                return Json(topChiamanti);
+                topChiamanti = ApplySorting(topChiamanti, sortField, sortDirection);
+
+                // Applica la paginazione
+                var pageSize = 10;
+                var totalPages = (int)Math.Ceiling(count / (double)pageSize);
+                var pagedResults = topChiamanti
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(c => new {
+                        numero = c.Numero ?? "",
+                        ragioneSociale = c.RagioneSociale ?? "",
+                        numeroChiamate = c.NumeroChiamate,
+                        durataTotale = c.DurataTotale,
+                        durataMedia = c.DurataMedia
+                    })
+                    .ToList();
+
+                return Json(new { data = pagedResults, totalPages });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Errore durante il recupero dei top chiamanti");
-                return Json(new List<object>());
+                _logger.LogError(ex, "Errore durante il recupero dei top chiamanti. Parametri: searchContatto={SearchContatto}, count={Count}, page={Page}, dateFrom={DateFrom}, dateTo={DateTo}, comune={Comune}, includeInterni={IncludeInterni}, sortField={SortField}, sortDirection={SortDirection}",
+                    searchContatto, count, page, dateFrom, dateTo, comune, includeInterni, sortField, sortDirection);
+                return Json(new { error = "Errore durante il recupero dei dati", details = ex.Message });
             }
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetTopChiamati(string searchContatto, int count = 10, string? dateFrom = null, string? dateTo = null)
+        public async Task<IActionResult> GetTopChiamati(string searchContatto, int count = 10, int page = 1, string? dateFrom = null, string? dateTo = null, string? comune = null, bool includeInterni = false, string sortField = "numeroChiamate", string sortDirection = "desc")
         {
             try
             {
-                DateTime? fromDateParsed = null;
-                DateTime? toDateParsed = null;
-                var oggi = DateTime.Today;
-
-                // Parsing dei parametri di data
-                if (!string.IsNullOrEmpty(dateFrom) && DateTimeExtensions.TryParseWithYearHandling(dateFrom, out DateTime fromDate))
+                var fromDateParsed = ParseDate(dateFrom);
+                var toDateParsed = ParseDate(dateTo);
+                if (toDateParsed.HasValue)
                 {
-                    if (fromDate.Year < 2020)
-                    {
-                        fromDate = new DateTime(oggi.Year, fromDate.Month, fromDate.Day);
-                    }
-                    fromDateParsed = fromDate;
+                    toDateParsed = toDateParsed.Value.AddDays(1).AddSeconds(-1);
                 }
 
-                if (!string.IsNullOrEmpty(dateTo) && DateTimeExtensions.TryParseWithYearHandling(dateTo, out DateTime toDate))
+                var statistiche = await _chiamataService.GetDetailedStatisticsAsync(fromDateParsed, toDateParsed, includeInterni, comune, searchContatto, count);
+
+                if (statistiche == null)
                 {
-                    if (toDate.Year < 2020)
-                    {
-                        toDate = new DateTime(oggi.Year, toDate.Month, toDate.Day);
-                    }
-                    toDateParsed = toDate.AddDays(1).AddSeconds(-1);
+                    _logger.LogWarning("GetDetailedStatisticsAsync ha restituito null");
+                    return Json(new { data = new List<object>(), totalPages = 1 });
                 }
 
-                var statistiche = await _chiamataService.GetDetailedStatisticsAsync(fromDateParsed, toDateParsed, true, null, searchContatto);
-                var topChiamati = statistiche.TopChiamati.Take(count).Select(c => new {
-                    numero = c.Numero,
-                    ragioneSociale = c.RagioneSociale,
-                    numeroChiamate = c.NumeroChiamate,
-                    durataTotale = c.DurataTotale,
-                    durataMedia = c.DurataMedia
-                });
+                // Applica l'ordinamento
+                var topChiamati = statistiche.TopChiamati?.AsQueryable();
+                if (topChiamati == null)
+                {
+                    _logger.LogWarning("TopChiamati è null");
+                    return Json(new { data = new List<object>(), totalPages = 1 });
+                }
 
-                return Json(topChiamati);
+                topChiamati = ApplySorting(topChiamati, sortField, sortDirection);
+
+                // Applica la paginazione
+                var pageSize = 10;
+                var totalPages = (int)Math.Ceiling(count / (double)pageSize);
+                var pagedResults = topChiamati
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(c => new {
+                        numero = c.Numero ?? "",
+                        ragioneSociale = c.RagioneSociale ?? "",
+                        numeroChiamate = c.NumeroChiamate,
+                        durataTotale = c.DurataTotale,
+                        durataMedia = c.DurataMedia
+                    })
+                    .ToList();
+
+                return Json(new { data = pagedResults, totalPages });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Errore durante il recupero dei top chiamati");
-                return Json(new List<object>());
+                _logger.LogError(ex, "Errore durante il recupero dei top chiamati. Parametri: searchContatto={SearchContatto}, count={Count}, page={Page}, dateFrom={DateFrom}, dateTo={DateTo}, comune={Comune}, includeInterni={IncludeInterni}, sortField={SortField}, sortDirection={SortDirection}",
+                    searchContatto, count, page, dateFrom, dateTo, comune, includeInterni, sortField, sortDirection);
+                return Json(new { error = "Errore durante il recupero dei dati", details = ex.Message });
+            }
+        }
+
+        private IQueryable<T> ApplySorting<T>(IQueryable<T> query, string sortField, string sortDirection)
+        {
+            if (string.IsNullOrEmpty(sortField))
+                return query;
+
+            var propertyInfo = typeof(T).GetProperty(sortField);
+            if (propertyInfo == null)
+                return query;
+
+            if (sortDirection.ToLower() == "asc")
+            {
+                return query.OrderBy(x => propertyInfo.GetValue(x, null));
+            }
+            else
+            {
+                return query.OrderByDescending(x => propertyInfo.GetValue(x, null));
             }
         }
 

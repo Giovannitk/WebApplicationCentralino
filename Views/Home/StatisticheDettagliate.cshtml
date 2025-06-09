@@ -76,6 +76,28 @@
                 min-width: 150px;
             }
         }
+
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+        .sortable:hover {
+            background-color: #f8f9fa;
+        }
+        .sortable i {
+            margin-left: 5px;
+        }
+        .sortable.asc i.fa-sort-up,
+        .sortable.desc i.fa-sort-down {
+            display: inline-block;
+        }
+        .sortable i.fa-sort {
+            display: inline-block;
+        }
+        .sortable.asc i.fa-sort,
+        .sortable.desc i.fa-sort {
+            display: none;
+        }
     </style>
 }
 
@@ -184,6 +206,42 @@
         </div>
     </div>
 
+    <!-- Nuovi pannelli per le statistiche di durata -->
+    <div class="row mb-4">
+        <div class="col-6 col-md-3 mb-3">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Durata Media In Entrata</h5>
+                    <h2 class="card-text">@FormatDuration(Model.DurataMediaInEntrata)</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <div class="card bg-danger text-white h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Durata Media In Uscita</h5>
+                    <h2 class="card-text">@FormatDuration(Model.DurataMediaInUscita)</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Durata Totale In Entrata</h5>
+                    <h2 class="card-text">@FormatDuration(Model.DurataTotaleInEntrata)</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <div class="card bg-danger text-white h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Durata Totale In Uscita</h5>
+                    <h2 class="card-text">@FormatDuration(Model.DurataTotaleInUscita)</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @if (!string.IsNullOrEmpty(ViewBag.SearchContatto))
     {
         <!-- Statistiche del Contatto -->
@@ -276,26 +334,30 @@
             <div class="card shadow h-100">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Top Chiamanti</h5>
-                    @if (!string.IsNullOrEmpty(ViewBag.SearchContatto))
-                    {
-                        <select id="topChiamantiCount" class="form-select form-select-sm" style="width: auto;">
+                    <div class="d-flex align-items-center">
+                        <select id="topChiamantiCount" class="form-select form-select-sm me-2" style="width: auto;">
                             <option value="10">Top 10</option>
+                            <option value="15">Top 15</option>
                             <option value="20">Top 20</option>
                             <option value="50">Top 50</option>
                             <option value="100">Top 100</option>
+                            <option value="0">Tutti</option>
                         </select>
-                    }
+                        <div id="topChiamantiPagination" class="pagination pagination-sm mb-0">
+                            <!-- La paginazione verrà inserita qui dinamicamente -->
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-striped">
+                        <table class="table table-striped table-hover">
                             <thead>
                                 <tr>
-                                    <th>Numero</th>
-                                    <th>Ragione Sociale</th>
-                                    <th>Chiamate</th>
-                                    <th>Durata Totale</th>
-                                    <th>Durata Media</th>
+                                    <th class="sortable" data-sort="numero">Numero <i class="fas fa-sort"></i></th>
+                                    <th class="sortable" data-sort="ragioneSociale">Ragione Sociale <i class="fas fa-sort"></i></th>
+                                    <th class="sortable" data-sort="numeroChiamate">N° Chiamate <i class="fas fa-sort"></i></th>
+                                    <th class="sortable" data-sort="durataTotale">Durata Totale <i class="fas fa-sort"></i></th>
+                                    <th class="sortable" data-sort="durataMedia">Durata Media <i class="fas fa-sort"></i></th>
                                 </tr>
                             </thead>
                             <tbody id="topChiamantiBody">
@@ -319,26 +381,30 @@
             <div class="card shadow h-100">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Top Chiamati</h5>
-                    @if (!string.IsNullOrEmpty(ViewBag.SearchContatto))
-                    {
-                        <select id="topChiamatiCount" class="form-select form-select-sm" style="width: auto;">
+                    <div class="d-flex align-items-center">
+                        <select id="topChiamatiCount" class="form-select form-select-sm me-2" style="width: auto;">
                             <option value="10">Top 10</option>
+                            <option value="15">Top 15</option>
                             <option value="20">Top 20</option>
                             <option value="50">Top 50</option>
                             <option value="100">Top 100</option>
+                            <option value="0">Tutti</option>
                         </select>
-                    }
+                        <div id="topChiamatiPagination" class="pagination pagination-sm mb-0">
+                            <!-- La paginazione verrà inserita qui dinamicamente -->
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-striped">
+                        <table class="table table-striped table-hover">
                             <thead>
                                 <tr>
-                                    <th>Numero</th>
-                                    <th>Ragione Sociale</th>
-                                    <th>Chiamate</th>
-                                    <th>Durata Totale</th>
-                                    <th>Durata Media</th>
+                                    <th class="sortable" data-sort="numero">Numero <i class="fas fa-sort"></i></th>
+                                    <th class="sortable" data-sort="ragioneSociale">Ragione Sociale <i class="fas fa-sort"></i></th>
+                                    <th class="sortable" data-sort="numeroChiamate">N° Chiamate <i class="fas fa-sort"></i></th>
+                                    <th class="sortable" data-sort="durataTotale">Durata Totale <i class="fas fa-sort"></i></th>
+                                    <th class="sortable" data-sort="durataMedia">Durata Media <i class="fas fa-sort"></i></th>
                                 </tr>
                             </thead>
                             <tbody id="topChiamatiBody">
@@ -447,13 +513,17 @@
             });
 
             // Gestione della visibilità dei campi di ricerca
+            let isUpdating = false;
             function toggleSearchFields() {
+                if (isUpdating) return;
+                isUpdating = true;
+
                 const comune = $('#comune').val();
                 const searchText = $('#searchContatto').val();
 
                 if (comune) {
                     $('#searchContainer').hide();
-                    $('#searchContatto').val('');
+                    $('#searchContatto').val('').trigger('change');
                 } else if (searchText) {
                     $('#comuneContainer').hide();
                     $('#comune').val('').trigger('change');
@@ -461,6 +531,8 @@
                     $('#searchContainer').show();
                     $('#comuneContainer').show();
                 }
+
+                isUpdating = false;
             }
 
             // Inizializza lo stato dei campi
@@ -471,7 +543,7 @@
                 toggleSearchFields();
             });
 
-            $('#searchContatto').on('input', function() {
+            $('#searchContatto').on('change', function() {
                 toggleSearchFields();
             });
 
@@ -700,64 +772,193 @@
             }
 
             // Gestione del cambio del numero di risultati per i top chiamanti
-            $('#topChiamantiCount').change(function() {
-                var count = $(this).val();
+            let currentChiamantiPage = 1;
+            let currentChiamatiPage = 1;
+
+            // Variabili per tenere traccia dello stato di ordinamento
+            var currentChiamantiSort = { field: 'numeroChiamate', direction: 'desc' };
+            var currentChiamatiSort = { field: 'numeroChiamate', direction: 'desc' };
+
+            function updateTopChiamanti(page = 1) {
+                var count = $('#topChiamantiCount').val();
                 var searchContatto = '@ViewBag.SearchContatto';
                 var dateFrom = '@ViewBag.DateFrom';
                 var dateTo = '@ViewBag.DateTo';
+                var comune = '@ViewBag.SelectedComune';
+                var includeInterni = '@ViewBag.IncludeInterni';
+
+                // Se count è 0, significa "Tutti"
+                if (count === "0") {
+                    count = "999999"; // Un numero molto grande per ottenere tutti i risultati
+                }
 
                 $.get('@Url.Action("GetTopChiamanti")', {
                     searchContatto: searchContatto,
                     count: count,
+                    page: page,
                     dateFrom: dateFrom,
-                    dateTo: dateTo
-                }, function(data) {
+                    dateTo: dateTo,
+                    comune: comune,
+                    includeInterni: includeInterni,
+                    sortField: currentChiamantiSort.field,
+                    sortDirection: currentChiamantiSort.direction
+                })
+                .done(function(response) {
+                    if (response.error) {
+                        console.error('Errore:', response.error);
+                        return;
+                    }
+
                     var tbody = $('#topChiamantiBody');
                     tbody.empty();
                     
-                    data.forEach(function(chiamante) {
-                        tbody.append(`
-                            <tr>
-                                <td>${chiamante.numero}</td>
-                                <td>${chiamante.ragioneSociale}</td>
-                                <td>${chiamante.numeroChiamate}</td>
-                                <td>${formatDuration(chiamante.durataTotale)}</td>
-                                <td>${formatDuration(chiamante.durataMedia)}</td>
-                            </tr>
-                        `);
-                    });
-                });
-            });
+                    if (response.data && Array.isArray(response.data)) {
+                        response.data.forEach(function(chiamante) {
+                            tbody.append(`
+                                <tr>
+                                    <td>${chiamante.numero || ''}</td>
+                                    <td class="ragione-sociale">${chiamante.ragioneSociale || ''}</td>
+                                    <td>${chiamante.numeroChiamate || 0}</td>
+                                    <td>${formatDuration(chiamante.durataTotale || 0)}</td>
+                                    <td>${formatDuration(chiamante.durataMedia || 0)}</td>
+                                </tr>
+                            `);
+                        });
 
-            // Gestione del cambio del numero di risultati per i top chiamati
-            $('#topChiamatiCount').change(function() {
-                var count = $(this).val();
+                        // Aggiorna la paginazione
+                        updatePagination('topChiamantiPagination', response.totalPages || 1, page, function(newPage) {
+                            currentChiamantiPage = newPage;
+                            updateTopChiamanti(newPage);
+                        });
+                    } else {
+                        console.error('Formato risposta non valido:', response);
+                    }
+                })
+                .fail(function(jqXHR, textStatus, errorThrown) {
+                    console.error('Errore nella richiesta:', textStatus, errorThrown);
+                });
+            }
+
+            function updateTopChiamati(page = 1) {
+                var count = $('#topChiamatiCount').val();
                 var searchContatto = '@ViewBag.SearchContatto';
                 var dateFrom = '@ViewBag.DateFrom';
                 var dateTo = '@ViewBag.DateTo';
+                var comune = '@ViewBag.SelectedComune';
+                var includeInterni = '@ViewBag.IncludeInterni';
+
+                // Se count è 0, significa "Tutti"
+                if (count === "0") {
+                    count = "999999"; // Un numero molto grande per ottenere tutti i risultati
+                }
 
                 $.get('@Url.Action("GetTopChiamati")', {
                     searchContatto: searchContatto,
                     count: count,
+                    page: page,
                     dateFrom: dateFrom,
-                    dateTo: dateTo
-                }, function(data) {
+                    dateTo: dateTo,
+                    comune: comune,
+                    includeInterni: includeInterni,
+                    sortField: currentChiamatiSort.field,
+                    sortDirection: currentChiamatiSort.direction
+                })
+                .done(function(response) {
+                    if (response.error) {
+                        console.error('Errore:', response.error);
+                        return;
+                    }
+
                     var tbody = $('#topChiamatiBody');
                     tbody.empty();
                     
-                    data.forEach(function(chiamato) {
-                        tbody.append(`
-                            <tr>
-                                <td>${chiamato.numero}</td>
-                                <td>${chiamato.ragioneSociale}</td>
-                                <td>${chiamato.numeroChiamate}</td>
-                                <td>${formatDuration(chiamato.durataTotale)}</td>
-                                <td>${formatDuration(chiamato.durataMedia)}</td>
-                            </tr>
-                        `);
-                    });
+                    if (response.data && Array.isArray(response.data)) {
+                        response.data.forEach(function(chiamato) {
+                            tbody.append(`
+                                <tr>
+                                    <td>${chiamato.numero || ''}</td>
+                                    <td class="ragione-sociale">${chiamato.ragioneSociale || ''}</td>
+                                    <td>${chiamato.numeroChiamate || 0}</td>
+                                    <td>${formatDuration(chiamato.durataTotale || 0)}</td>
+                                    <td>${formatDuration(chiamato.durataMedia || 0)}</td>
+                                </tr>
+                            `);
+                        });
+
+                        // Aggiorna la paginazione
+                        updatePagination('topChiamatiPagination', response.totalPages || 1, page, function(newPage) {
+                            currentChiamatiPage = newPage;
+                            updateTopChiamati(newPage);
+                        });
+                    } else {
+                        console.error('Formato risposta non valido:', response);
+                    }
+                })
+                .fail(function(jqXHR, textStatus, errorThrown) {
+                    console.error('Errore nella richiesta:', textStatus, errorThrown);
                 });
+            }
+
+            function updatePagination(containerId, totalPages, currentPage, callback) {
+                var container = $(`#${containerId}`);
+                container.empty();
+
+                if (totalPages <= 1) return;
+
+                // Pulsante "Precedente"
+                container.append(`
+                    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                        <a class="page-link" href="#" data-page="${currentPage - 1}">Prec</a>
+                    </li>
+                `);
+
+                // Calcola il range di pagine da mostrare
+                var startPage = Math.max(1, currentPage - 2);
+                var endPage = Math.min(totalPages, startPage + 4);
+                if (endPage - startPage < 4) {
+                    startPage = Math.max(1, endPage - 4);
+                }
+
+                // Pulsanti delle pagine
+                for (var i = startPage; i <= endPage; i++) {
+                    container.append(`
+                        <li class="page-item ${i === currentPage ? 'active' : ''}">
+                            <a class="page-link" href="#" data-page="${i}">${i}</a>
+                        </li>
+                    `);
+                }
+
+                // Pulsante "Successivo"
+                container.append(`
+                    <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                        <a class="page-link" href="#" data-page="${currentPage + 1}">Succ</a>
+                    </li>
+                `);
+
+                // Gestione dei click sui pulsanti
+                container.find('.page-link').click(function(e) {
+                    e.preventDefault();
+                    var newPage = $(this).data('page');
+                    if (newPage >= 1 && newPage <= totalPages) {
+                        callback(newPage);
+                    }
+                });
+            }
+
+            // Gestione del cambio del numero di risultati
+            $('#topChiamantiCount').change(function() {
+                currentChiamantiPage = 1;
+                updateTopChiamanti(1);
             });
+
+            $('#topChiamatiCount').change(function() {
+                currentChiamatiPage = 1;
+                updateTopChiamati(1);
+            });
+
+            // Inizializza le tabelle
+            updateTopChiamanti(1);
+            updateTopChiamati(1);
 
             // Funzione per formattare la durata
             function formatDuration(seconds) {
@@ -840,6 +1041,47 @@
                 );
                 </text>
             }
+
+            // Funzione per gestire il click sulle intestazioni delle colonne
+            function handleSort(tableId, field) {
+                var currentSort = tableId === 'topChiamanti' ? currentChiamantiSort : currentChiamatiSort;
+                
+                // Se si clicca sulla stessa colonna, inverte la direzione
+                if (currentSort.field === field) {
+                    currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    // Se si clicca su una nuova colonna, imposta la direzione predefinita a 'asc'
+                    currentSort.field = field;
+                    currentSort.direction = 'asc';
+                }
+
+                // Aggiorna le icone di ordinamento
+                $(`#${tableId} th.sortable`).removeClass('asc desc');
+                $(`#${tableId} th[data-sort="${field}"]`).addClass(currentSort.direction);
+
+                // Aggiorna i dati
+                if (tableId === 'topChiamanti') {
+                    updateTopChiamanti(1);
+                } else {
+                    updateTopChiamati(1);
+                }
+            }
+
+            // Inizializza gli eventi di ordinamento
+            $(document).ready(function() {
+                // Aggiungi gli eventi click alle intestazioni delle colonne
+                $('#topChiamanti th.sortable').click(function() {
+                    handleSort('topChiamanti', $(this).data('sort'));
+                });
+
+                $('#topChiamati th.sortable').click(function() {
+                    handleSort('topChiamati', $(this).data('sort'));
+                });
+
+                // Imposta l'ordinamento iniziale
+                $('#topChiamanti th[data-sort="numeroChiamate"]').addClass('desc');
+                $('#topChiamati th[data-sort="numeroChiamate"]').addClass('desc');
+            });
         });
     </script>
 }

@@ -2,137 +2,9 @@
 @{
     ViewData["Title"] = "Gestione Chiamate";    
     var chiamate = ViewBag.Chiamate as List<WebApplicationCentralino.Models.Chiamata>;
-
 }
-
 
 <h2>@ViewData["Title"]</h2>
-
-<div class="alert alert-info">
-    Inserire sia Numero e Ragione Sociale sia per il chiamante che per il chiamato.
-</div>
-
-<form asp-action="Salva" method="post" id="formChiamata">
-    
-@if (Model.Id > 0)
-{        
-    <input type = "hidden" asp-for = "Id" />
-}
-
-<div class="row">
-    <div class="col-md-6">
-        <div class="mb-3">
-            <label asp-for="NumeroChiamante" class="form-label">Numero Chiamante</label>
-            <select asp-for="NumeroChiamante" class="form-select select2" asp-items="@(ViewBag.Contatti as List<SelectListItem>)">
-                <option value="">Seleziona o inserisci un numero</option>
-            </select>
-            <span asp-validation-for="NumeroChiamante" class="text-danger"></span>
-        </div>
-    </div>
-    <div class="col-md-6">
-            <div class="mb-3">
-                <label asp-for="RagioneSocialeChiamante" class="form-label">Ragione Sociale Chiamante</label>
-                <select asp-for="RagioneSocialeChiamante" class="form-select select2" asp-items="@(ViewBag.RagioniSociali as List<SelectListItem>)">
-                    <option value="">Seleziona o inserisci una ragione sociale</option>
-                </select>
-                <span asp-validation-for="RagioneSocialeChiamante" class="text-danger"></span>
-            </div>
-    </div>
-</div>
-<div class="row">
-    <div class="col-md-6">
-        <div class="mb-3">
-            <label asp-for="NumeroChiamato" class="form-label">Numero Chiamato</label>
-            <select asp-for="NumeroChiamato" class="form-select select2" asp-items="@(ViewBag.Contatti as List<SelectListItem>)">
-                <option value="">Seleziona o inserisci un numero</option>
-            </select>
-            <span asp-validation-for="NumeroChiamato" class="text-danger"></span>
-        </div>
-    </div>
-    <div class="col-md-6">
-            <div class="mb-3">
-                <label asp-for="RagioneSocialeChiamato" class="form-label">Ragione Sociale Chiamato</label>
-                <select asp-for="RagioneSocialeChiamato" class="form-select select2" asp-items="@(ViewBag.RagioniSociali as List<SelectListItem>)">
-                    <option value="">Seleziona o inserisci una ragione sociale</option>
-                </select>
-                <span asp-validation-for="RagioneSocialeChiamato" class="text-danger"></span>
-            </div>
-    </div>
-</div>
-<div class="row">
-    <div class="col-md-6">
-        <div class="mb-3">
-            <label asp-for="DataArrivoChiamata" class="form-label">Data Arrivo</label>
-            <input asp-for="DataArrivoChiamata" class="form-control" type="datetime-local" step="1" />
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="mb-3">
-            <label asp-for="DataFineChiamata" class="form-label">Data Fine</label>
-            <input asp-for="DataFineChiamata" class="form-control" type="datetime-local" step="1" />
-        </div>
-    </div>
-</div>
-<div class="row">
-    <div class="col-md-6">
-        <div class="mb-3">
-            <label asp-for="TipoChiamata" class="form-label">Tipologia Linea</label>
-            <select asp-for="TipoChiamata" class="form-select" data-bs-toggle="tooltip" data-bs-placement="right" 
-                    title="Entrata: chiamata ricevuta da un numero esterno all'azienda&#10;Uscita: chiamata effettuata dall'interno verso l'esterno dell'azienda">
-                <option value="Entrata">Entrata</option>
-                <option value="Uscita">Uscita</option>
-            </select>
-        </div>
-    </div>
-    <div class="col-md-6">
-            <div class="mb-3">
-                <label for="LocazionePredefinita" class="form-label">Locazione</label>
-                @{
-                    var comuniList = ViewBag.Comuni as List<SelectListItem>;
-                }
-
-                <select id="LocazionePredefinita" name="LocazionePredefinita" class="form-select">
-                    <option value="">Seleziona una locazione</option>
-                    @if (comuniList != null)
-                    {
-                        foreach (var comune in comuniList)
-                        {
-                            var isSelected = Model?.Locazione == comune.Value;
-                            <option value="@comune.Value" selected="@(isSelected ? "selected" : null)">
-                                @comune.Text
-                            </option>
-                        }
-                    }
-
-                    <option value="Altro" selected="@(Model?.Locazione != null && (comuniList == null || !comuniList.Any(c => c.Value == Model.Locazione)) ? "selected" : null)">
-                        Altro
-                    </option>
-                </select>
-
-            </div>
-
-            <div class="mb-3" id="DivLocazioneManuale" style="display:none;">
-                <label for="Locazione" class="form-label">Inserisci manualmente la locazione</label>
-                <input asp-for="Locazione" class="form-control" readonly />
-                <small class="form-text text-muted">Suggerimento: utilizzare il formato "Comune di [Nome Comune]" (es. "Comune di Roccalumera")</small>
-            </div>
-
-    </div>
-</div>
-
-<input type="hidden" asp-for="UniqueID" />
-<button type="submit" class="btn btn-success">Salva</button>
-<a asp-controller="Chiamate" asp-action="Index" class="btn btn-secondary">Annulla</a>
-
-    
-@if (!ViewData.ModelState.IsValid)
-{        
-    <div class = "alert alert-danger mt-3">
-        <div asp-validation-summary = "All" class = "text-danger"></div>
-    </div>  
-}
-
-</form>
 
 @if (TempData["SuccessMessage"] != null)
 {
@@ -149,6 +21,154 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }
+
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">@(Model.Id > 0 ? "Modifica Chiamata" : "Nuova Chiamata")</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    Inserire sia Numero e Ragione Sociale sia per il chiamante che per il chiamato.
+                </div>
+
+                <form asp-action="Salva" method="post" id="formChiamata">
+                    @if (Model.Id > 0)
+                    {        
+                        <input type="hidden" asp-for="Id" />
+                    }
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="NumeroChiamante" class="form-label">Numero Chiamante</label>
+                                <select asp-for="NumeroChiamante" class="form-select select2" asp-items="@(ViewBag.Contatti as List<SelectListItem>)">
+                                    <option value="">Seleziona o inserisci un numero</option>
+                                </select>
+                                <span asp-validation-for="NumeroChiamante" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="RagioneSocialeChiamante" class="form-label">Ragione Sociale Chiamante</label>
+                                <select asp-for="RagioneSocialeChiamante" class="form-select select2" asp-items="@(ViewBag.RagioniSociali as List<SelectListItem>)">
+                                    <option value="">Seleziona o inserisci una ragione sociale</option>
+                                </select>
+                                <span asp-validation-for="RagioneSocialeChiamante" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="NumeroChiamato" class="form-label">Numero Chiamato</label>
+                                <select asp-for="NumeroChiamato" class="form-select select2" asp-items="@(ViewBag.Contatti as List<SelectListItem>)">
+                                    <option value="">Seleziona o inserisci un numero</option>
+                                </select>
+                                <span asp-validation-for="NumeroChiamato" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="RagioneSocialeChiamato" class="form-label">Ragione Sociale Chiamato</label>
+                                <select asp-for="RagioneSocialeChiamato" class="form-select select2" asp-items="@(ViewBag.RagioniSociali as List<SelectListItem>)">
+                                    <option value="">Seleziona o inserisci una ragione sociale</option>
+                                </select>
+                                <span asp-validation-for="RagioneSocialeChiamato" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="DataArrivoChiamata" class="form-label">Data Arrivo</label>
+                                <input asp-for="DataArrivoChiamata" class="form-control" type="datetime-local" step="1" />
+                                <span asp-validation-for="DataArrivoChiamata" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="DataFineChiamata" class="form-label">Data Fine</label>
+                                <input asp-for="DataFineChiamata" class="form-control" type="datetime-local" step="1" />
+                                <span asp-validation-for="DataFineChiamata" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="TipoChiamata" class="form-label">Tipologia Linea</label>
+                                <select asp-for="TipoChiamata" class="form-select" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                        title="Entrata: chiamata ricevuta da un numero esterno al centralino&#10;Uscita: chiamata effettuata da un interno del centralino verso l'esterno">
+                                    <option value="Entrata">Entrata</option>
+                                    <option value="Uscita">Uscita</option>
+                                </select>
+                                <div class="form-text">
+                                    <strong>Entrata:</strong> chiamata ricevuta da un numero esterno al centralino<br>
+                                    <strong>Uscita:</strong> chiamata effettuata da un interno del centralino verso l'esterno
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="LocazionePredefinita" class="form-label">Locazione</label>
+                                @{
+                                    var comuniList = ViewBag.Comuni as List<SelectListItem>;
+                                }
+
+                                <select id="LocazionePredefinita" name="LocazionePredefinita" class="form-select">
+                                    <option value="">Seleziona una locazione</option>
+                                    @if (comuniList != null)
+                                    {
+                                        foreach (var comune in comuniList)
+                                        {
+                                            var isSelected = Model?.Locazione == comune.Value;
+                                            <option value="@comune.Value" selected="@(isSelected ? "selected" : null)">
+                                                @comune.Text
+                                            </option>
+                                        }
+                                    }
+
+                                    <option value="Altro" selected="@(Model?.Locazione != null && (comuniList == null || !comuniList.Any(c => c.Value == Model.Locazione)) ? "selected" : null)">
+                                        Altro
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3" id="DivLocazioneManuale" style="display:none;">
+                                <label for="Locazione" class="form-label">Inserisci manualmente la locazione</label>
+                                <input asp-for="Locazione" class="form-control" readonly />
+                                <small class="form-text text-muted">Suggerimento: utilizzare il formato "Comune di [Nome Comune]" (es. "Comune di Roccalumera")</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <input type="hidden" asp-for="UniqueID" />
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Salva
+                        </button>
+                        <a asp-controller="Chiamate" asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Annulla
+                        </a>
+                    </div>
+                </form>
+
+                @if (!ViewData.ModelState.IsValid)
+                {        
+                    <div class="alert alert-danger mt-3">
+                        <div asp-validation-summary="All" class="text-danger"></div>
+                    </div>  
+                }
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -436,6 +456,7 @@
                 var ragioneSocialeChiamante = $("#RagioneSocialeChiamante").val();
                 var numeroChiamato = $("#NumeroChiamato").val();
                 var ragioneSocialeChiamato = $("#RagioneSocialeChiamato").val();
+                var id = $("#Id").val(); // Get the ID value
 
                 var verificaChiamante = $.Deferred();
                 var verificaChiamato = $.Deferred();
@@ -500,6 +521,10 @@
                 $.when(verificaChiamante, verificaChiamato).then(
                     function() {
                         // Entrambe le verifiche sono passate, procedi con il submit
+                        // Assicurati che l'ID sia incluso nel form data
+                        if (id) {
+                            $("#Id").val(id);
+                        }
                         e.target.submit();
                     },
                     function() {

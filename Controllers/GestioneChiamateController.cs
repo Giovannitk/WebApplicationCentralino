@@ -331,20 +331,10 @@ namespace WebApplicationCentralino.Controllers
                 bool success;
                 bool isNew = false;
 
-                // Verifica se esiste già una chiamata con stessa data inizio/fine e (opzionale) stessi numeri
-                var idEsistente = await _gestioneChiamataService.TrovaIdChiamataEsistenteAsync(
-                    chiamata.DataArrivoChiamata,
-                    chiamata.DataFineChiamata,
-                    chiamata.NumeroChiamante,
-                    chiamata.NumeroChiamato
-                );
-
-                if (idEsistente.HasValue)
+                // Se l'ID è maggiore di 0, significa che stiamo aggiornando una chiamata esistente
+                if (chiamata.Id > 0)
                 {
-                    // Esiste già: aggiorna quella
-                    chiamata.Id = idEsistente.Value;
                     _logger.LogInformation($"Aggiornamento chiamata esistente con ID {chiamata.Id}");
-                    _logger.LogInformation($"prova {chiamata.NumeroChiamante} - {chiamata.RagioneSocialeChiamante}");
                     chiamata.CampoExtra1 = "Manuale"; // Imposta il campo a Manuale anche per gli aggiornamenti
                     success = await _gestioneChiamataService.AggiornaChiamataAsync(chiamata);
                     message = $"Chiamata aggiornata con ID: {chiamata.Id}";

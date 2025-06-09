@@ -242,7 +242,13 @@ namespace WebApplicationCentralino.Services
                     return null;
                 }
 
-                return await response.Content.ReadFromJsonAsync<Chiamata>();
+                var chiamata = await response.Content.ReadFromJsonAsync<Chiamata>();
+                if (chiamata != null)
+                {
+                    chiamata.Id = id; // Assicurati che l'ID sia impostato correttamente
+                    _logger.LogInformation($"Chiamata recuperata con ID {id}: {chiamata.NumeroChiamante}, {chiamata.Locazione}");
+                }
+                return chiamata;
             }
             catch (HttpRequestException ex) when (ex.Message.Contains("401"))
             {

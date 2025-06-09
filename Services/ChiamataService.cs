@@ -7,6 +7,7 @@ using WebApplicationCentralino.Services;
 using Microsoft.Extensions.Logging;
 using System.Linq;
 using Microsoft.Extensions.Caching.Memory;
+using WebApplicationCentralino.Managers;
 
 namespace WebApplicationCentralino.Services
 {
@@ -197,16 +198,39 @@ namespace WebApplicationCentralino.Services
                 // Filtra per comune se specificato
                 if (!string.IsNullOrWhiteSpace(comune))
                 {
-                    // Ottieni i numeri dei contatti che hanno il comune nella ragione sociale
-                    var numeriContattiComune = contatti
-                        .Where(c => c.RagioneSociale != null && c.RagioneSociale.Contains(comune, StringComparison.OrdinalIgnoreCase))
-                        .Select(c => c.NumeroContatto)
-                        .ToList();
+                    // Rimuovi "Comune di " dal nome del comune se presente
+                    var comuneToSearch = comune.Replace("Comune di ", "").Trim();
+                    
+                    // Ottieni il valore del database dal ComuniManager
+                    var dbValue = ComuniManager.GetDatabaseValue(comuneToSearch);
+                    
+                    // Crea una lista di possibili varianti del nome del comune
+                    var comuneVariants = new List<string>
+                    {
+                        comuneToSearch,                    // Nome originale
+                        dbValue,                           // Valore nel database
+                        comuneToSearch.ToUpper(),          // Nome in maiuscolo
+                        dbValue.ToUpper(),                 // Valore DB in maiuscolo
+                        $"COMUNE DI {comuneToSearch.ToUpper()}",  // COMUNE DI + nome maiuscolo
+                        $"Comune di {comuneToSearch}",     // Comune di + nome originale
+                        $"COMUNE DI {dbValue.ToUpper()}",  // COMUNE DI + valore DB maiuscolo
+                        $"Comune di {dbValue}",            // Comune di + valore DB
+                        $"- COMUNE DI {comuneToSearch.ToUpper()}", // - COMUNE DI + nome maiuscolo
+                        $"- COMUNE DI {dbValue.ToUpper()}",        // - COMUNE DI + valore DB maiuscolo
+                        $"- Comune di {comuneToSearch}",           // - Comune di + nome originale
+                        $"- Comune di {dbValue}"                   // - Comune di + valore DB
+                    };
 
-                    // Filtra le chiamate dove il chiamante o il chiamato è uno dei contatti del comune
-                    chiamate = chiamate.Where(c => 
-                        (c.NumeroChiamante != null && numeriContattiComune.Contains(c.NumeroChiamante)) ||
-                        (c.NumeroChiamato != null && numeriContattiComune.Contains(c.NumeroChiamato))
+                    // Rimuovi eventuali duplicati mantenendo l'ordine
+                    comuneVariants = comuneVariants.Distinct().ToList();
+
+                    chiamate = chiamate.Where(c =>
+                        (!string.IsNullOrEmpty(c.RagioneSocialeChiamante) && 
+                         comuneVariants.Any(v => c.RagioneSocialeChiamante.Contains(v, StringComparison.OrdinalIgnoreCase))) ||
+                        (!string.IsNullOrEmpty(c.RagioneSocialeChiamato) && 
+                         comuneVariants.Any(v => c.RagioneSocialeChiamato.Contains(v, StringComparison.OrdinalIgnoreCase))) ||
+                        (!string.IsNullOrEmpty(c.Locazione) && 
+                         comuneVariants.Any(v => c.Locazione.Contains(v, StringComparison.OrdinalIgnoreCase)))
                     ).ToList();
                 }
 

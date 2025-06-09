@@ -58,7 +58,7 @@
                             </div>
                         </div>
                         <input type="hidden" asp-for="RagioneSociale" id="ragioneSocialeCompleta" />
-                        <div class="form-text">Inserisci la prima parte della ragione sociale e seleziona un comune o inserisci un testo personalizzato</div>
+                        <div class="form-text">Inserisci la prima parte della ragione sociale e nella seconda parte: seleziona un comune o inserisci un testo personalizzato per indicare l'azienda del contatto.</div>
                         <span asp-validation-for="RagioneSociale" class="text-danger"></span>
                     </div>
 
@@ -72,15 +72,15 @@
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="Interno" class="form-label">Interno</label>
+                        <label asp-for="Interno" class="form-label">Tipologia Linea</label>
                         <select asp-for="Interno" class="form-select" required>
                             <option value="">Seleziona...</option>
                             <option value="1">Interno</option>
                             <option value="0">Esterno</option>
                         </select>
                         <div class="form-text">
-                            <strong>Interno:</strong> numero telefonico interno all'azienda<br>
-                            <strong>Esterno:</strong> numero telefonico esterno all'azienda
+                            <strong>Interno:</strong> numero telefonico interno al centralino<br>
+                            <strong>Esterno:</strong> numero telefonico esterno al centralino
                         </div>
                         <span asp-validation-for="Interno" class="text-danger"></span>
                     </div>
@@ -100,13 +100,50 @@
 </div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
     <script>
         $(document).ready(function() {
             // Inizializza Select2
             $('#secondaParte').select2({
                 theme: 'bootstrap-5',
-                placeholder: 'Seleziona un comune o inserisci testo personalizzato',
+                placeholder: "Seleziona un comune o inserisci l'azienda del contatto",
                 allowClear: true
+            });
+
+            // Abilita la validazione del form
+            $("#formContatto").validate({
+                rules: {
+                    NumeroContatto: {
+                        required: true,
+                        pattern: /^\d{1,15}$/
+                    },
+                    RagioneSociale: {
+                        required: true
+                    },
+                    Citta: {
+                        pattern: /^[A-Za-z\s']+$/
+                    },
+                    Interno: {
+                        required: true
+                    }
+                },
+                messages: {
+                    NumeroContatto: {
+                        required: "Il numero di contatto è obbligatorio",
+                        pattern: "Inserire solo numeri (max 15 cifre)"
+                    },
+                    RagioneSociale: {
+                        required: "La ragione sociale è obbligatoria"
+                    },
+                    Citta: {
+                        pattern: "Inserire solo lettere, senza numeri"
+                    },
+                    Interno: {
+                        required: "Specificare se il numero è interno o esterno"
+                    }
+                }
             });
 
             // Gestisci il cambio di opzione "Inserisci testo personalizzato"
@@ -123,6 +160,7 @@
                 const secondaParte = $('#secondaParte').val().trim();
                 
                 if (primaParte && secondaParte) {
+                    // Se la seconda parte è un input personalizzato o un comune, aggiungi sempre il trattino
                     $('#ragioneSocialeCompleta').val(`${primaParte} - ${secondaParte}`);
                 } else if (primaParte) {
                     $('#ragioneSocialeCompleta').val(primaParte);
@@ -159,38 +197,20 @@
                 }
             }
 
-            // Abilita la validazione del form
-            $("#formContatto").validate({
-                rules: {
-                    NumeroContatto: {
-                        required: true,
-                        pattern: /^\d{1,15}$/
-                    },
-                    RagioneSociale: {
-                        required: true
-                    },
-                    Citta: {
-                        pattern: /^[A-Za-z\s']+$/
-                    },
-                    Interno: {
-                        required: true
-                    }
-                },
-                messages: {
-                    NumeroContatto: {
-                        required: "Il numero di contatto è obbligatorio",
-                        pattern: "Inserire solo numeri (max 15 cifre)"
-                    },
-                    RagioneSociale: {
-                        required: "La ragione sociale è obbligatoria"
-                    },
-                    Citta: {
-                        pattern: "Inserire solo lettere, senza numeri"
-                    },
-                    Interno: {
-                        required: "Specificare se il numero è interno o esterno"
-                    }
+            // Aggiungi una regola personalizzata per la ragione sociale
+            $.validator.addMethod("customRagioneSociale", function(value, element) {
+                const secondaParte = $('#secondaParte').val();
+                // Se è un input di testo personalizzato, non applicare il formato specifico
+                if (secondaParte === 'custom' || !secondaParte.startsWith('Comune di')) {
+                    return true;
                 }
+                // Altrimenti verifica il formato standard
+                return value.includes(' - Comune di');
+            }, "La ragione sociale deve essere nel formato 'ragioneSociale - Comune di PaeseX'");
+
+            // Aggiorna la validazione quando cambia il tipo di input
+            $('#secondaParte').on('input change', function() {
+                $('#ragioneSocialeCompleta').valid();
             });
 
             // Previeni l'inserimento di caratteri non numerici nel campo numero

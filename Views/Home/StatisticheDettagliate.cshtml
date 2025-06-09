@@ -16,7 +16,6 @@
         
         /* Stili per le celle della tabella */
         .table td, .table th {
-            white-space: nowrap;
             padding: 0.5rem;
         }
         
@@ -25,6 +24,14 @@
             max-width: 200px;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+        
+        /* Stili specifici per la colonna ragione sociale */
+        .table td.ragione-sociale {
+            white-space: normal;
+            min-width: 200px;
+            max-width: none;
+            word-wrap: break-word;
         }
         
         /* Stili per i badge */
@@ -63,6 +70,10 @@
             .stats-table th,
             .stats-table td {
                 font-size: 0.9rem;
+            }
+            
+            .table td.ragione-sociale {
+                min-width: 150px;
             }
         }
     </style>
@@ -292,7 +303,7 @@
                                 {
                                     <tr>
                                         <td>@chiamante.Numero</td>
-                                        <td>@chiamante.RagioneSociale</td>
+                                        <td class="ragione-sociale">@chiamante.RagioneSociale</td>
                                         <td>@chiamante.NumeroChiamate</td>
                                         <td>@FormatDuration(chiamante.DurataTotale)</td>
                                         <td>@FormatDuration(chiamante.DurataMedia)</td>
@@ -335,7 +346,7 @@
                                 {
                                     <tr>
                                         <td>@chiamato.Numero</td>
-                                        <td>@chiamato.RagioneSociale</td>
+                                        <td class="ragione-sociale">@chiamato.RagioneSociale</td>
                                         <td>@chiamato.NumeroChiamate</td>
                                         <td>@FormatDuration(chiamato.DurataTotale)</td>
                                         <td>@FormatDuration(chiamato.DurataMedia)</td>

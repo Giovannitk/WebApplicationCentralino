@@ -88,9 +88,9 @@ namespace WebApplicationCentralino.Controllers
                     if (fromDate.Year < 2020)
                     {
                         fromDate = new DateTime(oggi.Year, fromDate.Month, fromDate.Day, fromDate.Hour, fromDate.Minute, fromDate.Second);
-                        dateFrom = fromDate.ToString("yyyy-MM-dd");
                     }
                     fromDateParsed = fromDate;
+                    dateFrom = fromDate.ToString("yyyy-MM-dd");
                 }
                 else
                 {
@@ -105,9 +105,9 @@ namespace WebApplicationCentralino.Controllers
                     if (toDate.Year < 2020)
                     {
                         toDate = new DateTime(oggi.Year, toDate.Month, toDate.Day, toDate.Hour, toDate.Minute, toDate.Second);
-                        dateTo = toDate.ToString("yyyy-MM-dd");
                     }
                     toDateParsed = toDate.AddDays(1).AddSeconds(-1);
+                    dateTo = toDate.ToString("yyyy-MM-dd");
                 }
                 else
                 {
@@ -123,6 +123,9 @@ namespace WebApplicationCentralino.Controllers
                 ViewBag.Comuni = ComuniManager.GetComuniList();
                 ViewBag.SelectedComune = comune;
                 ViewBag.SearchContatto = searchContatto;
+                ViewBag.DateFrom = dateFrom;
+                ViewBag.DateTo = dateTo;
+                ViewBag.IncludeInterni = includeInterni;
                 
                 return View(statistiche);
             }
@@ -152,6 +155,7 @@ namespace WebApplicationCentralino.Controllers
                         fromDate = new DateTime(oggi.Year, fromDate.Month, fromDate.Day);
                     }
                     fromDateParsed = fromDate;
+                    dateFrom = fromDate.ToString("yyyy-MM-dd");
                 }
                 else
                 {
@@ -166,6 +170,7 @@ namespace WebApplicationCentralino.Controllers
                         toDate = new DateTime(oggi.Year, toDate.Month, toDate.Day);
                     }
                     toDateParsed = toDate.AddDays(1).AddSeconds(-1);
+                    dateTo = toDate.ToString("yyyy-MM-dd");
                 }
                 else
                 {
@@ -179,6 +184,9 @@ namespace WebApplicationCentralino.Controllers
                 // Lista predefinita dei comuni
                 ViewBag.Comuni = ComuniManager.GetComuniList();
                 ViewBag.SelectedComune = selectedComune;
+                ViewBag.DateFrom = dateFrom;
+                ViewBag.DateTo = dateTo;
+                ViewBag.IncludeInterni = includeInterni;
                 
                 return View(statistiche);
             }
@@ -207,9 +215,9 @@ namespace WebApplicationCentralino.Controllers
                     if (fromDate.Year < 2020)
                     {
                         fromDate = new DateTime(oggi.Year, fromDate.Month, fromDate.Day, fromDate.Hour, fromDate.Minute, fromDate.Second);
-                        dateFrom = fromDate.ToString("yyyy-MM-dd");
                     }
                     fromDateParsed = fromDate;
+                    dateFrom = fromDate.ToString("yyyy-MM-dd");
                 }
                 else
                 {
@@ -224,9 +232,9 @@ namespace WebApplicationCentralino.Controllers
                     if (toDate.Year < 2020)
                     {
                         toDate = new DateTime(oggi.Year, toDate.Month, toDate.Day, toDate.Hour, toDate.Minute, toDate.Second);
-                        dateTo = toDate.ToString("yyyy-MM-dd");
                     }
                     toDateParsed = toDate.AddDays(1).AddSeconds(-1);
+                    dateTo = toDate.ToString("yyyy-MM-dd");
                 }
                 else
                 {

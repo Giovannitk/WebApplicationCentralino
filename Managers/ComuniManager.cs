@@ -66,11 +66,14 @@ namespace WebApplicationCentralino.Managers
 
         public static string GetDatabaseValue(string displayValue)
         {
-            if (_comuni.TryGetValue(displayValue, out string dbValue))
+            // Rimuovi il prefisso "Comune di " se presente
+            var cleanValue = displayValue.Replace("Comune di ", "").Trim();
+            
+            if (_comuni.TryGetValue(cleanValue, out string dbValue))
             {
                 return dbValue;
             }
-            return displayValue;
+            return cleanValue;
         }
 
         public static string GetDisplayValue(string dbValue)

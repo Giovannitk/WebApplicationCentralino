@@ -25,7 +25,7 @@ namespace WebApplicationCentralino.Controllers
             _chiamataService = chiamataService;
         }
 
-        public async Task<IActionResult> Index(string? dateFrom = null, string? dateTo = null, double minDuration = 5, string? tipoInserimento = null, bool includeInterni = false)
+        public async Task<IActionResult> Index(string? dateFrom = null, string? dateTo = null, double minDuration = 5, string? tipoInserimento = null, bool includeInterni = false, string? searchTerm = null)
         {
             DateTime? fromDateParsed = null;
             DateTime? toDateParsed = null;
@@ -73,6 +73,7 @@ namespace WebApplicationCentralino.Controllers
             ViewBag.MinDuration = minDuration;
             ViewBag.TipoInserimento = tipoInserimento;
             ViewBag.IncludeInterni = includeInterni;
+            ViewBag.SearchTerm = searchTerm;
             ViewBag.UltimoAggiornamento = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
 
             // Ottieni le chiamate filtrate
@@ -82,6 +83,18 @@ namespace WebApplicationCentralino.Controllers
             if (!string.IsNullOrEmpty(tipoInserimento))
             {
                 chiamate = chiamate.Where(c => c.CampoExtra1 == tipoInserimento).ToList();
+            }
+
+            // Applica il filtro di ricerca se specificato
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                searchTerm = searchTerm.ToLower();
+                chiamate = chiamate.Where(c =>
+                    (c.NumeroChiamante?.ToLower().Contains(searchTerm) ?? false) ||
+                    (c.NumeroChiamato?.ToLower().Contains(searchTerm) ?? false) ||
+                    (c.RagioneSocialeChiamante?.ToLower().Contains(searchTerm) ?? false) ||
+                    (c.RagioneSocialeChiamato?.ToLower().Contains(searchTerm) ?? false)
+                ).ToList();
             }
 
             return View(chiamate);

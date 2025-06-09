@@ -12,12 +12,12 @@ namespace WebApplicationCentralino.Models
         public string? NumeroContatto { get; set; }
 
         [Required(ErrorMessage = "La ragione sociale è obbligatoria")]
-        [RegularExpression(@"^.* - Comune di [A-Za-z\s']+$", 
-            ErrorMessage = "La ragione sociale deve essere nel formato 'ragioneSociale - Comune di PaeseX'")]
+        // [RegularExpression(@"^.* - Comune di [A-Za-z\s']+$", 
+        //     ErrorMessage = "La ragione sociale deve essere nel formato 'ragioneSociale - Comune di PaeseX'")]
         [Display(Name = "Ragione Sociale")]
         public string? RagioneSociale { get; set; }
 
-        [RegularExpression(@"^[A-Za-z\s']+$", ErrorMessage = "La città non può contenere numeri")]
+        [RegularExpression(@"^[A-Za-z\s'-]+$", ErrorMessage = "La città non può contenere numeri")]
         [Display(Name = "Città")]
         public string? Citta { get; set; }
 

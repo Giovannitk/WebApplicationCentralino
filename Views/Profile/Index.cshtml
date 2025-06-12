@@ -1,0 +1,85 @@
+@model WebApplicationCentralino.Models.UserInfo
+@{
+    ViewData["Title"] = "Il Mio Profilo";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-person-circle me-2"></i>Il Mio Profilo
+                    </h3>
+                </div>
+                <div class="card-body">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Nome:</label>
+                                <p class="form-control-plaintext">@Model.nome</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Email:</label>
+                                <p class="form-control-plaintext">@Model.email</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Ruolo:</label>
+                                <p class="form-control-plaintext">
+                                    <span class="badge bg-@(Model.ruolo == "Admin" ? "danger" : "primary")">
+                                        @Model.ruolo
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">ID Utente:</label>
+                                <p class="form-control-plaintext">@Model.id</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-shield-lock me-2"></i>Sicurezza Account
+                        </h5>
+                        <a asp-action="ChangePassword" class="btn btn-warning">
+                            <i class="bi bi-key me-2"></i>Cambia Password
+                        </a>
+                    </div>
+
+                    <div class="mt-3">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Suggerimenti per la sicurezza:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Usa una password forte con almeno 8 caratteri</li>
+                                <li>Includi lettere maiuscole, minuscole, numeri e simboli</li>
+                                <li>Non condividere mai la tua password</li>
+                                <li>Cambia la password regolarmente</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

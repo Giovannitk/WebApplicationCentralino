@@ -18,5 +18,10 @@ namespace WebApplicationCentralino.Models
         [Required(ErrorMessage = "Il ruolo è obbligatorio")]
         [Display(Name = "Ruolo")]
         public string Ruolo { get; set; }
+
+        [StringLength(100, ErrorMessage = "La {0} deve essere lunga almeno {2} caratteri.", MinimumLength = 6)]
+        [DataType(DataType.Password)]
+        [Display(Name = "Nuova Password (lasciare vuoto per non modificare)")]
+        public string? Password { get; set; }
     }
 } 

@@ -101,6 +101,17 @@
 <div class="container-fluid mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Statistiche Comuni</h2>
+        @if (!string.IsNullOrEmpty(ViewBag.SelectedComune))
+        {
+            <a id="exportButton" href="@Url.Action("ExportStatisticsComuni", "Home", new { 
+                dateFrom = ViewBag.DateFrom, 
+                dateTo = ViewBag.DateTo, 
+                includeInterni = ViewBag.IncludeInterni, 
+                selectedComune = ViewBag.SelectedComune 
+            })" class="btn btn-success">
+                <i class="bi bi-file-earmark-arrow-down"></i> Esporta Excel
+            </a>
+        }
     </div>
 
     <div class="card shadow mb-4">
@@ -411,6 +422,26 @@
 
             $(document).ready(function() {
                 initializeCharts(tipoData, locazioneData, giornoData);
+                
+                // Aggiorna l'URL di esportazione quando cambiano i filtri
+                function updateExportUrl() {
+                    var dateFrom = $('#dateFrom').val();
+                    var dateTo = $('#dateTo').val();
+                    var includeInterni = $('#includeInterni').val();
+                    var selectedComune = $('#selectedComune').val();
+
+                    var exportUrl = '@Url.Action("ExportStatisticsComuni", "Home")' + '?' + $.param({
+                        dateFrom: dateFrom,
+                        dateTo: dateTo,
+                        includeInterni: includeInterni,
+                        selectedComune: selectedComune
+                    });
+
+                    $('#exportButton').attr('href', exportUrl);
+                }
+
+                // Aggiorna l'URL quando cambiano i filtri
+                $('#dateFrom, #dateTo, #includeInterni, #selectedComune').on('change', updateExportUrl);
             });
         </script>
     }

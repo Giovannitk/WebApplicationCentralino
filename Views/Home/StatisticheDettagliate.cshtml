@@ -104,6 +104,15 @@
 <div class="container-fluid mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Statistiche Dettagliate</h2>
+        <a id="exportButton" href="@Url.Action("ExportStatistics", "Home", new { 
+            dateFrom = ViewBag.DateFrom, 
+            dateTo = ViewBag.DateTo, 
+            includeInterni = ViewBag.IncludeInterni, 
+            comune = ViewBag.SelectedComune, 
+            searchContatto = ViewBag.SearchContatto 
+        })" class="btn btn-success">
+            <i class="bi bi-file-earmark-arrow-down"></i> Esporta Excel
+        </a>
     </div>
 
     <div class="card shadow mb-4">
@@ -1082,6 +1091,28 @@
                 $('#topChiamanti th[data-sort="numeroChiamate"]').addClass('desc');
                 $('#topChiamati th[data-sort="numeroChiamate"]').addClass('desc');
             });
+
+            // Aggiorna l'URL di esportazione quando cambiano i filtri
+            function updateExportUrl() {
+                var dateFrom = $('#dateFrom').val();
+                var dateTo = $('#dateTo').val();
+                var includeInterni = $('#includeInterni').val();
+                var comune = $('#comune').val();
+                var searchContatto = $('#searchContatto').val();
+
+                var exportUrl = '@Url.Action("ExportStatistics", "Home")' + '?' + $.param({
+                    dateFrom: dateFrom,
+                    dateTo: dateTo,
+                    includeInterni: includeInterni,
+                    comune: comune,
+                    searchContatto: searchContatto
+                });
+
+                $('#exportButton').attr('href', exportUrl);
+            }
+
+            // Aggiorna l'URL quando cambiano i filtri
+            $('#dateFrom, #dateTo, #includeInterni, #comune, #searchContatto').on('change', updateExportUrl);
         });
     </script>
 }

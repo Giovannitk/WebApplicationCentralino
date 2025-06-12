@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Threading;
 
 namespace WebApplicationCentralino.Services
 {
@@ -30,6 +31,8 @@ namespace WebApplicationCentralino.Services
         private readonly ILogger<SystemLogService> _logger;
         private readonly string _logDirectory;
         private readonly TimeSpan _logRetentionPeriod = TimeSpan.FromDays(3);
+        private readonly object _logLock = new object();
+        private readonly Dictionary<string, object> _fileLocks = new Dictionary<string, object>();
 
         public SystemLogService(ILogger<SystemLogService> logger, IWebHostEnvironment env)
         {
@@ -63,7 +66,42 @@ namespace WebApplicationCentralino.Services
 
                 var logEntry = $"[{timestamp:yyyy-MM-dd HH:mm:ss}] [{type}] [{source}] {message}";
 
-                await File.AppendAllTextAsync(logPath, logEntry + Environment.NewLine);
+                // Get or create a lock for this specific log file
+                object fileLock;
+                lock (_logLock)
+                {
+                    if (!_fileLocks.ContainsKey(logFileName))
+                    {
+                        _fileLocks[logFileName] = new object();
+                    }
+                    fileLock = _fileLocks[logFileName];
+                }
+
+                // Use the file-specific lock to ensure thread-safe writing
+                lock (fileLock)
+                {
+                    try
+                    {
+                        // Use FileStream with FileShare.ReadWrite to allow concurrent access
+                        using (var fileStream = new FileStream(logPath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+                        using (var writer = new StreamWriter(fileStream))
+                        {
+                            writer.WriteLine(logEntry);
+                            writer.Flush();
+                        }
+                    }
+                    catch (IOException ex)
+                    {
+                        // If file is still locked, try with a small delay
+                        Thread.Sleep(10);
+                        using (var fileStream = new FileStream(logPath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+                        using (var writer = new StreamWriter(fileStream))
+                        {
+                            writer.WriteLine(logEntry);
+                            writer.Flush();
+                        }
+                    }
+                }
                 
                 // Also log to the standard logger
                 switch (type.ToUpper())

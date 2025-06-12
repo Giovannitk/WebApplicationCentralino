@@ -152,13 +152,26 @@ namespace WebApplicationCentralino.Controllers
                     }
 
                     var client = _httpClientFactory.CreateClient("ApiClient");
-                    var jsonContent = JsonSerializer.Serialize(model);
+                    
+                    // Se è stata fornita una nuova password, includila nella richiesta
+                    var updateData = new
+                    {
+                        id = model.Id,
+                        nome = model.Nome,
+                        email = model.Email,
+                        ruolo = model.Ruolo,
+                        password = model.Password // Sarà null se non fornita
+                    };
+                    
+                    var jsonContent = JsonSerializer.Serialize(updateData);
                     var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
                     var response = await client.PutAsync($"api/users/{id}", content);
 
                     if (response.IsSuccessStatusCode)
                     {
+                        TempData["SuccessMessage"] = "Utente aggiornato con successo" + 
+                            (!string.IsNullOrEmpty(model.Password) ? " (password modificata)" : "");
                         return RedirectToAction(nameof(Index));
                     }
 

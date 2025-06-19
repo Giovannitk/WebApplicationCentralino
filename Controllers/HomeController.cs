@@ -119,13 +119,21 @@ namespace WebApplicationCentralino.Controllers
                     dateTo = oggi.ToString("yyyy-MM-dd");
                 }
 
-                // Recupera le statistiche dettagliate
-                var statistiche = await _chiamataService.GetDetailedStatisticsAsync(fromDateParsed, toDateParsed, includeInterni, comune, searchContatto);
+                // Se searchContatto contiene il separatore "|", estrai solo la parte del numero per il servizio
+                var searchContattoForService = searchContatto;
+                if (!string.IsNullOrEmpty(searchContatto) && searchContatto.Contains("|"))
+                {
+                    searchContattoForService = searchContatto.Split('|')[0];
+                }
+
+                // Passa l'identificatore completo al servizio per permettere il filtraggio specifico per contatto
+                // Ora usa sempre TipoChiamata per identificare le chiamate interne
+                var statistiche = await _chiamataService.GetDetailedStatisticsAsync(fromDateParsed, toDateParsed, includeInterni, comune, searchContatto, 10, true);
                 
                 // Lista predefinita dei comuni
                 ViewBag.Comuni = ComuniManager.GetComuniList();
                 ViewBag.SelectedComune = comune;
-                ViewBag.SearchContatto = searchContatto;
+                ViewBag.SearchContatto = searchContatto; // Mantieni il formato originale per la vista
                 ViewBag.DateFrom = dateFrom;
                 ViewBag.DateTo = dateTo;
                 ViewBag.IncludeInterni = includeInterni;
@@ -274,7 +282,8 @@ namespace WebApplicationCentralino.Controllers
                         (c.NumeroContatto != null && c.NumeroContatto.Contains(searchContatto, StringComparison.OrdinalIgnoreCase)) ||
                         (c.RagioneSociale != null && c.RagioneSociale.Contains(searchContatto, StringComparison.OrdinalIgnoreCase)))
                     .Select(c => new {
-                        id = c.NumeroContatto,
+                        // Usa una combinazione di numero e ragione sociale come identificatore univoco
+                        id = $"{c.NumeroContatto}|{c.RagioneSociale}",
                         text = $"{c.NumeroContatto} - {c.RagioneSociale}"
                     })
                     .ToList();
@@ -312,14 +321,28 @@ namespace WebApplicationCentralino.Controllers
         {
             try
             {
-                var fromDateParsed = ParseDate(dateFrom);
-                var toDateParsed = ParseDate(dateTo);
-                if (toDateParsed.HasValue)
+                DateTime? fromDateParsed = null;
+                DateTime? toDateParsed = null;
+
+                // Parsing dei parametri di data
+                if (!string.IsNullOrEmpty(dateFrom) && DateTimeExtensions.TryParseWithYearHandling(dateFrom, out DateTime fromDate))
                 {
-                    toDateParsed = toDateParsed.Value.AddDays(1).AddSeconds(-1);
+                    fromDateParsed = fromDate;
                 }
 
-                var statistiche = await _chiamataService.GetDetailedStatisticsAsync(fromDateParsed, toDateParsed, includeInterni, comune, searchContatto, count);
+                if (!string.IsNullOrEmpty(dateTo) && DateTimeExtensions.TryParseWithYearHandling(dateTo, out DateTime toDate))
+                {
+                    toDateParsed = toDate.AddDays(1).AddSeconds(-1);
+                }
+
+                // Se searchContatto contiene il separatore "|", estrai solo la parte del numero
+                var searchContattoForService = searchContatto;
+                if (!string.IsNullOrEmpty(searchContatto) && searchContatto.Contains("|"))
+                {
+                    searchContattoForService = searchContatto.Split('|')[0];
+                }
+
+                var statistiche = await _chiamataService.GetDetailedStatisticsAsync(fromDateParsed, toDateParsed, includeInterni, comune, searchContattoForService, count, true);
 
                 if (statistiche == null)
                 {
@@ -366,14 +389,28 @@ namespace WebApplicationCentralino.Controllers
         {
             try
             {
-                var fromDateParsed = ParseDate(dateFrom);
-                var toDateParsed = ParseDate(dateTo);
-                if (toDateParsed.HasValue)
+                DateTime? fromDateParsed = null;
+                DateTime? toDateParsed = null;
+
+                // Parsing dei parametri di data
+                if (!string.IsNullOrEmpty(dateFrom) && DateTimeExtensions.TryParseWithYearHandling(dateFrom, out DateTime fromDate))
                 {
-                    toDateParsed = toDateParsed.Value.AddDays(1).AddSeconds(-1);
+                    fromDateParsed = fromDate;
                 }
 
-                var statistiche = await _chiamataService.GetDetailedStatisticsAsync(fromDateParsed, toDateParsed, includeInterni, comune, searchContatto, count);
+                if (!string.IsNullOrEmpty(dateTo) && DateTimeExtensions.TryParseWithYearHandling(dateTo, out DateTime toDate))
+                {
+                    toDateParsed = toDate.AddDays(1).AddSeconds(-1);
+                }
+
+                // Se searchContatto contiene il separatore "|", estrai solo la parte del numero
+                var searchContattoForService = searchContatto;
+                if (!string.IsNullOrEmpty(searchContatto) && searchContatto.Contains("|"))
+                {
+                    searchContattoForService = searchContatto.Split('|')[0];
+                }
+
+                var statistiche = await _chiamataService.GetDetailedStatisticsAsync(fromDateParsed, toDateParsed, includeInterni, comune, searchContattoForService, count, true);
 
                 if (statistiche == null)
                 {
@@ -445,8 +482,16 @@ namespace WebApplicationCentralino.Controllers
         {
             try
             {
+                // Se searchContatto contiene il separatore "|", estrai solo la parte del numero per l'export
+                var searchContattoForExport = searchContatto;
+                if (!string.IsNullOrEmpty(searchContatto) && searchContatto.Contains("|"))
+                {
+                    searchContattoForExport = searchContatto.Split('|')[0];
+                }
+
                 // Ottieni le statistiche con un numero molto alto per ottenere tutte le liste
-                var statistics = await _chiamataService.GetDetailedStatisticsAsync(dateFrom, dateTo, includeInterni, comune, searchContatto, 999999);
+                // Ora usa sempre TipoChiamata per identificare le chiamate interne
+                var statistics = await _chiamataService.GetDetailedStatisticsAsync(dateFrom, dateTo, includeInterni, comune, searchContattoForExport, 999999, true);
 
                 using (var workbook = new XLWorkbook())
                 {
@@ -476,7 +521,16 @@ namespace WebApplicationCentralino.Controllers
                     if (!string.IsNullOrEmpty(searchContatto))
                     {
                         wsSummary.Cell("A7").Value = (XLCellValue)"Contatto:";
-                        wsSummary.Cell("B7").Value = (XLCellValue)searchContatto;
+                        // Se searchContatto contiene il separatore "|", mostra il formato completo
+                        if (searchContatto.Contains("|"))
+                        {
+                            var parts = searchContatto.Split('|');
+                            wsSummary.Cell("B7").Value = (XLCellValue)$"{parts[0]} - {parts[1]}";
+                        }
+                        else
+                        {
+                            wsSummary.Cell("B7").Value = (XLCellValue)searchContatto;
+                        }
                     }
 
                     // Statistiche principali
@@ -1409,5 +1463,151 @@ namespace WebApplicationCentralino.Controllers
                 return RedirectToAction("StatisticheComuni");
             }
         }
+
+        /// <summary>
+        /// Recupera i top chiamanti per locazione
+        /// </summary>
+        public async Task<IActionResult> GetTopChiamantiPerLocazione(string searchContatto, int count = 10, int page = 1, string? dateFrom = null, string? dateTo = null, string? comune = null, bool includeInterni = false, string sortField = "numeroChiamate", string sortDirection = "desc")
+        {
+            try
+            {
+                DateTime? fromDateParsed = null;
+                DateTime? toDateParsed = null;
+
+                // Parsing dei parametri di data
+                if (!string.IsNullOrEmpty(dateFrom) && DateTimeExtensions.TryParseWithYearHandling(dateFrom, out DateTime fromDate))
+                {
+                    fromDateParsed = fromDate;
+                }
+
+                if (!string.IsNullOrEmpty(dateTo) && DateTimeExtensions.TryParseWithYearHandling(dateTo, out DateTime toDate))
+                {
+                    toDateParsed = toDate.AddDays(1).AddSeconds(-1);
+                }
+
+                // Se searchContatto contiene il separatore "|", estrai solo la parte del numero
+                var searchContattoForService = searchContatto;
+                if (!string.IsNullOrEmpty(searchContatto) && searchContatto.Contains("|"))
+                {
+                    searchContattoForService = searchContatto.Split('|')[0];
+                }
+
+                var statistiche = await _chiamataService.GetDetailedStatisticsAsync(fromDateParsed, toDateParsed, includeInterni, comune, searchContattoForService, count, true);
+
+                if (statistiche == null)
+                {
+                    _logger.LogWarning("GetDetailedStatisticsAsync ha restituito null");
+                    return Json(new { data = new List<object>(), totalPages = 1 });
+                }
+
+                // Applica l'ordinamento
+                var topChiamantiPerLocazione = statistiche.TopChiamantiPerLocazione?.AsQueryable();
+                if (topChiamantiPerLocazione == null)
+                {
+                    _logger.LogWarning("TopChiamantiPerLocazione è null");
+                    return Json(new { data = new List<object>(), totalPages = 1 });
+                }
+
+                topChiamantiPerLocazione = ApplySorting(topChiamantiPerLocazione, sortField, sortDirection);
+
+                // Applica la paginazione
+                var pageSize = 10;
+                var totalPages = (int)Math.Ceiling(count / (double)pageSize);
+                var pagedResults = topChiamantiPerLocazione
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(c => new {
+                        numero = c.Numero ?? "",
+                        ragioneSociale = c.RagioneSociale ?? "",
+                        locazione = c.Locazione ?? "",
+                        numeroChiamate = c.NumeroChiamate,
+                        durataTotale = c.DurataTotale,
+                        durataMedia = c.DurataMedia
+                    })
+                    .ToList();
+
+                return Json(new { data = pagedResults, totalPages });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante il recupero dei top chiamanti per locazione. Parametri: searchContatto={SearchContatto}, count={Count}, page={Page}, dateFrom={DateFrom}, dateTo={DateTo}, comune={Comune}, includeInterni={IncludeInterni}, sortField={SortField}, sortDirection={SortDirection}",
+                    searchContatto, count, page, dateFrom, dateTo, comune, includeInterni, sortField, sortDirection);
+                return Json(new { error = "Errore durante il recupero dei dati", details = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Recupera i top chiamati per locazione
+        /// </summary>
+        public async Task<IActionResult> GetTopChiamatiPerLocazione(string searchContatto, int count = 10, int page = 1, string? dateFrom = null, string? dateTo = null, string? comune = null, bool includeInterni = false, string sortField = "numeroChiamate", string sortDirection = "desc")
+        {
+            try
+            {
+                DateTime? fromDateParsed = null;
+                DateTime? toDateParsed = null;
+
+                // Parsing dei parametri di data
+                if (!string.IsNullOrEmpty(dateFrom) && DateTimeExtensions.TryParseWithYearHandling(dateFrom, out DateTime fromDate))
+                {
+                    fromDateParsed = fromDate;
+                }
+
+                if (!string.IsNullOrEmpty(dateTo) && DateTimeExtensions.TryParseWithYearHandling(dateTo, out DateTime toDate))
+                {
+                    toDateParsed = toDate.AddDays(1).AddSeconds(-1);
+                }
+
+                // Se searchContatto contiene il separatore "|", estrai solo la parte del numero
+                var searchContattoForService = searchContatto;
+                if (!string.IsNullOrEmpty(searchContatto) && searchContatto.Contains("|"))
+                {
+                    searchContattoForService = searchContatto.Split('|')[0];
+                }
+
+                var statistiche = await _chiamataService.GetDetailedStatisticsAsync(fromDateParsed, toDateParsed, includeInterni, comune, searchContattoForService, count, true);
+
+                if (statistiche == null)
+                {
+                    _logger.LogWarning("GetDetailedStatisticsAsync ha restituito null");
+                    return Json(new { data = new List<object>(), totalPages = 1 });
+                }
+
+                // Applica l'ordinamento
+                var topChiamatiPerLocazione = statistiche.TopChiamatiPerLocazione?.AsQueryable();
+                if (topChiamatiPerLocazione == null)
+                {
+                    _logger.LogWarning("TopChiamatiPerLocazione è null");
+                    return Json(new { data = new List<object>(), totalPages = 1 });
+                }
+
+                topChiamatiPerLocazione = ApplySorting(topChiamatiPerLocazione, sortField, sortDirection);
+
+                // Applica la paginazione
+                var pageSize = 10;
+                var totalPages = (int)Math.Ceiling(count / (double)pageSize);
+                var pagedResults = topChiamatiPerLocazione
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(c => new {
+                        numero = c.Numero ?? "",
+                        ragioneSociale = c.RagioneSociale ?? "",
+                        locazione = c.Locazione ?? "",
+                        numeroChiamate = c.NumeroChiamate,
+                        durataTotale = c.DurataTotale,
+                        durataMedia = c.DurataMedia
+                    })
+                    .ToList();
+
+                return Json(new { data = pagedResults, totalPages });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante il recupero dei top chiamati per locazione. Parametri: searchContatto={SearchContatto}, count={Count}, page={Page}, dateFrom={DateFrom}, dateTo={DateTo}, comune={Comune}, includeInterni={IncludeInterni}, sortField={SortField}, sortDirection={SortDirection}",
+                    searchContatto, count, page, dateFrom, dateTo, comune, includeInterni, sortField, sortDirection);
+                return Json(new { error = "Errore durante il recupero dei dati", details = ex.Message });
+            }
+        }
+
+        
     }
 }

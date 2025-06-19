@@ -130,6 +130,7 @@ namespace WebApplicationCentralino.Controllers
                     (c.RagioneSocialeChiamato?.ToLower().Contains(searchTerm) ?? false) ||
                     (c.TipoChiamata?.ToLower().Contains(searchTerm) ?? false) ||
                     (c.Locazione?.ToLower().Contains(searchTerm) ?? false) ||
+                    (c.LocazioneChiamato?.ToLower().Contains(searchTerm) ?? false) ||
                     (c.CampoExtra1?.ToLower().Contains(searchTerm) ?? false)
                 ).ToList();
             }
@@ -148,8 +149,9 @@ namespace WebApplicationCentralino.Controllers
                 worksheet.Cell(1, 6).Value = "Data Fine";
                 worksheet.Cell(1, 7).Value = "Durata (sec)";
                 worksheet.Cell(1, 8).Value = "Tipo Chiamata";
-                worksheet.Cell(1, 9).Value = "Locazione";
-                worksheet.Cell(1, 10).Value = "Inserimento";
+                worksheet.Cell(1, 9).Value = "Locazione Chiamante";
+                worksheet.Cell(1, 10).Value = "Locazione Chiamato";
+                worksheet.Cell(1, 11).Value = "Inserimento";
 
                 // Stile intestazioni
                 var headerRow = worksheet.Row(1);
@@ -171,7 +173,8 @@ namespace WebApplicationCentralino.Controllers
                     worksheet.Cell(row, 7).Value = chiamata.Durata.TotalSeconds;
                     worksheet.Cell(row, 8).Value = chiamata.TipoChiamata ?? "-";
                     worksheet.Cell(row, 9).Value = chiamata.Locazione ?? "-";
-                    worksheet.Cell(row, 10).Value = chiamata.CampoExtra1 == "Manuale" ? "Manuale" : "Automatico";
+                    worksheet.Cell(row, 10).Value = chiamata.LocazioneChiamato ?? "-";
+                    worksheet.Cell(row, 11).Value = chiamata.CampoExtra1 == "Manuale" ? "Manuale" : "Automatico";
                     row++;
                 }
 
@@ -225,7 +228,8 @@ namespace WebApplicationCentralino.Controllers
                     (c.RagioneSocialeChiamante?.ToLower().Contains(searchTerm) ?? false) ||
                     (c.RagioneSocialeChiamato?.ToLower().Contains(searchTerm) ?? false) ||
                     (c.TipoChiamata?.ToLower().Contains(searchTerm) ?? false) ||
-                    (c.Locazione?.ToLower().Contains(searchTerm) ?? false)
+                    (c.Locazione?.ToLower().Contains(searchTerm) ?? false) ||
+                    (c.LocazioneChiamato?.ToLower().Contains(searchTerm) ?? false)
                 ).ToList();
             }
 
@@ -240,7 +244,8 @@ namespace WebApplicationCentralino.Controllers
                 DataFineChiamata = c.DataFineChiamata.ToString("dd/MM/yyyy HH:mm:ss"),
                 DurataSecs = c.Durata.TotalSeconds.ToString("N0"),
                 TipoChiamata = c.TipoChiamata ?? "-",
-                Locazione = c.Locazione ?? "-"
+                LocazioneChiamante = c.Locazione ?? "-",
+                LocazioneChiamato = c.LocazioneChiamato ?? "-"
             }).ToList();
 
             // Genera il nome del file con il timestamp

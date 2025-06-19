@@ -43,6 +43,8 @@ namespace WebApplicationCentralino.Managers
             { "Patti", "Patti" },
             { "Roccafiorita", "Roccafiorita" },
             { "Roccalumera", "Roccalumera" },
+            { "Rodì Milici", "Rodi' Milici"},
+            { "Rometta", "Rometta"},
             { "Sambuca", "Sambuca" },
             { "Santa Lucia del Mela", "Santa Lucia del Mela" },
             { "Saponara", "Saponara" },

@@ -138,7 +138,7 @@ namespace WebApplicationCentralino.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Salva(Chiamata chiamata, string LocazionePredefinita)
+        public async Task<IActionResult> Salva(Chiamata chiamata, string LocazionePredefinita, string LocazioneChiamatoPredefinita)
         {
             // Assicuriamo che TipoChiamata sia un valore valido (0 o 1)
             if (chiamata.TipoChiamata != "Entrata")
@@ -149,6 +149,11 @@ namespace WebApplicationCentralino.Controllers
             if (LocazionePredefinita != "Altro")
             {
                 chiamata.Locazione = LocazionePredefinita;
+            }
+
+            if (LocazioneChiamatoPredefinita != "Altro")
+            {
+                chiamata.LocazioneChiamato = LocazioneChiamatoPredefinita;
             }
 
             // NUOVO CODICE: Verifica corrispondenza tra numero e ragione sociale per chiamante e chiamato
@@ -325,6 +330,8 @@ namespace WebApplicationCentralino.Controllers
                                        $"DataArrivo={chiamata.DataArrivoChiamata} (Ticks: {chiamata.DataArrivoChiamata.Ticks}), " +
                                        $"DataFine={chiamata.DataFineChiamata} (Ticks: {chiamata.DataFineChiamata.Ticks}), " +
                                        $"TipoChiamata={chiamata.TipoChiamata} ({(chiamata.TipoChiamata == "Uscita" ? "Entrata" : "Uscita")}), " +
+                                       $"Locazione={chiamata.Locazione}, " +
+                                       $"LocazioneChiamato={chiamata.LocazioneChiamato}, " +
                                        $"UniqueID={chiamata.UniqueID}");
 
                 string message;

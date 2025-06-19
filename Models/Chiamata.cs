@@ -27,6 +27,7 @@ namespace WebApplicationCentralino.Models
 
         public string? TipoChiamata { get; set; }
         public string? Locazione { get; set; }
+        public string? LocazioneChiamato { get; set; }
         public string? UniqueID { get; set; }
         public string? CampoExtra1 { get; set; }
 

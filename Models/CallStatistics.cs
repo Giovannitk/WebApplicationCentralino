@@ -27,6 +27,10 @@ namespace WebApplicationCentralino.Models
         public Dictionary<string, int> ChiamatePerOra { get; set; } = new();
         public List<TopChiamante> TopChiamanti { get; set; } = new();
         public List<TopChiamato> TopChiamati { get; set; } = new();
+        public List<TopChiamantePerLocazione> TopChiamantiPerLocazione { get; set; } = new();
+        public List<TopChiamatoPerLocazione> TopChiamatiPerLocazione { get; set; } = new();
+        public Dictionary<string, int> ChiamatePerLocazioneChiamante { get; set; } = new();
+        public Dictionary<string, int> ChiamatePerLocazioneChiamato { get; set; } = new();
     }
 
     public class TopChiamante
@@ -42,6 +46,26 @@ namespace WebApplicationCentralino.Models
     {
         public string Numero { get; set; } = "";
         public string RagioneSociale { get; set; } = "";
+        public int NumeroChiamate { get; set; }
+        public double DurataTotale { get; set; }
+        public double DurataMedia => NumeroChiamate > 0 ? DurataTotale / NumeroChiamate : 0;
+    }
+
+    public class TopChiamantePerLocazione
+    {
+        public string Numero { get; set; } = "";
+        public string RagioneSociale { get; set; } = "";
+        public string Locazione { get; set; } = "";
+        public int NumeroChiamate { get; set; }
+        public double DurataTotale { get; set; }
+        public double DurataMedia => NumeroChiamate > 0 ? DurataTotale / NumeroChiamate : 0;
+    }
+
+    public class TopChiamatoPerLocazione
+    {
+        public string Numero { get; set; } = "";
+        public string RagioneSociale { get; set; } = "";
+        public string Locazione { get; set; } = "";
         public int NumeroChiamate { get; set; }
         public double DurataTotale { get; set; }
         public double DurataMedia => NumeroChiamate > 0 ? DurataTotale / NumeroChiamate : 0;
@@ -74,5 +98,9 @@ namespace WebApplicationCentralino.Models
         public Dictionary<string, int> ChiamatePerGiorno { get; set; } = new();
         public Dictionary<string, int> ChiamatePerOra { get; set; } = new();
         public List<Chiamata> UltimeChiamate { get; set; } = new();
+        public Dictionary<string, int> ChiamatePerLocazioneChiamante { get; set; } = new();
+        public Dictionary<string, int> ChiamatePerLocazioneChiamato { get; set; } = new();
+        public List<TopChiamantePerLocazione> TopChiamantiPerLocazione { get; set; } = new();
+        public List<TopChiamatoPerLocazione> TopChiamatiPerLocazione { get; set; } = new();
     }
 } 

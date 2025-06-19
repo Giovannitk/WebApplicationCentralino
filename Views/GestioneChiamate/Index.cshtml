@@ -84,6 +84,69 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
+                                <label for="LocazionePredefinita" class="form-label">Locazione Chiamante</label>
+                                @{
+                                    var comuniList = ViewBag.Comuni as List<SelectListItem>;
+                                }
+
+                                <select id="LocazionePredefinita" name="LocazionePredefinita" class="form-select">
+                                    <option value="">Seleziona una locazione</option>
+                                    @if (comuniList != null)
+                                    {
+                                        foreach (var comune in comuniList)
+                                        {
+                                            var isSelected = Model?.Locazione == comune.Value;
+                                            <option value="@comune.Value" selected="@(isSelected ? "selected" : null)">
+                                                @comune.Text
+                                            </option>
+                                        }
+                                    }
+
+                                    <option value="Altro" selected="@(Model?.Locazione != null && (comuniList == null || !comuniList.Any(c => c.Value == Model.Locazione)) ? "selected" : null)">
+                                        Altro
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3" id="DivLocazioneManuale" style="display:none;">
+                                <label for="Locazione" class="form-label">Inserisci manualmente la locazione del chiamante</label>
+                                <input asp-for="Locazione" class="form-control" readonly />
+                                <small class="form-text text-muted">Suggerimento: utilizzare il formato "Comune di [Nome Comune]" (es. "Comune di Roccalumera")</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="LocazioneChiamatoPredefinita" class="form-label">Locazione Chiamato</label>
+                                <select id="LocazioneChiamatoPredefinita" name="LocazioneChiamatoPredefinita" class="form-select">
+                                    <option value="">Seleziona una locazione</option>
+                                    @if (comuniList != null)
+                                    {
+                                        foreach (var comune in comuniList)
+                                        {
+                                            var isSelected = Model?.LocazioneChiamato == comune.Value;
+                                            <option value="@comune.Value" selected="@(isSelected ? "selected" : null)">
+                                                @comune.Text
+                                            </option>
+                                        }
+                                    }
+
+                                    <option value="Altro" selected="@(Model?.LocazioneChiamato != null && (comuniList == null || !comuniList.Any(c => c.Value == Model.LocazioneChiamato)) ? "selected" : null)">
+                                        Altro
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3" id="DivLocazioneChiamatoManuale" style="display:none;">
+                                <label for="LocazioneChiamato" class="form-label">Inserisci manualmente la locazione del chiamato</label>
+                                <input asp-for="LocazioneChiamato" class="form-control" readonly />
+                                <small class="form-text text-muted">Suggerimento: utilizzare il formato "Comune di [Nome Comune]" (es. "Comune di Roccalumera")</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
                                 <label asp-for="DataArrivoChiamata" class="form-label">Data Arrivo</label>
                                 <input asp-for="DataArrivoChiamata" class="form-control" type="datetime-local" step="1" />
                                 <span asp-validation-for="DataArrivoChiamata" class="text-danger"></span>
@@ -111,38 +174,6 @@
                                     <strong>Entrata:</strong> chiamata ricevuta da un numero esterno al centralino<br>
                                     <strong>Uscita:</strong> chiamata effettuata da un interno del centralino verso l'esterno
                                 </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="LocazionePredefinita" class="form-label">Locazione</label>
-                                @{
-                                    var comuniList = ViewBag.Comuni as List<SelectListItem>;
-                                }
-
-                                <select id="LocazionePredefinita" name="LocazionePredefinita" class="form-select">
-                                    <option value="">Seleziona una locazione</option>
-                                    @if (comuniList != null)
-                                    {
-                                        foreach (var comune in comuniList)
-                                        {
-                                            var isSelected = Model?.Locazione == comune.Value;
-                                            <option value="@comune.Value" selected="@(isSelected ? "selected" : null)">
-                                                @comune.Text
-                                            </option>
-                                        }
-                                    }
-
-                                    <option value="Altro" selected="@(Model?.Locazione != null && (comuniList == null || !comuniList.Any(c => c.Value == Model.Locazione)) ? "selected" : null)">
-                                        Altro
-                                    </option>
-                                </select>
-                            </div>
-
-                            <div class="mb-3" id="DivLocazioneManuale" style="display:none;">
-                                <label for="Locazione" class="form-label">Inserisci manualmente la locazione</label>
-                                <input asp-for="Locazione" class="form-control" readonly />
-                                <small class="form-text text-muted">Suggerimento: utilizzare il formato "Comune di [Nome Comune]" (es. "Comune di Roccalumera")</small>
                             </div>
                         </div>
                     </div>
@@ -220,9 +251,10 @@
         }
 
         function editCall(id, numChiamante, numChiamato, ragSocChiamante, ragSocChiamato,
-                        dataArrivo, dataFine, tipo, locazione, uniqueID) {
+                        dataArrivo, dataFine, tipo, locazione, locazioneChiamato, uniqueID) {
 
             console.log("Locazione ricevuta:", locazione);
+            console.log("Locazione chiamato ricevuta:", locazioneChiamato);
 
             document.getElementById("Id").value = id;
             document.getElementById("NumeroChiamante").value = numChiamante;
@@ -233,7 +265,31 @@
             document.getElementById("DataFineChiamata").value = dataFine;
             document.getElementById("TipoChiamata").value = tipo;
             document.getElementById("Locazione").value = locazione;
+            document.getElementById("LocazioneChiamato").value = locazioneChiamato;
             document.getElementById("UniqueID").value = uniqueID;
+
+            // Aggiorna i dropdown delle locazioni
+            if (locazione) {
+                const ddlLocazione = document.getElementById("LocazionePredefinita");
+                const comuneTrovato = Array.from(ddlLocazione.options).find(opt => opt.value === locazione);
+                if (comuneTrovato) {
+                    ddlLocazione.value = locazione;
+                } else {
+                    ddlLocazione.value = "Altro";
+                }
+                toggleManuale();
+            }
+
+            if (locazioneChiamato) {
+                const ddlLocazioneChiamato = document.getElementById("LocazioneChiamatoPredefinita");
+                const comuneTrovato = Array.from(ddlLocazioneChiamato.options).find(opt => opt.value === locazioneChiamato);
+                if (comuneTrovato) {
+                    ddlLocazioneChiamato.value = locazioneChiamato;
+                } else {
+                    ddlLocazioneChiamato.value = "Altro";
+                }
+                toggleManualeChiamato();
+            }
 
             document.querySelector('h2').scrollIntoView({ behavior: 'smooth' });
         }
@@ -360,6 +416,10 @@
             const divManuale = document.getElementById("DivLocazioneManuale");
             const manualInput = document.getElementById("Locazione");
 
+            const ddlChiamato = document.getElementById("LocazioneChiamatoPredefinita");
+            const divManualeChiamato = document.getElementById("DivLocazioneChiamatoManuale");
+            const manualInputChiamato = document.getElementById("LocazioneChiamato");
+
             function toggleManuale() {
                 if (ddl.value === "Altro") {
                     divManuale.style.display = "block";
@@ -372,9 +432,26 @@
                 }
             }
 
+            function toggleManualeChiamato() {
+                if (ddlChiamato.value === "Altro") {
+                    divManualeChiamato.style.display = "block";
+                    manualInputChiamato.removeAttribute("readonly");
+                    manualInputChiamato.value = ""; // pulisci il campo se entri in manuale
+                } else {
+                    divManualeChiamato.style.display = "none";
+                    manualInputChiamato.setAttribute("readonly", true);
+                    manualInputChiamato.value = ddlChiamato.value; // imposta il valore scelto
+                }
+            }
+
             if (ddl) {
                 ddl.addEventListener("change", toggleManuale);
                 toggleManuale(); // inizializzazione
+            }
+
+            if (ddlChiamato) {
+                ddlChiamato.addEventListener("change", toggleManualeChiamato);
+                toggleManualeChiamato(); // inizializzazione
             }
 
             $('.select2').select2({
@@ -551,7 +628,12 @@
 
                 $("#TipoChiamata").val("Uscita");
                 $("#Locazione").val("");
+                $("#LocazioneChiamato").val("");
                 $("#UniqueID").val(crypto.randomUUID());
+
+                // Reset dei dropdown delle locazioni
+                $("#LocazionePredefinita").val("").trigger("change");
+                $("#LocazioneChiamatoPredefinita").val("").trigger("change");
 
                 $("#sezioneElencoChiamate")[0].scrollIntoView({ behavior: 'smooth' });
             });

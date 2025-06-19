@@ -126,38 +126,76 @@ namespace WebApplicationCentralino.Controllers
         }
 
         [HttpGet]
+        [Route("Profile/Test")]
+        [AllowAnonymous]
+        public IActionResult Test()
+        {
+            return Json(new { message = "ProfileController funziona", timestamp = DateTime.Now });
+        }
+
+        [HttpGet]
+        [Route("Profile/GetUserName")]
         public async Task<IActionResult> GetUserName()
         {
             try
             {
                 var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+                var userName = User.Identity?.Name;
+                
+                _logger.LogInformation("GetUserName chiamato - Email: {Email}, UserName: {UserName}", userEmail, userName);
+                
                 if (string.IsNullOrEmpty(userEmail))
                 {
-                    return Json(new { nome = User.Identity.Name });
+                    _logger.LogWarning("Email utente non trovata nei claims, uso UserName: {UserName}", userName);
+                    return Json(new { nome = userName ?? "Utente" });
                 }
+
+                _logger.LogInformation("Tentativo recupero nome utente per: {Email}", userEmail);
 
                 var client = _httpClientFactory.CreateClient("ApiClient");
                 var response = await client.GetAsync("api/profile/profile");
 
+                _logger.LogInformation("Risposta API GetUserName - Status: {Status}", response.StatusCode);
+
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
+                    _logger.LogInformation("Risposta API GetUserName - Content: {Content}", content);
+                    
                     var user = JsonSerializer.Deserialize<UserInfo>(content, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
                     });
                     
-                    return Json(new { nome = user.nome });
+                    if (user != null && !string.IsNullOrEmpty(user.nome))
+                    {
+                        _logger.LogInformation("Nome utente recuperato: {Nome}", user.nome);
+                        return Json(new { nome = user.nome });
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Nome utente vuoto o null nel response, uso email: {Email}", userEmail);
+                        return Json(new { nome = userEmail });
+                    }
                 }
-
-                // Fallback: restituisce l'email se non riesce a recuperare il nome
-                return Json(new { nome = User.Identity.Name });
+                else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    _logger.LogWarning("Endpoint api/profile/profile non trovato (404). Verificare che il server sia in esecuzione. Uso email: {Email}", userEmail);
+                    return Json(new { nome = userEmail });
+                }
+                else
+                {
+                    _logger.LogError("Errore API GetUserName - Status: {Status}, uso email: {Email}", response.StatusCode, userEmail);
+                    return Json(new { nome = userEmail });
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Errore durante il recupero del nome utente");
                 // Fallback: restituisce l'email in caso di errore
-                return Json(new { nome = User.Identity.Name });
+                var userEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? User.Identity?.Name ?? "Utente";
+                _logger.LogInformation("Fallback GetUserName - usando: {UserEmail}", userEmail);
+                return Json(new { nome = userEmail });
             }
         }
     }

@@ -72,7 +72,7 @@
                     <label for="includeInterni" class="form-label">Includi chiamate interne:</label>
                     <div class="input-group">
                         <select id="includeInterni" class="form-select">
-                            <option value="false" selected>No</option>
+                            <option value="false">No</option>
                             <option value="true">Sì</option>
                         </select>
                     </div>
@@ -97,7 +97,8 @@
                             <th class="min-width-150">Data Fine</th>
                             <th class="min-width-80">Durata</th>
                             <th class="min-width-100">Tipo</th>
-                            <th class="min-width-120">Locazione</th>
+                            <th class="min-width-120">Locazione Chiamante</th>
+                            <th class="min-width-120">Locazione Chiamato</th>
                             <th class="min-width-100">Inserimento</th>
                             <th class="min-width-80">Azioni</th>
                         </tr>
@@ -122,6 +123,7 @@
                                         </span>
                                     </td>
                                     <td>@(chiamata.Locazione ?? "-")</td>
+                                    <td>@(chiamata.LocazioneChiamato ?? "-")</td>
                                     <td>
                                         <span class="badge @(chiamata.CampoExtra1 == "Manuale" ? "bg-info" : "bg-secondary")">
                                             @(chiamata.CampoExtra1 == "Manuale" ? "Manuale" : "Automatico")
@@ -259,9 +261,9 @@
                     { "width": "150px", "targets": [4, 5] }, // Date
                     { "width": "80px", "targets": 6 }, // Durata
                     { "width": "100px", "targets": 7 }, // Tipo
-                    { "width": "250px", "targets": 8, "className": "text-wrap" }, // Locazione
-                    { "width": "100px", "targets": 9 }, // Inserimento
-                    { "width": "80px", "targets": 10 } // Azioni
+                    { "width": "250px", "targets": [8, 9], "className": "text-wrap" }, // Locazioni
+                    { "width": "100px", "targets": 10 }, // Inserimento
+                    { "width": "80px", "targets": 11 } // Azioni
                 ],
                 "destroy": true,
                 "deferRender": true,

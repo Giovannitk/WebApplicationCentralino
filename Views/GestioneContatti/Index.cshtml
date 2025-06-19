@@ -30,11 +30,11 @@
             <div class="card-body">
                 <form asp-action="Salva" method="post" id="formContatto">
                     <input type="hidden" asp-for="Id" />
-                    
+
                     <div class="mb-3">
                         <label asp-for="NumeroContatto" class="form-label">Numero Contatto</label>
-                        <input asp-for="NumeroContatto" class="form-control" required 
-                               pattern="^\d{1,15}$" 
+                        <input asp-for="NumeroContatto" class="form-control" required
+                               pattern="^\d{1,15}$"
                                title="Inserire solo numeri (max 15 cifre)" />
                         <div class="form-text">Inserire solo numeri, massimo 15 cifre</div>
                         <span asp-validation-for="NumeroContatto" class="text-danger"></span>
@@ -52,10 +52,14 @@
                                     <option value="custom">Inserisci testo personalizzato</option>
                                     @foreach (var comune in ViewBag.Comuni as Dictionary<string, string>)
                                     {
-                                        <option value="Comune di @comune.Value">Comune di @comune.Key</option>
+                                        <option value="Comune di @comune.Key">Comune di @comune.Key</option>
                                     }
                                 </select>
                             </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label" small text-muted>Comune/Opzione selezionata:</label>
+                            <input type="text" id="comuneSelezionato" class="form-control" readonly />
                         </div>
                         <input type="hidden" asp-for="RagioneSociale" id="ragioneSocialeCompleta" />
                         <div class="form-text">Inserisci la prima parte della ragione sociale e nella seconda parte: seleziona un comune o inserisci un testo personalizzato per indicare l'azienda del contatto.</div>
@@ -64,7 +68,7 @@
 
                     <div class="mb-3">
                         <label asp-for="Citta" class="form-label">Città</label>
-                        <input asp-for="Citta" class="form-control" 
+                        <input asp-for="Citta" class="form-control"
                                pattern="^[A-Za-z\s']+$"
                                title="Inserire solo lettere" />
                         <div class="form-text">Inserire solo lettere, senza numeri</div>
@@ -100,16 +104,170 @@
 </div>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script>
         $(document).ready(function() {
-            // Inizializza Select2
-            $('#secondaParte').select2({
-                theme: 'bootstrap-5',
-                placeholder: "Seleziona un comune o inserisci l'azienda del contatto",
-                allowClear: true
+            // Funzione per inizializzare Select2
+            function initializeSelect2() {
+                $('#secondaParte').select2({
+                    theme: 'bootstrap-5',
+                    placeholder: "Seleziona un comune o inserisci l'azienda del contatto",
+                    allowClear: true
+                });
+            }
+
+            // Aggiorna il campo nascosto quando cambiano i valori
+            function aggiornaComuneSelezionato() {
+                let val = $('#secondaParte').val();
+                if (!val) val = "Nessun comune selezionato";
+                $('#comuneSelezionato').val(val);
+            }
+
+            // Aggiorna il campo nascosto quando cambiano i valori
+            function aggiornaRagioneSociale() {
+                const primaParte = $('#primaParte').val().trim();
+                const secondaParte = $('#secondaParte').val().trim();
+
+                if (primaParte && secondaParte) {
+                    $('#ragioneSocialeCompleta').val(`${primaParte} - ${secondaParte}`);
+                } else if (primaParte) {
+                    $('#ragioneSocialeCompleta').val(primaParte);
+                } else {
+                    $('#ragioneSocialeCompleta').val('');
+                }
+                aggiornaComuneSelezionato();
+            }
+
+            // Funzione per applicare gli event listener
+            function applicaEventListeners() {
+                $('#primaParte, #secondaParte').off('input change').on('input change', aggiornaRagioneSociale);
+            }
+
+            // Funzione per ripristinare i valori dalla ragione sociale
+            function ripristinaValori() {
+                const ragioneSocialeIniziale = $('#ragioneSocialeCompleta').val();
+                if (ragioneSocialeIniziale) {
+                    const parti = ragioneSocialeIniziale.split(' - ');
+                    if (parti.length > 1) {
+                        $('#primaParte').val(parti[0]);
+                        const comuneValue = parti[1];
+
+                        // Cerca il valore corretto nel select
+                        const option = $('#secondaParte option').filter(function() {
+                            return $(this).val() === comuneValue;
+                        });
+
+                        if ($("#secondaParte option[value='" + comuneValue + "']").length > 0) {
+                            $('#secondaParte').val(comuneValue);
+                        } else {
+                            // Comune personalizzato
+                            $('#secondaParte').replaceWith(`
+                                <div id="secondaParteWrapper" class="input-group">
+                                    <input type="text" id="secondaParte" class="form-control" value="${comuneValue}" />
+                                    <button type="button" class="btn btn-outline-secondary" id="tornaSelect">
+                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                    </button>
+                                </div>
+                            `);
+                            applicaEventListeners();
+                            aggiornaComuneSelezionato();
+                            return;
+                        }
+
+                    } else {
+                        $('#primaParte').val(ragioneSocialeIniziale);
+                    }
+                }
+
+                // Inizializza Select2 dopo aver impostato i valori
+                initializeSelect2();
+
+                // Forza un refresh di Select2 dopo un breve ritardo
+                setTimeout(function() {
+                    if ($('#secondaParte').val()) {
+                        $('#secondaParte').trigger('change.select2');
+                    }
+                    aggiornaComuneSelezionato();
+                }, 100);
+            }
+
+            // Ripristina i valori prima di inizializzare Select2
+            ripristinaValori();
+
+            // Applica gli event listener iniziali
+            applicaEventListeners();
+
+            // Gestisci il cambio di opzione "Inserisci testo personalizzato"
+            $(document).on('change', '#secondaParte', function () {
+                const currentValue = $(this).val();
+
+                if (currentValue === 'custom') {
+                    // Salva il contenuto precedente
+                    const oldValue = $(this).val();
+                    // Distruggi Select2 se attivo
+                    if ($(this).hasClass('select2-hidden-accessible')) {
+                        $(this).select2('destroy');
+                    }
+
+                    // Sostituisci con un campo testo e aggiungi un pulsante per tornare al menu
+                    $(this).replaceWith(`
+                        <div id="secondaParteWrapper" class="input-group">
+                            <input type="text" id="secondaParte" class="form-control" placeholder="Inserisci testo personalizzato" />
+                            <button type="button" class="btn btn-outline-secondary" id="tornaSelect">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </button>
+                        </div>
+                    `);
+
+                    applicaEventListeners();
+                    aggiornaRagioneSociale();
+                    aggiornaComuneSelezionato();
+                } else {
+                    aggiornaComuneSelezionato();
+                }
+            });
+
+            // Torna al select se clicca il pulsante
+            $(document).on('click', '#tornaSelect', function () {
+                const valoreAttuale = $('#secondaParte').val();
+
+                // Ricrea il select originale
+                let selectHtml = `
+                    <select id="secondaParte" class="form-select select2">
+                        <option value="">Nessun comune selezionato</option>
+                        <option value="custom">Inserisci testo personalizzato</option>`;
+        @foreach (var comune in ViewBag.Comuni as Dictionary<string, string>)
+        {
+            <text>
+                            selectHtml += `<option value="Comune di @comune.Key">Comune di @comune.Key</option>`;
+            </text>
+        }
+                selectHtml += `</select>`;
+
+                $('#secondaParteWrapper').replaceWith(selectHtml);
+                initializeSelect2();
+                applicaEventListeners();
+
+                // Se il testo corrisponde a un'opzione esistente, selezionala
+                $('#secondaParte option').each(function () {
+                    if ($(this).val() === valoreAttuale) {
+                        $('#secondaParte').val(valoreAttuale).trigger('change.select2');
+                    }
+                });
+
+                aggiornaRagioneSociale();
+                aggiornaComuneSelezionato();
+            });
+
+            // Gestisci anche l'evento select2:select per assicurarsi che i cambiamenti vengano rilevati
+            $(document).on('select2:select', '#secondaParte', function() {
+                aggiornaRagioneSociale();
+            });
+
+            // Gestisci anche l'evento select2:unselect per gestire la cancellazione
+            $(document).on('select2:unselect', '#secondaParte', function() {
+                aggiornaRagioneSociale();
             });
 
             // Abilita la validazione del form
@@ -146,57 +304,6 @@
                 }
             });
 
-            // Gestisci il cambio di opzione "Inserisci testo personalizzato"
-            $('#secondaParte').on('change', function() {
-                if ($(this).val() === 'custom') {
-                    $(this).select2('destroy');
-                    $(this).replaceWith('<input type="text" id="secondaParte" class="form-control" placeholder="Inserisci testo personalizzato" />');
-                }
-            });
-
-            // Aggiorna il campo nascosto quando cambiano i valori
-            function aggiornaRagioneSociale() {
-                const primaParte = $('#primaParte').val().trim();
-                const secondaParte = $('#secondaParte').val().trim();
-                
-                if (primaParte && secondaParte) {
-                    // Se la seconda parte è un input personalizzato o un comune, aggiungi sempre il trattino
-                    $('#ragioneSocialeCompleta').val(`${primaParte} - ${secondaParte}`);
-                } else if (primaParte) {
-                    $('#ragioneSocialeCompleta').val(primaParte);
-                } else {
-                    $('#ragioneSocialeCompleta').val('');
-                }
-            }
-
-            // Aggiungi gli event listener
-            $('#primaParte, #secondaParte').on('input change', aggiornaRagioneSociale);
-
-            // Se c'è un valore iniziale, dividilo e imposta i campi
-            const ragioneSocialeIniziale = $('#ragioneSocialeCompleta').val();
-            if (ragioneSocialeIniziale) {
-                const parti = ragioneSocialeIniziale.split(' - ');
-                if (parti.length > 1) {
-                    $('#primaParte').val(parti[0]);
-                    // Cerca il valore corretto nel select
-                    const comuneValue = parti[1];
-                    const option = $('#secondaParte option').filter(function() {
-                        return $(this).val() === comuneValue;
-                    });
-                    if (option.length) {
-                        $('#secondaParte').val(comuneValue).trigger('change');
-                    } else {
-                        // Se non trova il comune, imposta come testo personalizzato
-                        $('#secondaParte').val('custom').trigger('change');
-                        setTimeout(() => {
-                            $('#secondaParte').val(comuneValue);
-                        }, 100);
-                    }
-                } else {
-                    $('#primaParte').val(ragioneSocialeIniziale);
-                }
-            }
-
             // Aggiungi una regola personalizzata per la ragione sociale
             $.validator.addMethod("customRagioneSociale", function(value, element) {
                 const secondaParte = $('#secondaParte').val();
@@ -209,7 +316,7 @@
             }, "La ragione sociale deve essere nel formato 'ragioneSociale - Comune di PaeseX'");
 
             // Aggiorna la validazione quando cambia il tipo di input
-            $('#secondaParte').on('input change', function() {
+            $(document).on('input change', '#secondaParte', function() {
                 $('#ragioneSocialeCompleta').valid();
             });
 
@@ -235,7 +342,7 @@
                         form.action = '@Url.Action("Elimina", "GestioneContatti")';
 
                         var numeroInput = document.createElement('input');
-                        
+
                         numeroInput.type = 'hidden';
                         numeroInput.name = 'numero';
                         numeroInput.value = numero;

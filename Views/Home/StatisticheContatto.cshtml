@@ -101,6 +101,110 @@
         </div>
     </div>
 
+    <!-- Nuove statistiche basate sulla locazione -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Distribuzione per Locazione Chiamante</h5>
+                </div>
+                <div class="card-body">
+                    <div style="height: 300px;">
+                        <canvas id="locazioneChiamanteChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Distribuzione per Locazione Chiamato</h5>
+                </div>
+                <div class="card-body">
+                    <div style="height: 300px;">
+                        <canvas id="locazioneChiamatoChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top chiamanti e chiamati per locazione -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Top Chiamanti per Locazione</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Numero</th>
+                                    <th>Ragione Sociale</th>
+                                    <th>Locazione</th>
+                                    <th>Chiamate</th>
+                                    <th>Durata Totale</th>
+                                    <th>Durata Media</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var chiamante in Model.TopChiamantiPerLocazione)
+                                {
+                                    <tr>
+                                        <td>@chiamante.Numero</td>
+                                        <td>@chiamante.RagioneSociale</td>
+                                        <td>@chiamante.Locazione</td>
+                                        <td>@chiamante.NumeroChiamate</td>
+                                        <td>@FormatDuration(chiamante.DurataTotale)</td>
+                                        <td>@FormatDuration(chiamante.DurataMedia)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Top Chiamati per Locazione</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Numero</th>
+                                    <th>Ragione Sociale</th>
+                                    <th>Locazione</th>
+                                    <th>Chiamate</th>
+                                    <th>Durata Totale</th>
+                                    <th>Durata Media</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var chiamato in Model.TopChiamatiPerLocazione)
+                                {
+                                    <tr>
+                                        <td>@chiamato.Numero</td>
+                                        <td>@chiamato.RagioneSociale</td>
+                                        <td>@chiamato.Locazione</td>
+                                        <td>@chiamato.NumeroChiamate</td>
+                                        <td>@FormatDuration(chiamato.DurataTotale)</td>
+                                        <td>@FormatDuration(chiamato.DurataMedia)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Ultime Chiamate -->
     <div class="card shadow mb-4">
         <div class="card-header bg-primary text-white">
@@ -132,7 +236,7 @@
                                 <td>@(chiamata.NumeroChiamato == Model.Numero ? chiamata.NumeroChiamante : chiamata.NumeroChiamato)</td>
                                 <td>@(chiamata.NumeroChiamato == Model.Numero ? chiamata.RagioneSocialeChiamante : chiamata.RagioneSocialeChiamato)</td>
                                 <td>@FormatDuration(chiamata.Durata.TotalSeconds)</td>
-                                <td>@(chiamata.Locazione ?? "-")</td>
+                                <td>@(chiamata.NumeroChiamato == Model.Numero ? (chiamata.Locazione ?? "-") : (chiamata.LocazioneChiamato ?? "-"))</td>
                             </tr>
                         }
                     </tbody>
@@ -261,6 +365,73 @@
                                 beginAtZero: true,
                                 ticks: {
                                     stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+
+            // Nuovi grafici per la distribuzione per locazione
+            const locazioneChiamanteData = {
+                labels: @Html.Raw(Json.Serialize(Model.ChiamatePerLocazioneChiamante.Keys)),
+                datasets: [{
+                    data: @Html.Raw(Json.Serialize(Model.ChiamatePerLocazioneChiamante.Values)),
+                    backgroundColor: [
+                        '#28a745', '#20c997', '#17a2b8', '#ffc107', '#dc3545', '#6f42c1', '#fd7e14', '#e83e8c'
+                    ]
+                }]
+            };
+
+            const locazioneChiamatoData = {
+                labels: @Html.Raw(Json.Serialize(Model.ChiamatePerLocazioneChiamato.Keys)),
+                datasets: [{
+                    data: @Html.Raw(Json.Serialize(Model.ChiamatePerLocazioneChiamato.Values)),
+                    backgroundColor: [
+                        '#28a745', '#20c997', '#17a2b8', '#ffc107', '#dc3545', '#6f42c1', '#fd7e14', '#e83e8c'
+                    ]
+                }]
+            };
+
+            new Chart(
+                document.getElementById('locazioneChiamanteChart'),
+                {
+                    type: 'pie',
+                    data: locazioneChiamanteData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    boxWidth: 15,
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+
+            new Chart(
+                document.getElementById('locazioneChiamatoChart'),
+                {
+                    type: 'pie',
+                    data: locazioneChiamatoData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    boxWidth: 15,
+                                    font: {
+                                        size: 12
+                                    }
                                 }
                             }
                         }

@@ -54,7 +54,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.SameSite = SameSiteMode.Strict;
     });
 
-var address = builder.Configuration.GetValue<string>("BaseUrl", "http://10.36.150.250:5000/");
+var address = builder.Configuration.GetValue<string>("ApiSettings:BaseUrl", "http://10.36.150.250:5000/");
 
 // Create a function to configure HTTP clients with JWT token handler
 void ConfigureHttpClientWithJwtToken(IServiceCollection services, string name, Action<HttpClient> configureClient = null)

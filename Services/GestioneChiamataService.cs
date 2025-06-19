@@ -66,6 +66,7 @@ namespace WebApplicationCentralino.Services
                     dataFineChiamata = chiamata.DataFineChiamata,
                     tipoChiamata = chiamata.TipoChiamata, 
                     locazione = chiamata.Locazione ?? "Non specificato",
+                    locazioneChiamato = chiamata.LocazioneChiamato ?? "Non specificato",
                     uniqueID = chiamata.UniqueID,
                     campoExtra1 = chiamata.CampoExtra1
                 };
@@ -112,6 +113,7 @@ namespace WebApplicationCentralino.Services
                     dataFineChiamata = chiamata.DataFineChiamata,
                     tipoChiamata = chiamata.TipoChiamata,
                     locazione = chiamata.Locazione,
+                    locazioneChiamato = chiamata.LocazioneChiamato,
                     uniqueID = chiamata.UniqueID,
                     campoExtra1 = chiamata.CampoExtra1
                 };

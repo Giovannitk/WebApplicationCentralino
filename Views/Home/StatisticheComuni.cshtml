@@ -363,6 +363,110 @@
                 </div>
             </div>
         </div>
+
+        <!-- Nuove statistiche basate sulla locazione -->
+        <div class="row mb-4">
+            <div class="col-12 col-md-6 mb-4">
+                <div class="card shadow h-100">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Distribuzione per Locazione Chiamante</h5>
+                    </div>
+                    <div class="card-body">
+                        <div style="height: 300px;">
+                            <canvas id="locazioneChiamanteChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 mb-4">
+                <div class="card shadow h-100">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Distribuzione per Locazione Chiamato</h5>
+                    </div>
+                    <div class="card-body">
+                        <div style="height: 300px;">
+                            <canvas id="locazioneChiamatoChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top chiamanti e chiamati per locazione -->
+        <div class="row mb-4">
+            <div class="col-12 col-md-6 mb-4">
+                <div class="card shadow h-100">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Top Chiamanti per Locazione</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th class="numero">Numero</th>
+                                        <th class="ragione-sociale">Ragione Sociale</th>
+                                        <th class="locazione">Locazione</th>
+                                        <th class="chiamate">Chiamate</th>
+                                        <th class="durata">Durata Totale</th>
+                                        <th class="durata">Durata Media</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var chiamante in Model.TopChiamantiPerLocazione)
+                                    {
+                                        <tr>
+                                            <td class="numero">@chiamante.Numero</td>
+                                            <td class="ragione-sociale">@chiamante.RagioneSociale</td>
+                                            <td class="locazione">@chiamante.Locazione</td>
+                                            <td class="chiamate">@chiamante.NumeroChiamate</td>
+                                            <td class="durata">@FormatDuration(chiamante.DurataTotale)</td>
+                                            <td class="durata">@FormatDuration(chiamante.DurataMedia)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 mb-4">
+                <div class="card shadow h-100">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Top Chiamati per Locazione</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th class="numero">Numero</th>
+                                        <th class="ragione-sociale">Ragione Sociale</th>
+                                        <th class="locazione">Locazione</th>
+                                        <th class="chiamate">Chiamate</th>
+                                        <th class="durata">Durata Totale</th>
+                                        <th class="durata">Durata Media</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var chiamato in Model.TopChiamatiPerLocazione)
+                                    {
+                                        <tr>
+                                            <td class="numero">@chiamato.Numero</td>
+                                            <td class="ragione-sociale">@chiamato.RagioneSociale</td>
+                                            <td class="locazione">@chiamato.Locazione</td>
+                                            <td class="chiamate">@chiamato.NumeroChiamate</td>
+                                            <td class="durata">@FormatDuration(chiamato.DurataTotale)</td>
+                                            <td class="durata">@FormatDuration(chiamato.DurataMedia)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     }
     else
     {
@@ -420,8 +524,76 @@
                 }]
             };
 
+            // Nuovi dati per i grafici di locazione
+            var locazioneChiamanteData = {
+                labels: @Html.Raw(Json.Serialize(Model.ChiamatePerLocazioneChiamante.Keys)),
+                datasets: [{
+                    data: @Html.Raw(Json.Serialize(Model.ChiamatePerLocazioneChiamante.Values)),
+                    backgroundColor: [
+                        '#28a745', '#20c997', '#17a2b8', '#ffc107', '#dc3545', '#6f42c1', '#fd7e14', '#e83e8c'
+                    ]
+                }]
+            };
+
+            var locazioneChiamatoData = {
+                labels: @Html.Raw(Json.Serialize(Model.ChiamatePerLocazioneChiamato.Keys)),
+                datasets: [{
+                    data: @Html.Raw(Json.Serialize(Model.ChiamatePerLocazioneChiamato.Values)),
+                    backgroundColor: [
+                        '#28a745', '#20c997', '#17a2b8', '#ffc107', '#dc3545', '#6f42c1', '#fd7e14', '#e83e8c'
+                    ]
+                }]
+            };
+
             $(document).ready(function() {
                 initializeCharts(tipoData, locazioneData, giornoData);
+                
+                // Inizializza i nuovi grafici per locazione
+                new Chart(
+                    document.getElementById('locazioneChiamanteChart'),
+                    {
+                        type: 'pie',
+                        data: locazioneChiamanteData,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        boxWidth: 15,
+                                        font: {
+                                            size: 12
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                );
+
+                new Chart(
+                    document.getElementById('locazioneChiamatoChart'),
+                    {
+                        type: 'pie',
+                        data: locazioneChiamatoData,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        boxWidth: 15,
+                                        font: {
+                                            size: 12
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                );
                 
                 // Aggiorna l'URL di esportazione quando cambiano i filtri
                 function updateExportUrl() {

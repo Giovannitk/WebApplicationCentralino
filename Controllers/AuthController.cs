@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Net.Http.Headers;
 using WebApplicationCentralino.Models;
 using WebApplicationCentralino.Services;
 
@@ -108,10 +109,46 @@ namespace WebApplicationCentralino.Controllers
 
                             Response.Cookies.Append("JWTToken", authResponse.Token, tokenCookie);
 
+                            // Recupera il nome dell'utente dall'API
+                            string userName = model.Email; // Fallback all'email
+                            try
+                            {
+                                // Crea un nuovo client HTTP con il token appena ricevuto
+                                var apiBaseUrl = _configuration.GetValue<string>("ApiSettings:BaseUrl", "http://10.36.150.250:5000/");
+                                var profileClient = _httpClientFactory.CreateClient();
+                                profileClient.BaseAddress = new Uri(apiBaseUrl);
+                                profileClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+                                profileClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authResponse.Token);
+                                
+                                var profileResponse = await profileClient.GetAsync("api/profile/profile");
+                                if (profileResponse.IsSuccessStatusCode)
+                                {
+                                    var profileContent = await profileResponse.Content.ReadAsStringAsync();
+                                    var userInfo = JsonSerializer.Deserialize<UserInfo>(profileContent, new JsonSerializerOptions
+                                    {
+                                        PropertyNameCaseInsensitive = true
+                                    });
+                                    
+                                    if (userInfo != null && !string.IsNullOrEmpty(userInfo.nome))
+                                    {
+                                        userName = userInfo.nome;
+                                        _logger.LogInformation("Nome utente recuperato durante login: {Nome}", userName);
+                                    }
+                                }
+                                else
+                                {
+                                    _logger.LogWarning("Errore nel recupero del profilo durante login: {StatusCode}", profileResponse.StatusCode);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "Impossibile recuperare il nome utente durante login, uso email come fallback");
+                            }
+
                             // Create claims for the user
                             var claims = new List<Claim>
                             {
-                                new Claim(ClaimTypes.Name, model.Email),
+                                new Claim(ClaimTypes.Name, userName),
                                 new Claim(ClaimTypes.Email, model.Email),
                                 new Claim(ClaimTypes.Role, authResponse.Role),
                                 new Claim("JWTToken", authResponse.Token)

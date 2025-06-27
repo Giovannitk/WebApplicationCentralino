@@ -158,9 +158,9 @@
                             return $(this).val() === comuneValue;
                         });
 
-                        if ($("#secondaParte option[value='" + comuneValue + "']").length > 0) {
-                            $('#secondaParte').val(comuneValue);
-                        } else {
+                            if ($('#secondaParte option').filter(function() { return $(this).val() === comuneValue; }).length > 0) {
+                                $('#secondaParte').val(comuneValue);
+                            } else {
                             // Comune personalizzato
                             $('#secondaParte').replaceWith(`
                                 <div id="secondaParteWrapper" class="input-group">

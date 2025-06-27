@@ -31,6 +31,9 @@ namespace WebApplicationCentralino.Models
         public string? UniqueID { get; set; }
         public string? CampoExtra1 { get; set; }
 
+        //public string? CampoExtra2 { get; set; }
+        public string? transferGroupId { get; set; }
+
         // Proprietà calcolata per la durata della chiamata
         public TimeSpan Durata => DataFineChiamata > DataArrivoChiamata
             ? DataFineChiamata - DataArrivoChiamata

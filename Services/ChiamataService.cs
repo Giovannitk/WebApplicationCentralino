@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using System.Linq;
 using Microsoft.Extensions.Caching.Memory;
 using WebApplicationCentralino.Managers;
+using WebApplicationCentralino.Extensions;
 
 namespace WebApplicationCentralino.Services
 {
@@ -26,8 +27,8 @@ namespace WebApplicationCentralino.Services
 
         public ChiamataService(
             IHttpClientFactory httpClientFactory,
-            IConfiguration configuration, 
-            ContattoService contattoService, 
+            IConfiguration configuration,
+            ContattoService contattoService,
             ILogger<ChiamataService> logger,
             IMemoryCache cache)
         {
@@ -63,7 +64,44 @@ namespace WebApplicationCentralino.Services
             try
             {
                 var response = await _httpClient.GetFromJsonAsync<List<Chiamata>>("api/call/get-all-calls");
-                return response ?? new List<Chiamata>();
+                var chiamate = response ?? new List<Chiamata>();
+
+                //foreach (var c in chiamate) 
+                //{
+                //    if (c.UniqueID == "1750868533.18468")
+                //    {
+                //        _logger.LogInformation($"[istanza 1] chiamante: {c.NumeroChiamante} - {c.RagioneSocialeChiamante}");
+                //        _logger.LogInformation($"[istanza 1] chiamato: {c.NumeroChiamato} - {c.RagioneSocialeChiamato}");
+                //    }
+
+                //    if (c.UniqueID == "1750868553.18470") 
+                //    {
+                //        _logger.LogInformation($"[istanza 2] chiamante: {c.NumeroChiamante} - {c.RagioneSocialeChiamante}");
+                //        _logger.LogInformation($"[istanza 2] chiamato: {c.NumeroChiamato} - {c.RagioneSocialeChiamato}");
+                //        _logger.LogInformation($"[istanza 2] campoExtra2: {c.transferGroupId}");
+                //    }
+
+                //    if (c.transferGroupId == "1750868533.18468")
+                //    {
+                //        _logger.LogInformation($"[istanza 2] chiamante: {c.NumeroChiamante} - {c.RagioneSocialeChiamante}");
+                //        _logger.LogInformation($"[istanza 2] chiamato: {c.NumeroChiamato} - {c.RagioneSocialeChiamato}");
+                //    }
+                //}
+
+                //var chiamateunite = ChiamataHelper.UnisciChiamateTrasferimento(chiamate);
+                //foreach (var c in chiamateunite)
+                //{
+                //    if (c.UniqueID.Contains("+"))
+                //    {
+                //        _logger.LogInformation($"[istanza 1 e 2] uniqueid: {c.UniqueID}");
+                //        _logger.LogInformation($"[istanza 1 e 2] chiamante: {c.NumeroChiamante} - {c.RagioneSocialeChiamante}");
+                //        _logger.LogInformation($"[istanza 1 e 2] chiamato: {c.NumeroChiamato} - {c.RagioneSocialeChiamato}");
+                //        _logger.LogInformation($"[istanza 1 e 2] campoExtra2: {c.transferGroupId}");
+                //        _logger.LogInformation($"[istanza 1 e 2] data: {c.DataArrivoChiamata}");
+                //    }
+                //}
+
+                return ChiamataHelper.UnisciChiamateTrasferimento(chiamate, _logger);
             }
             catch (HttpRequestException ex) when (ex.Message.Contains("401"))
             {
@@ -140,8 +178,8 @@ namespace WebApplicationCentralino.Services
                     .ToHashSet();
 
                 // Calcola i contatti incompleti e salvali in cache
-                var contattiIncompleti = contatti.Where(c => 
-                    string.IsNullOrEmpty(c.RagioneSociale) || 
+                var contattiIncompleti = contatti.Where(c =>
+                    string.IsNullOrEmpty(c.RagioneSociale) ||
                     c.RagioneSociale == "Non registrato" ||
                     c.RagioneSociale == c.NumeroContatto ||
                     string.IsNullOrEmpty(c.NumeroContatto)
@@ -194,7 +232,7 @@ namespace WebApplicationCentralino.Services
                 var statistiche = new DetailedCallStatistics();
 
                 // Filtra le chiamate per data
-                chiamate = chiamate.Where(c => 
+                chiamate = chiamate.Where(c =>
                     (dateFrom == null || c.DataArrivoChiamata >= dateFrom) &&
                     (dateTo == null || c.DataArrivoChiamata <= dateTo)
                 ).ToList();
@@ -219,10 +257,10 @@ namespace WebApplicationCentralino.Services
                 {
                     // Rimuovi "Comune di " dal nome del comune se presente
                     var comuneToSearch = comune.Replace("Comune di ", "").Trim();
-                    
+
                     // Ottieni il valore del database dal ComuniManager
                     var dbValue = ComuniManager.GetDatabaseValue(comuneToSearch);
-                    
+
                     // Crea una lista di possibili varianti del nome del comune
                     var comuneVariants = new List<string>
                     {
@@ -244,11 +282,11 @@ namespace WebApplicationCentralino.Services
                     comuneVariants = comuneVariants.Distinct().ToList();
 
                     chiamate = chiamate.Where(c =>
-                        (!string.IsNullOrEmpty(c.RagioneSocialeChiamante) && 
+                        (!string.IsNullOrEmpty(c.RagioneSocialeChiamante) &&
                          comuneVariants.Any(v => c.RagioneSocialeChiamante.Contains(v, StringComparison.OrdinalIgnoreCase))) ||
-                        (!string.IsNullOrEmpty(c.RagioneSocialeChiamato) && 
+                        (!string.IsNullOrEmpty(c.RagioneSocialeChiamato) &&
                          comuneVariants.Any(v => c.RagioneSocialeChiamato.Contains(v, StringComparison.OrdinalIgnoreCase))) ||
-                        (!string.IsNullOrEmpty(c.Locazione) && 
+                        (!string.IsNullOrEmpty(c.Locazione) &&
                          comuneVariants.Any(v => c.Locazione.Contains(v, StringComparison.OrdinalIgnoreCase)))
                     ).ToList();
                 }
@@ -265,22 +303,22 @@ namespace WebApplicationCentralino.Services
 
                         // Trova il contatto specifico
                         var contattoSpecifico = contatti
-                            .FirstOrDefault(c => 
-                                c.NumeroContatto == numeroContatto && 
+                            .FirstOrDefault(c =>
+                                c.NumeroContatto == numeroContatto &&
                                 c.RagioneSociale == ragioneSociale);
 
                         if (contattoSpecifico != null)
                         {
                             // Filtra le chiamate dove il numero corrisponde E la ragione sociale corrisponde (con logica flessibile)
-                            chiamate = chiamate.Where(c => 
+                            chiamate = chiamate.Where(c =>
                                 // Chiamate in entrata (il contatto è il chiamato)
-                                (c.NumeroChiamato == numeroContatto && 
-                                 (string.IsNullOrEmpty(c.RagioneSocialeChiamato) || 
+                                (c.NumeroChiamato == numeroContatto &&
+                                 (string.IsNullOrEmpty(c.RagioneSocialeChiamato) ||
                                   c.RagioneSocialeChiamato.Contains(ragioneSociale, StringComparison.OrdinalIgnoreCase) ||
                                   ragioneSociale.Contains(c.RagioneSocialeChiamato, StringComparison.OrdinalIgnoreCase))) ||
                                 // Chiamate in uscita (il contatto è il chiamante)
-                                (c.NumeroChiamante == numeroContatto && 
-                                 (string.IsNullOrEmpty(c.RagioneSocialeChiamante) || 
+                                (c.NumeroChiamante == numeroContatto &&
+                                 (string.IsNullOrEmpty(c.RagioneSocialeChiamante) ||
                                   c.RagioneSocialeChiamante.Contains(ragioneSociale, StringComparison.OrdinalIgnoreCase) ||
                                   ragioneSociale.Contains(c.RagioneSocialeChiamante, StringComparison.OrdinalIgnoreCase)))
                             ).ToList();
@@ -295,7 +333,7 @@ namespace WebApplicationCentralino.Services
                     {
                         // Ricerca tradizionale per numero o ragione sociale (per compatibilità)
                         var numeriContattiRicerca = contatti
-                            .Where(c => 
+                            .Where(c =>
                                 (c.NumeroContatto != null && c.NumeroContatto.Equals(searchContatto, StringComparison.OrdinalIgnoreCase)) ||
                                 (c.RagioneSociale != null && c.RagioneSociale.Equals(searchContatto, StringComparison.OrdinalIgnoreCase))
                             )
@@ -303,7 +341,7 @@ namespace WebApplicationCentralino.Services
                             .ToList();
 
                         // Filtra le chiamate dove il chiamante o il chiamato è uno dei contatti trovati
-                        chiamate = chiamate.Where(c => 
+                        chiamate = chiamate.Where(c =>
                             (c.NumeroChiamante != null && numeriContattiRicerca.Contains(c.NumeroChiamante)) ||
                             (c.NumeroChiamato != null && numeriContattiRicerca.Contains(c.NumeroChiamato))
                         ).ToList();
@@ -314,49 +352,50 @@ namespace WebApplicationCentralino.Services
 
                     // Aggiorna le statistiche per il contatto
                     statistiche.TotaleChiamate = chiamateContatto.Count;
-                    statistiche.ChiamateInEntrata = chiamateContatto.Count(c => c.TipoChiamata?.ToLower() == "entrata");
-                    statistiche.ChiamateInUscita = chiamateContatto.Count(c => c.TipoChiamata?.ToLower() == "uscita");
-                    statistiche.ChiamatePerse = chiamateContatto.Count(c => c.TipoChiamata?.ToLower() == "persa");
-                    statistiche.ChiamateNonRisposta = chiamateContatto.Count(c => c.TipoChiamata?.ToLower() == "non risposta");
+                    statistiche.ChiamateInEntrata = chiamateContatto.Count(c => NormalizzaTipoChiamata(c.TipoChiamata) == "entrata");
+                    statistiche.ChiamateInUscita = chiamateContatto.Count(c => NormalizzaTipoChiamata(c.TipoChiamata) == "uscita");
+                    statistiche.ChiamatePerse = chiamateContatto.Count(c => NormalizzaTipoChiamata(c.TipoChiamata) == "persa");
+                    statistiche.ChiamateNonRisposta = chiamateContatto.Count(c => NormalizzaTipoChiamata(c.TipoChiamata) == "non risposta");
                     statistiche.ChiamateManuali = chiamateContatto.Count(c => c.CampoExtra1 == "Manuale");
                     statistiche.ChiamateAutomatiche = chiamateContatto.Count(c => c.CampoExtra1 != "Manuale");
-                    
+
                     // Imposta ChiamateInterne solo se non stiamo usando TipoChiamata per identificare le interne
                     // Altrimenti le chiamate interne sono già contate nel raggruppamento per TipoChiamata
-                    if (!useTipoChiamataForInterni)
-                    {
-                        statistiche.ChiamateInterne = chiamateInterne.Count;
-                    }
-                    else
-                    {
-                        // Se usiamo TipoChiamata, le chiamate interne sono già contate nel raggruppamento per tipo
-                        statistiche.ChiamateInterne = 0;
-                    }
-                    
+                    //if (!useTipoChiamataForInterni)
+                    //{
+                    //    statistiche.ChiamateInterne = chiamateInterne.Count;
+                    //}
+                    //else
+                    //{
+                    //    // Se usiamo TipoChiamata, le chiamate interne sono già contate nel raggruppamento per tipo
+                    //    statistiche.ChiamateInterne = 0;
+                    //}
+                    statistiche.ChiamateInterne = chiamateInterne.Count;
+
                     statistiche.DurataTotaleChiamate = chiamateContatto.Sum(c => c.Durata.TotalSeconds);
 
                     // Calcola la durata media
-                    statistiche.DurataMediaChiamate = statistiche.TotaleChiamate > 0 
-                        ? statistiche.DurataTotaleChiamate / statistiche.TotaleChiamate 
+                    statistiche.DurataMediaChiamate = statistiche.TotaleChiamate > 0
+                        ? statistiche.DurataTotaleChiamate / statistiche.TotaleChiamate
                         : 0;
 
                     // Calcola le durate per chiamate in entrata
-                    var chiamateInEntrataContatto = chiamateContatto.Where(c => c.TipoChiamata?.ToLower() == "entrata");
+                    var chiamateInEntrataContatto = chiamateContatto.Where(c => NormalizzaTipoChiamata(c.TipoChiamata) == "entrata");
                     statistiche.DurataTotaleInEntrata = chiamateInEntrataContatto.Sum(c => c.Durata.TotalSeconds);
-                    statistiche.DurataMediaInEntrata = statistiche.ChiamateInEntrata > 0 
-                        ? statistiche.DurataTotaleInEntrata / statistiche.ChiamateInEntrata 
+                    statistiche.DurataMediaInEntrata = statistiche.ChiamateInEntrata > 0
+                        ? statistiche.DurataTotaleInEntrata / statistiche.ChiamateInEntrata
                         : 0;
 
                     // Calcola le durate per chiamate in uscita
-                    var chiamateInUscitaContatto = chiamateContatto.Where(c => c.TipoChiamata?.ToLower() == "uscita");
+                    var chiamateInUscitaContatto = chiamateContatto.Where(c => NormalizzaTipoChiamata(c.TipoChiamata) == "uscita");
                     statistiche.DurataTotaleInUscita = chiamateInUscitaContatto.Sum(c => c.Durata.TotalSeconds);
-                    statistiche.DurataMediaInUscita = statistiche.ChiamateInUscita > 0 
-                        ? statistiche.DurataTotaleInUscita / statistiche.ChiamateInUscita 
+                    statistiche.DurataMediaInUscita = statistiche.ChiamateInUscita > 0
+                        ? statistiche.DurataTotaleInUscita / statistiche.ChiamateInUscita
                         : 0;
 
                     // Raggruppa per tipo di chiamata
                     statistiche.ChiamatePerTipo = chiamateContatto
-                        .GroupBy(c => c.TipoChiamata ?? "Non specificato")
+                        .GroupBy(c => NormalizzaTipoChiamata(c.TipoChiamata) ?? "Non specificato")
                         .ToDictionary(g => g.Key, g => g.Count());
 
                     // Raggruppa per locazione
@@ -453,13 +492,13 @@ namespace WebApplicationCentralino.Services
 
                 // Se non ci sono filtri di comune o ricerca, usa tutte le chiamate filtrate solo per data e interni
                 statistiche.TotaleChiamate = chiamate.Count;
-                statistiche.ChiamateInEntrata = chiamate.Count(c => c.TipoChiamata?.ToLower() == "entrata");
-                statistiche.ChiamateInUscita = chiamate.Count(c => c.TipoChiamata?.ToLower() == "uscita");
-                statistiche.ChiamatePerse = chiamate.Count(c => c.TipoChiamata?.ToLower() == "persa");
-                statistiche.ChiamateNonRisposta = chiamate.Count(c => c.TipoChiamata?.ToLower() == "non risposta");
+                statistiche.ChiamateInEntrata = chiamate.Count(c => NormalizzaTipoChiamata(c.TipoChiamata) == "entrata");
+                statistiche.ChiamateInUscita = chiamate.Count(c => NormalizzaTipoChiamata(c.TipoChiamata) == "uscita");
+                statistiche.ChiamatePerse = chiamate.Count(c => NormalizzaTipoChiamata(c.TipoChiamata) == "persa");
+                statistiche.ChiamateNonRisposta = chiamate.Count(c => NormalizzaTipoChiamata(c.TipoChiamata) == "non risposta");
                 statistiche.ChiamateManuali = chiamate.Count(c => c.CampoExtra1 == "Manuale");
                 statistiche.ChiamateAutomatiche = chiamate.Count(c => c.CampoExtra1 != "Manuale");
-                
+
                 // Imposta ChiamateInterne solo se non stiamo usando TipoChiamata per identificare le interne
                 // Altrimenti le chiamate interne sono già contate nel raggruppamento per TipoChiamata
                 if (!useTipoChiamataForInterni)
@@ -471,31 +510,31 @@ namespace WebApplicationCentralino.Services
                     // Se usiamo TipoChiamata, le chiamate interne sono già contate nel raggruppamento per tipo
                     statistiche.ChiamateInterne = 0;
                 }
-                
+
                 statistiche.DurataTotaleChiamate = chiamate.Sum(c => c.Durata.TotalSeconds);
 
                 // Calcola la durata media
-                statistiche.DurataMediaChiamate = statistiche.TotaleChiamate > 0 
-                    ? statistiche.DurataTotaleChiamate / statistiche.TotaleChiamate 
+                statistiche.DurataMediaChiamate = statistiche.TotaleChiamate > 0
+                    ? statistiche.DurataTotaleChiamate / statistiche.TotaleChiamate
                     : 0;
 
                 // Calcola le durate per chiamate in entrata
-                var chiamateInEntrata = chiamate.Where(c => c.TipoChiamata?.ToLower() == "entrata");
+                var chiamateInEntrata = chiamate.Where(c => NormalizzaTipoChiamata(c.TipoChiamata) == "entrata");
                 statistiche.DurataTotaleInEntrata = chiamateInEntrata.Sum(c => c.Durata.TotalSeconds);
-                statistiche.DurataMediaInEntrata = statistiche.ChiamateInEntrata > 0 
-                    ? statistiche.DurataTotaleInEntrata / statistiche.ChiamateInEntrata 
+                statistiche.DurataMediaInEntrata = statistiche.ChiamateInEntrata > 0
+                    ? statistiche.DurataTotaleInEntrata / statistiche.ChiamateInEntrata
                     : 0;
 
                 // Calcola le durate per chiamate in uscita
-                var chiamateInUscita = chiamate.Where(c => c.TipoChiamata?.ToLower() == "uscita");
+                var chiamateInUscita = chiamate.Where(c => NormalizzaTipoChiamata(c.TipoChiamata) == "uscita");
                 statistiche.DurataTotaleInUscita = chiamateInUscita.Sum(c => c.Durata.TotalSeconds);
-                statistiche.DurataMediaInUscita = statistiche.ChiamateInUscita > 0 
-                    ? statistiche.DurataTotaleInUscita / statistiche.ChiamateInUscita 
+                statistiche.DurataMediaInUscita = statistiche.ChiamateInUscita > 0
+                    ? statistiche.DurataTotaleInUscita / statistiche.ChiamateInUscita
                     : 0;
 
                 // Raggruppa per tipo di chiamata
                 statistiche.ChiamatePerTipo = chiamate
-                    .GroupBy(c => c.TipoChiamata ?? "Non specificato")
+                    .GroupBy(c => NormalizzaTipoChiamata(c.TipoChiamata) ?? "Non specificato")
                     .ToDictionary(g => g.Key, g => g.Count());
 
                 // Raggruppa per locazione
@@ -605,7 +644,7 @@ namespace WebApplicationCentralino.Services
             {
                 var chiamate = await GetAllChiamateAsync();
                 var contatti = await _contattoService.GetAllAsync();
-                
+
                 // Trova il contatto
                 var contatto = contatti.FirstOrDefault(c => c.NumeroContatto == numeroContatto);
                 if (contatto == null)
@@ -624,8 +663,8 @@ namespace WebApplicationCentralino.Services
                 }
 
                 // Filtra le chiamate per il contatto specifico
-                var chiamateContatto = chiamate.Where(c => 
-                    c.NumeroChiamante == numeroContatto || 
+                var chiamateContatto = chiamate.Where(c =>
+                    c.NumeroChiamante == numeroContatto ||
                     c.NumeroChiamato == numeroContatto
                 ).ToList();
 
@@ -635,12 +674,12 @@ namespace WebApplicationCentralino.Services
                     RagioneSociale = contatto.RagioneSociale,
                     ChiamateInEntrata = chiamateContatto.Count(c => c.NumeroChiamato == numeroContatto),
                     ChiamateInUscita = chiamateContatto.Count(c => c.NumeroChiamante == numeroContatto),
-                    ChiamatePerse = chiamateContatto.Count(c => 
-                        (c.NumeroChiamato == numeroContatto || c.NumeroChiamante == numeroContatto) && 
-                        c.TipoChiamata?.ToLower() == "persa"),
-                    ChiamateNonRisposta = chiamateContatto.Count(c => 
-                        (c.NumeroChiamato == numeroContatto || c.NumeroChiamante == numeroContatto) && 
-                        c.TipoChiamata?.ToLower() == "non risposta"),
+                    ChiamatePerse = chiamateContatto.Count(c =>
+                        (c.NumeroChiamato == numeroContatto || c.NumeroChiamante == numeroContatto) &&
+                        NormalizzaTipoChiamata(c.TipoChiamata) == "persa"),
+                    ChiamateNonRisposta = chiamateContatto.Count(c =>
+                        (c.NumeroChiamato == numeroContatto || c.NumeroChiamante == numeroContatto) &&
+                        NormalizzaTipoChiamata(c.TipoChiamata) == "non risposta"),
                     DurataTotaleChiamate = chiamateContatto.Sum(c => c.Durata.TotalSeconds),
                 };
 
@@ -669,8 +708,8 @@ namespace WebApplicationCentralino.Services
 
                 // Top chiamanti per locazione (quando il contatto è chiamato)
                 statistiche.TopChiamantiPerLocazione = chiamateContatto
-                    .Where(c => c.NumeroChiamato == numeroContatto && 
-                               !string.IsNullOrEmpty(c.NumeroChiamante) && 
+                    .Where(c => c.NumeroChiamato == numeroContatto &&
+                               !string.IsNullOrEmpty(c.NumeroChiamante) &&
                                !string.IsNullOrEmpty(c.Locazione))
                     .GroupBy(c => new { c.NumeroChiamante, c.RagioneSocialeChiamante, c.Locazione })
                     .Select(g => new TopChiamantePerLocazione
@@ -687,8 +726,8 @@ namespace WebApplicationCentralino.Services
 
                 // Top chiamati per locazione (quando il contatto è chiamante)
                 statistiche.TopChiamatiPerLocazione = chiamateContatto
-                    .Where(c => c.NumeroChiamante == numeroContatto && 
-                               !string.IsNullOrEmpty(c.NumeroChiamato) && 
+                    .Where(c => c.NumeroChiamante == numeroContatto &&
+                               !string.IsNullOrEmpty(c.NumeroChiamato) &&
                                !string.IsNullOrEmpty(c.LocazioneChiamato))
                     .GroupBy(c => new { c.NumeroChiamato, c.RagioneSocialeChiamato, c.LocazioneChiamato })
                     .Select(g => new TopChiamatoPerLocazione
@@ -716,6 +755,16 @@ namespace WebApplicationCentralino.Services
                 _logger.LogError(ex, "Errore durante il calcolo delle statistiche del contatto");
                 throw;
             }
+        }
+
+        // Normalizza il tipo chiamata per statistiche e raggruppamenti
+        private string NormalizzaTipoChiamata(string? tipo)
+        {
+            if (string.IsNullOrEmpty(tipo)) return "non specificato";
+            tipo = tipo.ToLower();
+            if (tipo == "entrata+trasferimento") return "entrata";
+            if (tipo == "uscita+trasferimento") return "uscita";
+            return tipo;
         }
     }
 

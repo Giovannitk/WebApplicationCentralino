@@ -752,7 +752,11 @@
                 if (label === 'Interna') {
                     const internalCalls = @Model.ChiamateInterne;
                     const internalPercentage = ((internalCalls / totalCalls) * 100).toFixed(1);
-                    return `Interna (${internalPercentage}%)`;
+
+                    if (internalPercentage > 0)
+                        return `Interna (${internalPercentage}%)`;
+                    else
+                        return `Interna`;
                 }
                 return label;
             });

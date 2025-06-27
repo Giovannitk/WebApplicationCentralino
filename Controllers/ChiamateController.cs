@@ -76,8 +76,20 @@ namespace WebApplicationCentralino.Controllers
             ViewBag.SearchTerm = searchTerm;
             ViewBag.UltimoAggiornamento = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
 
-            // Ottieni le chiamate filtrate
-            var chiamate = await _chiamataService.GetFilteredChiamateAsync(fromDateParsed, toDateParsed, minDuration, includeInterni);
+            List<Chiamata> chiamate = new List<Chiamata>();
+            try
+            {
+                chiamate = await _chiamataService.GetFilteredChiamateAsync(fromDateParsed, toDateParsed, minDuration, includeInterni);
+            }
+            catch (HttpRequestException ex)
+            {
+                if (ex.Message.Contains("401"))
+                {
+                    TempData["SessionExpired"] = "Sessione scaduta, effettua di nuovo il login.";
+                    return RedirectToAction("Login", "Auth");
+                }
+                throw;
+            }
 
             // Applica il filtro per tipo di inserimento se specificato
             if (!string.IsNullOrEmpty(tipoInserimento))

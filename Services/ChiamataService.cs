@@ -56,6 +56,49 @@ namespace WebApplicationCentralino.Services
             }
         }
 
+
+        private Contatto? TrovaContatto(string? numero, List<Contatto> contatti)
+        {
+            if (string.IsNullOrWhiteSpace(numero))
+                return null;
+
+            var numeriContatto = contatti
+              .Where(c => !string.IsNullOrWhiteSpace(c.NumeroContatto))
+              .Select(c => c.NumeroContatto!)
+              .ToHashSet();
+
+            // Prova tutte le versioni del numero da confrontare
+            var possibiliNumeri = new List<string> { numero };
+
+            // Rimuove le prime n cifre (max 3)
+            if (numero.Length > 1)
+                possibiliNumeri.Add(numero.Substring(1));
+            if (numero.Length > 2)
+                possibiliNumeri.Add(numero.Substring(2));
+            if (numero.Length > 3)
+                possibiliNumeri.Add(numero.Substring(3));
+
+            foreach (var variante in possibiliNumeri)
+            {
+                var contatto = contatti.FirstOrDefault(c => c.NumeroContatto == variante);
+                if (contatto != null)
+                    return contatto;
+            }
+
+            return null;
+        }
+
+
+        private string EstraiLocazioneDaRagioneSociale(string? ragioneSociale)
+        {
+            if (string.IsNullOrWhiteSpace(ragioneSociale))
+                return string.Empty;
+
+            var parts = ragioneSociale.Split('-', 2);
+            return parts.Length == 2 ? parts[1].Trim() : ragioneSociale.Trim();
+        }
+
+
         /// <summary>
         /// Recupera tutte le chiamate dal servizio API
         /// </summary>
@@ -66,47 +109,73 @@ namespace WebApplicationCentralino.Services
                 var response = await _httpClient.GetFromJsonAsync<List<Chiamata>>("api/call/get-all-calls");
                 var chiamate = response ?? new List<Chiamata>();
 
-                //foreach (var c in chiamate) 
-                //{
-                //    if (c.UniqueID == "1750868533.18468")
-                //    {
-                //        _logger.LogInformation($"[istanza 1] chiamante: {c.NumeroChiamante} - {c.RagioneSocialeChiamante}");
-                //        _logger.LogInformation($"[istanza 1] chiamato: {c.NumeroChiamato} - {c.RagioneSocialeChiamato}");
-                //    }
+                var contatti = await _contattoService.GetAllAsync();
 
-                //    if (c.UniqueID == "1750868553.18470") 
-                //    {
-                //        _logger.LogInformation($"[istanza 2] chiamante: {c.NumeroChiamante} - {c.RagioneSocialeChiamante}");
-                //        _logger.LogInformation($"[istanza 2] chiamato: {c.NumeroChiamato} - {c.RagioneSocialeChiamato}");
-                //        _logger.LogInformation($"[istanza 2] campoExtra2: {c.transferGroupId}");
-                //    }
+                foreach (var chiamata in chiamate)
+                {
+                    // --- CHIAMATO ---
+                    if (string.IsNullOrWhiteSpace(chiamata.RagioneSocialeChiamato) || chiamata.RagioneSocialeChiamato == "Non registrato")
+                    {
+                        var contatto = TrovaContatto(chiamata.NumeroChiamato, contatti);
+                        if (contatto != null)
+                        {
+                            chiamata.RagioneSocialeChiamato = contatto.RagioneSociale;
 
-                //    if (c.transferGroupId == "1750868533.18468")
-                //    {
-                //        _logger.LogInformation($"[istanza 2] chiamante: {c.NumeroChiamante} - {c.RagioneSocialeChiamante}");
-                //        _logger.LogInformation($"[istanza 2] chiamato: {c.NumeroChiamato} - {c.RagioneSocialeChiamato}");
-                //    }
-                //}
+                            if (!string.Equals(chiamata.NumeroChiamato, contatto.NumeroContatto, StringComparison.Ordinal))
+                            {
+                                //_logger.LogInformation("NumeroChiamato aggiornato da {VecchioNumero} a {NuovoNumero}",
+                                  //chiamata.NumeroChiamato, contatto.NumeroContatto);
 
-                //var chiamateunite = ChiamataHelper.UnisciChiamateTrasferimento(chiamate);
-                //foreach (var c in chiamateunite)
-                //{
-                //    if (c.UniqueID.Contains("+"))
-                //    {
-                //        _logger.LogInformation($"[istanza 1 e 2] uniqueid: {c.UniqueID}");
-                //        _logger.LogInformation($"[istanza 1 e 2] chiamante: {c.NumeroChiamante} - {c.RagioneSocialeChiamante}");
-                //        _logger.LogInformation($"[istanza 1 e 2] chiamato: {c.NumeroChiamato} - {c.RagioneSocialeChiamato}");
-                //        _logger.LogInformation($"[istanza 1 e 2] campoExtra2: {c.transferGroupId}");
-                //        _logger.LogInformation($"[istanza 1 e 2] data: {c.DataArrivoChiamata}");
-                //    }
-                //}
+                                chiamata.NumeroChiamato = contatto.NumeroContatto;
+                            }
+
+                            var locazione = EstraiLocazioneDaRagioneSociale(contatto.RagioneSociale);
+                            if (!string.IsNullOrWhiteSpace(locazione))
+                            {
+                                chiamata.LocazioneChiamato = locazione;
+                            }
+
+                            //_logger.LogInformation("Aggiornata chiamata (chiamato): {Numero} → {RagioneSociale}, Locazione: {Locazione}",
+                              //chiamata.NumeroChiamato, contatto.RagioneSociale, chiamata.LocazioneChiamato);
+                        }
+                    }
+
+                    // --- CHIAMANTE ---
+                    if (string.IsNullOrWhiteSpace(chiamata.RagioneSocialeChiamante) || chiamata.RagioneSocialeChiamante == "Non registrato")
+                    {
+                        var contatto = TrovaContatto(chiamata.NumeroChiamante, contatti);
+                        if (contatto != null)
+                        {
+                            chiamata.RagioneSocialeChiamante = contatto.RagioneSociale;
+
+                            if (!string.Equals(chiamata.NumeroChiamante, contatto.NumeroContatto, StringComparison.Ordinal))
+                            {
+                                //_logger.LogInformation("NumeroChiamante aggiornato da {VecchioNumero} a {NuovoNumero}",
+                                  //chiamata.NumeroChiamante, contatto.NumeroContatto);
+
+                                chiamata.NumeroChiamante = contatto.NumeroContatto;
+                            }
+
+                            var locazione = EstraiLocazioneDaRagioneSociale(contatto.RagioneSociale);
+                            if (!string.IsNullOrWhiteSpace(locazione))
+                            {
+                                chiamata.Locazione = locazione;
+                            }
+
+                            //_logger.LogInformation("Aggiornata chiamata (chiamante): {Numero} → {RagioneSociale}, Locazione: {Locazione}",
+                              //chiamata.NumeroChiamante, contatto.RagioneSociale, chiamata.Locazione);
+                        }
+                    }
+
+
+                }
 
                 return ChiamataHelper.UnisciChiamateTrasferimento(chiamate, _logger);
             }
             catch (HttpRequestException ex) when (ex.Message.Contains("401"))
             {
                 _logger.LogError(ex, "Token scaduto o non valido");
-                throw; // Let the middleware handle the 401
+                throw;
             }
             catch (Exception ex)
             {
@@ -114,6 +183,7 @@ namespace WebApplicationCentralino.Services
                 return new List<Chiamata>();
             }
         }
+
 
         /// <summary>
         /// Recupera le chiamate filtrate in base a data e durata minima

@@ -17,7 +17,7 @@ namespace WebApplicationCentralino.Models
         [Display(Name = "Ragione Sociale")]
         public string? RagioneSociale { get; set; }
 
-        [RegularExpression(@"^[A-Za-z\s'-]+$", ErrorMessage = "La città non può contenere numeri")]
+        [RegularExpression(@"^[A-Za-zÀ-ÖØ-öø-ÿ\s'\.-]+$", ErrorMessage = "La città non può contenere numeri")]
         [Display(Name = "Città")]
         public string? Citta { get; set; }
 

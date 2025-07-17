@@ -113,7 +113,10 @@ namespace WebApplicationCentralino.Controllers
                     TempData["ErrorMessage"] = "Errore durante il salvataggio del contatto";
                 }
 
-                return RedirectToAction(nameof(Index));
+                //return RedirectToAction(nameof(Index));
+
+                TempData["SuccessMessage"] = "Contatto salvato con successo!";
+                return RedirectToAction("Index", "Contatti");
             }
             catch (Exception ex)
             {
@@ -180,7 +183,8 @@ namespace WebApplicationCentralino.Controllers
                 else
                     TempData["ErrorMessage"] = "Errore durante l'eliminazione del contatto";
 
-                return RedirectToAction(nameof(Index));
+                //return RedirectToAction(nameof(Index));
+                return RedirectToAction("Index", "Contatti");
             }
             catch (Exception ex)
             {

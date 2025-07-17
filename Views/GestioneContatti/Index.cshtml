@@ -69,8 +69,8 @@
                     <div class="mb-3">
                         <label asp-for="Citta" class="form-label">Città</label>
                         <input asp-for="Citta" class="form-control"
-                               pattern="^[A-Za-z\s']+$"
-                               title="Inserire solo lettere" />
+                               pattern="^[A-Za-zÀ-ÖØ-öø-ÿ\s'\.-]+$"
+                               title="Inserire solo lettere, apostrofo, punto o trattino" />
                         <div class="form-text">Inserire solo lettere, senza numeri</div>
                         <span asp-validation-for="Citta" class="text-danger"></span>
                     </div>
@@ -240,7 +240,7 @@
         @foreach (var comune in ViewBag.Comuni as Dictionary<string, string>)
         {
             <text>
-                            selectHtml += `<option value="Comune di @comune.Key">Comune di @comune.Key</option>`;
+                                selectHtml += `<option value="Comune di @comune.Key">Comune di @comune.Key</option>`;
             </text>
         }
                 selectHtml += `</select>`;
@@ -281,7 +281,7 @@
                         required: true
                     },
                     Citta: {
-                        pattern: /^[A-Za-z\s']+$/
+                        pattern: /^[A-Za-zÀ-ÖØ-öø-ÿ\s'\.-]+$/
                     },
                     Interno: {
                         required: true

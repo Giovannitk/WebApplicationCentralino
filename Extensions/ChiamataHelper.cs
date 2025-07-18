@@ -14,10 +14,18 @@ namespace WebApplicationCentralino.Extensions
         /// <param name="chiamate">Lista originale delle chiamate</param>
         /// <param name="logger">Logger opzionale per debug</param>
         /// <returns>Nuova lista con chiamate unite per trasferimento</returns>
-        public static List<Chiamata> UnisciChiamateTrasferimento(List<Chiamata> chiamate, ILogger? logger = null)
+        public static List<Chiamata> UnisciChiamateTrasferimento(
+    List<Chiamata> chiamate,
+    List<Contatto> contatti,
+    ILogger? logger = null)
         {
             var usate = new HashSet<string>(); // UniqueID già usati in unione
             var chiamateDaRestituire = new List<Chiamata>();
+
+            var numeriInterni = contatti
+    .Where(c => c.Interno == 1 && !string.IsNullOrEmpty(c.NumeroContatto))
+    .Select(c => c.NumeroContatto!)
+    .ToHashSet();
 
             // Raggruppa le chiamate per transferGroupId
             var gruppiTrasferimento = chiamate
@@ -43,7 +51,7 @@ namespace WebApplicationCentralino.Extensions
                     chiamateById.TryGetValue(chiamata.transferGroupId, out var chiamataOriginale))
                 {
                     // Unisci la chiamata originale con quella trasferita
-                    var nuova = UnisciDueChiamate(chiamataOriginale, chiamata, logger);
+                    var nuova = UnisciDueChiamate(chiamataOriginale, chiamata, numeriInterni, logger);
 
                     chiamateDaRestituire.Add(nuova);
                     usate.Add(chiamata.UniqueID!);
@@ -63,7 +71,7 @@ namespace WebApplicationCentralino.Extensions
                     // Se la chiamata trasferita non è già stata processata
                     if (!usate.Contains(chiamataTrasferita.UniqueID!))
                     {
-                        var nuova = UnisciDueChiamate(chiamata, chiamataTrasferita, logger);
+                        var nuova = UnisciDueChiamate(chiamata, chiamataTrasferita, numeriInterni, logger);
 
                         chiamateDaRestituire.Add(nuova);
                         usate.Add(chiamata.UniqueID!);
@@ -86,35 +94,70 @@ namespace WebApplicationCentralino.Extensions
         /// <summary>
         /// Unisce due chiamate collegate da trasferimento
         /// </summary>
-        private static Chiamata UnisciDueChiamate(Chiamata chiamataOriginale, Chiamata chiamataTrasferita, ILogger? logger = null)
+        private static Chiamata UnisciDueChiamate(
+    Chiamata chiamataOriginale,
+    Chiamata chiamataTrasferita,
+    HashSet<string> numeriInterni,
+    ILogger? logger = null)
         {
             var nuova = new Chiamata();
 
-            //logger?.LogInformation($"[ChiamataHelper] Unisco chiamate:");
-            //logger?.LogInformation($"[ChiamataHelper] Originale: {DettagliChiamata(chiamataOriginale)}");
-            //logger?.LogInformation($"[ChiamataHelper] Trasferita: {DettagliChiamata(chiamataTrasferita)}");
+            var chiamanteOriginaleÈInterno = numeriInterni.Contains(chiamataOriginale.NumeroChiamante!);
+            var chiamatoOriginaleÈInterno = numeriInterni.Contains(chiamataOriginale.NumeroChiamato!);
+            var chiamatoTrasferitaÈInterno = numeriInterni.Contains(chiamataTrasferita.NumeroChiamato!);
 
-            // Caso 1: Chiamata in entrata trasferita
+            // Caso 1: Chiamata in entrata trasferita (es. esterno chiama → interno → altro interno)
             if (chiamataOriginale.TipoChiamata == "Entrata")
             {
                 nuova.NumeroChiamante = chiamataOriginale.NumeroChiamante;
                 nuova.RagioneSocialeChiamante = chiamataOriginale.RagioneSocialeChiamante;
                 nuova.Locazione = chiamataOriginale.Locazione;
+
                 nuova.NumeroChiamato = chiamataTrasferita.NumeroChiamato;
                 nuova.RagioneSocialeChiamato = chiamataTrasferita.RagioneSocialeChiamato;
                 nuova.LocazioneChiamato = chiamataTrasferita.LocazioneChiamato;
-                nuova.TipoChiamata = "Entrata"; // Mantieni come "Entrata" per il filtro
+
+                nuova.TipoChiamata = "Entrata";
             }
-            // Caso 2: Chiamata in uscita trasferita
-            else if (chiamataOriginale.TipoChiamata == "Uscita")
+            // Caso 2: Chiamata interna → uscita (interno riceve → passa → altro interno → esterno)
+            else if (chiamataOriginale.TipoChiamata == "Interna" && chiamataTrasferita.TipoChiamata == "Uscita")
             {
-                nuova.NumeroChiamante = chiamataOriginale.NumeroChiamato; // Chi ha fatto la chiamata originale
+                nuova.NumeroChiamante = chiamataOriginale.NumeroChiamato; // interno che ha ricevuto la chiamata
                 nuova.RagioneSocialeChiamante = chiamataOriginale.RagioneSocialeChiamato;
                 nuova.Locazione = chiamataOriginale.LocazioneChiamato;
+
                 nuova.NumeroChiamato = chiamataTrasferita.NumeroChiamato;
                 nuova.RagioneSocialeChiamato = chiamataTrasferita.RagioneSocialeChiamato;
                 nuova.LocazioneChiamato = chiamataTrasferita.LocazioneChiamato;
-                nuova.TipoChiamata = "Uscita"; // Mantieni come "Uscita" per il filtro
+
+                nuova.TipoChiamata = "Uscita";
+            }
+            // Caso 3: Chiamata in uscita trasferita tra interni
+            else if (chiamataOriginale.TipoChiamata == "Uscita" && chiamataTrasferita.TipoChiamata == "Interna")
+            {
+                // Corretto: chiamante = interno che ha preso la chiamata (dalla chiamata interna), chiamato = esterno (dalla chiamata uscita)
+                nuova.NumeroChiamante = chiamataTrasferita.NumeroChiamato; // interno che ha preso la chiamata
+                nuova.RagioneSocialeChiamante = chiamataTrasferita.RagioneSocialeChiamato;
+                nuova.Locazione = chiamataTrasferita.LocazioneChiamato;
+
+                nuova.NumeroChiamato = chiamataOriginale.NumeroChiamato; // esterno
+                nuova.RagioneSocialeChiamato = chiamataOriginale.RagioneSocialeChiamato;
+                nuova.LocazioneChiamato = chiamataOriginale.LocazioneChiamato;
+
+                nuova.TipoChiamata = "Uscita";
+            }
+            // Caso 4: Entrambe sono chiamate interne (interno → interno)
+            else if (chiamataOriginale.TipoChiamata == "Interna" && chiamataTrasferita.TipoChiamata == "Interna")
+            {
+                nuova.NumeroChiamante = chiamataOriginale.NumeroChiamante;
+                nuova.RagioneSocialeChiamante = chiamataOriginale.RagioneSocialeChiamante;
+                nuova.Locazione = chiamataOriginale.Locazione;
+
+                nuova.NumeroChiamato = chiamataTrasferita.NumeroChiamato;
+                nuova.RagioneSocialeChiamato = chiamataTrasferita.RagioneSocialeChiamato;
+                nuova.LocazioneChiamato = chiamataTrasferita.LocazioneChiamato;
+
+                nuova.TipoChiamata = "Interna";
             }
             else
             {
@@ -126,13 +169,15 @@ namespace WebApplicationCentralino.Extensions
                 nuova.NumeroChiamante = chiamataBase.NumeroChiamante;
                 nuova.RagioneSocialeChiamante = chiamataBase.RagioneSocialeChiamante;
                 nuova.Locazione = chiamataBase.Locazione;
+
                 nuova.NumeroChiamato = chiamataTrasferita.NumeroChiamato;
                 nuova.RagioneSocialeChiamato = chiamataTrasferita.RagioneSocialeChiamato;
                 nuova.LocazioneChiamato = chiamataTrasferita.LocazioneChiamato;
-                nuova.TipoChiamata = chiamataBase.TipoChiamata; // Mantieni il tipo originale
+
+                nuova.TipoChiamata = chiamataBase.TipoChiamata;
             }
 
-            // Imposta le date e altri campi
+            // Date coerenti
             nuova.DataArrivoChiamata = chiamataOriginale.DataArrivoChiamata < chiamataTrasferita.DataArrivoChiamata
                 ? chiamataOriginale.DataArrivoChiamata
                 : chiamataTrasferita.DataArrivoChiamata;
@@ -142,13 +187,12 @@ namespace WebApplicationCentralino.Extensions
                 : chiamataTrasferita.DataFineChiamata;
 
             nuova.UniqueID = chiamataOriginale.UniqueID + "+" + chiamataTrasferita.UniqueID;
-            nuova.CampoExtra1 = "TRASFERIMENTO"; // Marca che è una chiamata con trasferimento
+            nuova.CampoExtra4 = "TRASFERIMENTO";
             nuova.transferGroupId = chiamataTrasferita.transferGroupId;
-
-            //logger?.LogInformation($"[ChiamataHelper] Chiamata unita: {DettagliChiamata(nuova)}");
 
             return nuova;
         }
+
 
         private static string DettagliChiamata(Chiamata c)
         {

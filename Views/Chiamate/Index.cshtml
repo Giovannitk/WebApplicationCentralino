@@ -100,6 +100,8 @@
                             <th class="min-width-120">Locazione Chiamante</th>
                             <th class="min-width-120">Locazione Chiamato</th>
                             <th class="min-width-100">Inserimento</th>
+                            <th class="min-width-120">Stato</th>
+                            <th class="min-width-120">Trasferimento</th>
                             <th class="min-width-80">Azioni</th>
                         </tr>
                     </thead>
@@ -110,9 +112,27 @@
                             {
                                 <tr>
                                     @* <td>@chiamata.Id</td> *@
-                                    <td>@(chiamata.NumeroChiamante ?? "-")</td>
+                                    <td>
+                                        @(chiamata.NumeroChiamante ?? "-")
+                                        @if (!string.IsNullOrEmpty(chiamata.NumeroChiamante))
+                                        {
+                                            <a href="@Url.Action("Index", "Contatti", new { searchTerm = chiamata.NumeroChiamante })"
+                                               class="btn btn-sm btn-outline-secondary ms-1" title="Cerca in rubrica">
+                                                <i class="bi bi-search"></i>
+                                            </a>
+                                        }
+                                    </td>
                                     <td>@(chiamata.RagioneSocialeChiamante ?? "-")</td>
-                                    <td>@(chiamata.NumeroChiamato ?? "-")</td>
+                                    <td>
+                                        @(chiamata.NumeroChiamato ?? "-")
+                                        @if (!string.IsNullOrEmpty(chiamata.NumeroChiamato))
+                                        {
+                                            <a href="@Url.Action("Index", "Contatti", new { searchTerm = chiamata.NumeroChiamato })"
+                                               class="btn btn-sm btn-outline-secondary ms-1" title="Cerca in rubrica">
+                                                <i class="bi bi-search"></i>
+                                            </a>
+                                        }
+                                    </td>
                                     <td>@(chiamata.RagioneSocialeChiamato ?? "-")</td>
                                     <td>@(chiamata.DataArrivoChiamata.ToString("dd/MM/yyyy HH:mm:ss"))</td>
                                     <td>@(chiamata.DataFineChiamata.ToString("dd/MM/yyyy HH:mm:ss"))</td>
@@ -128,6 +148,19 @@
                                         <span class="badge @(chiamata.CampoExtra1 == "Manuale" ? "bg-info" : "bg-secondary")">
                                             @(chiamata.CampoExtra1 == "Manuale" ? "Manuale" : "Automatico")
                                         </span>
+                                    </td>
+                                    <td>@(chiamata.StatoChiamata ?? "-")</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(chiamata.CampoExtra4))
+                                        {
+                                            <span class="badge @(chiamata.CampoExtra4.ToLower().Contains("trasfer") ? "bg-info" : "bg-secondary")">
+                                                @chiamata.CampoExtra4
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">-</span>
+                                        }
                                     </td>
                                     <td>
                                         <a asp-controller="GestioneChiamate"
@@ -177,37 +210,54 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 
     <style>
-        .min-width-80 { min-width: 80px; }
-        .min-width-100 { min-width: 100px; }
-        .min-width-120 { min-width: 120px; }
-        .min-width-150 { min-width: 150px; }
-        .min-width-180 { min-width: 180px; }
-        .min-width-250 { min-width: 250px; }
-        
+        .min-width-80 {
+            min-width: 80px;
+        }
+
+        .min-width-100 {
+            min-width: 100px;
+        }
+
+        .min-width-120 {
+            min-width: 120px;
+        }
+
+        .min-width-150 {
+            min-width: 150px;
+        }
+
+        .min-width-180 {
+            min-width: 180px;
+        }
+
+        .min-width-250 {
+            min-width: 250px;
+        }
+
         /* Stili per la visualizzazione responsive */
         .table-responsive {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
         }
-        
+
         /* Stili per le celle della tabella */
         .table td, .table th {
             padding: 0.5rem;
         }
-        
-        /* Stili per le celle con testo lungo */
-        .table td.text-wrap {
-            white-space: normal;
-            min-width: 250px;
-            max-width: 300px;
-            word-wrap: break-word;
-        }
-        
-        /* Stili per le celle con testo normale */
-        .table td:not(.text-wrap) {
-            white-space: nowrap;
-        }
-        
+
+            /* Stili per le celle con testo lungo */
+            .table td.text-wrap {
+                white-space: normal;
+                min-width: 250px;
+                max-width: 300px;
+                word-wrap: break-word;
+            }
+
+            /* Stili per le celle con testo normale */
+            .table td:not(.text-wrap) {
+                white-space: nowrap;
+            }
+
         /* Stili per i badge */
         .badge {
             white-space: nowrap;
@@ -263,7 +313,9 @@
                     { "width": "100px", "targets": 7 }, // Tipo
                     { "width": "250px", "targets": [8, 9], "className": "text-wrap" }, // Locazioni
                     { "width": "100px", "targets": 10 }, // Inserimento
-                    { "width": "80px", "targets": 11 } // Azioni
+                    { "width": "120px", "targets": 11 }, // Stato
+                    { "width": "120px", "targets": 12 }, // Trasferimento
+                    { "width": "80px", "targets": 13 } // Azioni
                 ],
                 "destroy": true,
                 "deferRender": true,
@@ -293,7 +345,7 @@
                 // Reindirizza alla stessa pagina con parametri di query
                 window.location.href = `@Url.Action("Index")?dateFrom=${dateFrom}&dateTo=${dateTo}&minDuration=${minDuration}&tipoInserimento=${tipoInserimento}&includeInterni=${includeInterni}&searchTerm=${encodeURIComponent(searchValue)}`;
             });
-            
+
             // Gestione esportazione Excel
             $("#exportExcel").click(function() {
                 let dateFrom = $("#dateFrom").val();
@@ -301,12 +353,12 @@
                 let minDuration = $("#minDuration").val();
                 let searchValue = tabella.search();
                 let includeInterni = $("#includeInterni").val();
-                
+
                 // Crea l'URL per l'esportazione in Excel con gli stessi filtri
                 let exportUrl = `@Url.Action("ExportToExcel")?dateFrom=${dateFrom}&dateTo=${dateTo}&minDuration=${minDuration}&searchTerm=${encodeURIComponent(searchValue)}&includeInterni=${includeInterni}`;
                 window.location.href = exportUrl;
             });
-            
+
             // Gestione esportazione CSV
             $("#exportCsv").click(function() {
                 let dateFrom = $("#dateFrom").val();
@@ -314,7 +366,7 @@
                 let minDuration = $("#minDuration").val();
                 let searchValue = tabella.search();
                 let includeInterni = $("#includeInterni").val();
-                
+
                 // Crea l'URL per l'esportazione in CSV con gli stessi filtri
                 let exportUrl = `@Url.Action("ExportToCsv")?dateFrom=${dateFrom}&dateTo=${dateTo}&minDuration=${minDuration}&searchTerm=${encodeURIComponent(searchValue)}&includeInterni=${includeInterni}`;
                 window.location.href = exportUrl;

@@ -38,5 +38,8 @@ namespace WebApplicationCentralino.Models
         public TimeSpan Durata => DataFineChiamata > DataArrivoChiamata
             ? DataFineChiamata - DataArrivoChiamata
             : TimeSpan.Zero;
+
+        public string? StatoChiamata { get; set; }
+        public string? CampoExtra4 { get; set; }
     }
 }

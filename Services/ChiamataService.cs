@@ -170,7 +170,7 @@ namespace WebApplicationCentralino.Services
 
                 }
 
-                return ChiamataHelper.UnisciChiamateTrasferimento(chiamate, _logger);
+                return ChiamataHelper.UnisciChiamateTrasferimento(chiamate, contatti,_logger);
             }
             catch (HttpRequestException ex) when (ex.Message.Contains("401"))
             {
